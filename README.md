@@ -55,6 +55,9 @@ ofrece ninguna que **sobrescriba** el elemento más antiguo al llenarse.
 
 # Ejecutar la aplicación
 java -jar target/simulador-planta.jar
+
+# Opcional: abrirla con la simulación ya avanzada, para ver las colas con trabajo
+java -jar target/simulador-planta.jar 150
 ```
 
 Desde IntelliJ IDEA: abrir la carpeta del proyecto, dejar que importe el `pom.xml` y ejecutar la
