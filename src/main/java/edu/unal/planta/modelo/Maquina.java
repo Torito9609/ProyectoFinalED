@@ -22,6 +22,12 @@ import java.util.Optional;
  */
 public final class Maquina {
 
+    /**
+     * Techo del factor de desgaste de {@link #probabilidadFallo()}: una máquina con el
+     * mantenimiento muy atrasado llega a fallar al doble de su tasa base, no más.
+     */
+    private static final double MAX_FACTOR_DESGASTE = 2.0;
+
     private final String etiqueta;
     private final String tipo;
     private final List<Sensor> sensores;
@@ -223,13 +229,21 @@ public final class Maquina {
      * Es decir: una máquina más cargada y con el mantenimiento más atrasado falla más seguido, que
      * es el comportamiento que se quiere mostrar en la demostración.</p>
      *
+     * <p>El factor de desgaste está acotado por {@link #MAX_FACTOR_DESGASTE}. Sin ese techo la
+     * fórmula se vuelve un lazo de realimentación: como el preventivo es la prioridad más baja,
+     * puede quedar esperando mucho tiempo, y entonces el contador crece, la máquina falla más, la
+     * cola se llena de trabajo correctivo y el preventivo se aleja todavía más. Una máquina muy
+     * atrasada falla más seguido, pero no infinitamente más.</p>
+     *
      * <p>El cálculo no tiene aleatoriedad; el sorteo lo hace el generador de fallos.</p>
      *
      * @return probabilidad entre 0 y 1
      */
     public double probabilidadFallo() {
         double factorCarga = carga / 100.0;
-        double factorDesgaste = 1.0 + (double) ticksDesdeMantenimiento / intervaloPreventivo;
+        double factorDesgaste = Math.min(
+                MAX_FACTOR_DESGASTE,
+                1.0 + (double) ticksDesdeMantenimiento / intervaloPreventivo);
         return Math.min(1.0, tasaBaseFallo * factorCarga * factorDesgaste);
     }
 

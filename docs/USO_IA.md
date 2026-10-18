@@ -95,6 +95,26 @@ Convención de la columna **Autoría**:
 | `CLAUDE.md` (secciones 2, 6 y 10) | Mixto | Actualizado para reflejar la decisión del equipo |
 | `test/.../ConfiguracionPlantaTest.java` | IA | Prueba de que cada magnitud cae en su zona de umbrales |
 
+### Calibración de la simulación
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Planta.java` (paso 5) | Mixto | **Decisión de Kevin** (opción 2); implementada por IA |
+| `modelo/Maquina.java` (techo de desgaste) | IA | Hallazgo de la medición; revisado por el equipo |
+| `modelo/ConfiguracionPlanta.java` (duraciones) | IA | Calibrado midiendo tres variantes; las tasas de fallo siguen siendo de Cristian |
+| `CLAUDE.md` (sección 7, pasos 1 y 5) | Mixto | Actualizado para reflejar las decisiones |
+
+### Etapa 4 — Paneles de la vista
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `vista/Colores.java`, `vista/SeleccionVista.java` | IA | Paleta y estado de selección |
+| `vista/PanelEstructura.java` | IA | Clase base con método plantilla |
+| `vista/Panel*.java` (7 paneles) | IA | Diseño acordado con Kevin antes de implementar; revisados sobre renders PNG |
+| `vista/VentanaPrincipal.java` | IA | Distribución de la sección 9 del documento de diseño |
+| `test/.../PanelesVistaTest.java` | IA | Una prueba: que ningún panel falle al dibujarse |
+| `docs/img/ventana.png` | — | Captura generada del programa |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

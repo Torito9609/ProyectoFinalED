@@ -92,7 +92,9 @@ class PlantaTest {
         assertEquals(EstadoMaquina.OPERANDO, prensa.estado());
         assertFalse(prensa.tieneAnomalia(), "la reparación quita el fallo físico");
         assertFalse(prensa.alarmaActiva(), "y también la alarma");
-        assertEquals(0, prensa.ticksDesdeMantenimiento(), "el mantenimiento queda al día");
+        assertTrue(prensa.ticksDesdeMantenimiento() > 0,
+                "una reparación correctiva no es un servicio preventivo, así que el reloj del "
+                        + "preventivo sigue corriendo");
     }
 
     @Test

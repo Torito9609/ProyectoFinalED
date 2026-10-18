@@ -18,6 +18,8 @@ donde se ve su comportamiento real: el acceso por índice del arreglo, la sobres
 circular, el orden de llegada de las colas FIFO, los cuatro carriles de la cola con prioridad y la
 cima de la pila de deshacer.
 
+![La ventana del simulador](docs/img/ventana.png)
+
 ## Estructuras de datos utilizadas
 
 El proyecto usa las **cinco** estructuras lineales del enunciado. La justificación completa de cada
@@ -53,6 +55,9 @@ ofrece ninguna que **sobrescriba** el elemento más antiguo al llenarse.
 
 # Ejecutar la aplicación
 java -jar target/simulador-planta.jar
+
+# Opcional: abrirla con la simulación ya avanzada, para ver las colas con trabajo
+java -jar target/simulador-planta.jar 150
 ```
 
 Desde IntelliJ IDEA: abrir la carpeta del proyecto, dejar que importe el `pom.xml` y ejecutar la
@@ -132,7 +137,7 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | `ColaCircular` y `ColaPrioridadOrdenes` con pruebas | Listo |
 | Entidades del modelo y configuración | Listo |
 | Simulación (`Planta.tick()`) probada sin interfaz | Listo |
-| Interfaz Swing (6 paneles) | Pendiente |
+| Interfaz Swing (paneles de las 5 estructuras) | Listo |
 | Controlador e integración | Pendiente |
 | Manual de usuario y documento explicativo | Pendiente |
 | Video | Pendiente |

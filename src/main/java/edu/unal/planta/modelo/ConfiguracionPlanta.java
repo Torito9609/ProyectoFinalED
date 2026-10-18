@@ -43,10 +43,12 @@ public final class ConfiguracionPlanta {
     /**
      * Duración de la reparación en ticks, indexada por {@link Prioridad#nivel()}.
      *
-     * <p>Las órdenes más graves toman más tiempo, lo que hace que se formen filas visibles en la
-     * cola con prioridad.</p>
+     * <p>Las órdenes más graves toman más tiempo. Estas duraciones, junto con las tasas base de
+     * fallo de cada máquina, son las que deciden si la cola con prioridad forma filas visibles:
+     * la cola se llena cuando las órdenes llegan más rápido de lo que los dos técnicos las
+     * atienden.</p>
      */
-    private static final int[] DURACION_REPARACION = {8, 6, 4, 3};
+    private static final int[] DURACION_REPARACION = {10, 8, 6, 4};
 
     /**
      * Pesos con que el generador elige la magnitud de una anomalía, indexados por el orden de
@@ -112,8 +114,7 @@ public final class ConfiguracionPlanta {
      *
      * <p>Ese techo es solo el límite superior. Lo que llena la cola de verdad es que las órdenes
      * lleguen más rápido de lo que los técnicos las atienden, y eso depende de la tasa base de
-     * fallo y de la duración de las reparaciones. Un ensayo de 1000 ticks con los valores actuales
-     * da una cola con contenido en el 6 % de los ticks y un máximo de dos órdenes.</p>
+     * fallo y de la duración de las reparaciones, no del número de máquinas.</p>
      *
      * @return lista de máquinas recién creadas, todas operando
      */
