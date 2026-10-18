@@ -145,7 +145,7 @@ Condición para los valores: nominal + ruido debe quedar **claramente por debajo
 Otros valores provisionales:
 - Capacidad de la cola circular: **12 lecturas** por máquina.
 - Técnicos: **2** (bastante menos técnicos que máquinas, para que se formen filas).
-- Duración de reparación en ticks: P1 = 8, P2 = 6, P3 = 4, P4 = 3.
+- Duración de reparación en ticks: P1 = 10, P2 = 8, P3 = 6, P4 = 4. Junto con las tasas de fallo, son los valores que deciden si la cola con prioridad forma filas visibles.
 
 ---
 
@@ -153,12 +153,14 @@ Otros valores provisionales:
 
 ### Orden exacto de un tick (`Planta.tick()`)
 1. **Generar fallos.** Cada máquina OPERANDO **sin anomalía activa** desarrolla una con probabilidad
-   `p = tasaBase × (carga / 100) × (1 + ticksDesdeMantenimiento / intervaloPreventivo)`.
+   `p = tasaBase × (carga / 100) × min(2, 1 + ticksDesdeMantenimiento / intervaloPreventivo)`.
+   El factor de desgaste está **acotado a 2**: sin ese techo la fórmula se vuelve un lazo de realimentación, porque el preventivo es la prioridad más baja y puede quedar esperando, lo que hace fallar más la máquina y aleja todavía más el preventivo.
    Se elige un sensor al azar, y la magnitud con pesos **80 % leve / 15 % moderada / 5 % severa** (distribución recomendada por ISA-18.2 para tres prioridades).
 2. **Leer sensores.** Cada máquina OPERANDO o EN_ALARMA genera una `Lectura` (nominal + ruido + desplazamiento de la anomalía) y la encola en su `ColaCircular`.
 3. **Detectar.** Si la última lectura supera el umbral de advertencia en algún sensor **y la máquina no tiene alarma activa**, se crea un `EventoFallo`, se encola en la **cola de eventos** y la máquina pasa a EN_ALARMA. La regla de una sola alarma por máquina evita la inundación de alarmas.
 4. **Clasificar.** Se desencola **un solo** evento por tick (así la cola puede acumularse y verse), se clasifica y se inserta en la **cola con prioridad**. Si es P1, la máquina pasa a DETENIDA de inmediato.
-5. **Avanzar trabajos.** A cada técnico ocupado se le resta un tick. Al terminar: la máquina vuelve a OPERANDO, se borran la anomalía y la alarma, se reinician los ticks desde el mantenimiento, y el técnico se **encola al final** de la cola de técnicos.
+5. **Avanzar trabajos.** A cada técnico ocupado se le resta un tick. Al terminar: la máquina vuelve a OPERANDO, se borran la anomalía y la alarma, y el técnico se **encola al final** de la cola de técnicos.
+   Los ticks desde el mantenimiento **solo se reinician si la orden atendida era P4**, es decir un preventivo. Una reparación correctiva arregla el fallo pero no es un servicio completo, así que el reloj del preventivo sigue corriendo. Decisión del 18 de octubre: sin esta distinción, cada reparación aplazaba el preventivo y el carril P4 no llegaba a usarse.
 6. **Asignar.** Mientras haya técnicos libres y órdenes pendientes: se extrae la orden más prioritaria, se desencola el primer técnico y la máquina pasa a EN_MANTENIMIENTO.
 7. **Preventivo.** Si una máquina supera su intervalo preventivo y no tiene orden P4 pendiente, se genera una orden P4 directamente (no es un fallo, no pasa por la cola de eventos).
 8. Incrementar el tick y **notificar a los observadores**.

@@ -36,6 +36,47 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Ajuste — 2026-10-18 — Calibración de la simulación
+
+**Responsable:** decisión de Kevin (opción 2), calibración medida con Claude Code.
+
+Tres cambios, todos nacidos de medir y no de suponer:
+
+1. **Reparaciones más largas** (P1=10, P2=8, P3=6, P4=4). Las tasas de fallo de Cristian quedaron
+   sin tocar.
+2. **El contador de mantenimiento se reinicia solo con una orden P4.** Una reparación correctiva no
+   es un servicio preventivo.
+3. **Techo de 2 al factor de desgaste**, que apareció como consecuencia del punto anterior.
+
+### El lazo de realimentación
+
+Al aplicar el punto 2 la planta se saturó: promedio de 8,2 órdenes en cola y el carril P4 lleno el
+91 % de los ticks pero sin atenderse nunca. La causa está en la fórmula del paso 1:
+
+`p = tasaBase × (carga/100) × (1 + ticksDesdeMantenimiento / intervaloPreventivo)`
+
+Como el P4 es la prioridad más baja, bajo carga se queda al fondo de la cola. Y como ya no se
+reinicia con las reparaciones correctivas, el contador crece sin límite, la máquina falla cada vez
+más, llega más trabajo correctivo y el preventivo se aleja todavía más. Es inanición por prioridad
+realimentando la tasa de fallo. El techo de 2 lo corta: una máquina muy atrasada falla al doble de
+su tasa base, no más.
+
+### Calibración medida (1000 ticks, semilla 7)
+
+| Variante | Ticks con cola | Promedio | Máx. | Carriles con contenido |
+|---|---|---|---|---|
+| 3 máquinas, valores iniciales | 1 % | — | 1 | casi ninguno |
+| 6 máquinas, valores iniciales | 6 % | 0,07 | 2 | P3 5 %, P4 1 % |
+| **B: 6 máquinas, reparaciones largas, techo** | **38 %** | **0,54** | **4** | **P1 1 %, P2 3 %, P3 16 %, P4 27 %** |
+| C: lo mismo con tasas 1,5× | 74 % | 2,10 | 9 | P3 46 %, P4 58 % |
+
+Se eligió **B**: los cuatro carriles muestran contenido, la planta se ve ocupada pero no saturada, y
+es la opción que menos se aparta de los valores de Cristian. Si en el ensayo del video se quiere una
+planta más movida, pasar a C es cambiar seis números en un archivo. Para el pico de la demostración
+está además el botón de inyectar fallo, que es justo para eso.
+
+---
+
 ## Ajuste — 2026-10-18 — El inventario sube de 3 a 6 máquinas
 
 **Responsable:** decisión de Kevin, implementada con Claude Code.
@@ -320,7 +361,9 @@ todavía no se han aprobado.
 |---|---|---|---|---|
 | 2026-10-18 | 7, paso 7 (preventivo) | Marcar en `Maquina` un `boolean` de preventiva pendiente, en vez de recorrer el carril P4 de la cola con prioridad para saber si ya hay una | Recorrer el carril es O(n) y obliga a inspeccionar la cola desde afuera. El indicador es O(1) y respeta mejor el tipo abstracto de datos | **Implementada**, aprobada por Kevin |
 | 2026-10-18 | 2, 6 y 10 (tres máquinas) | Subir el inventario inicial de **3 a 6 máquinas**, dejando los 2 técnicos | Con tres máquinas hay a lo sumo tres fallos simultáneos, y con dos técnicos que toman la orden en el mismo tick la cola con prioridad nunca pasa de una orden. Los paneles de colas se verían vacíos en toda la demostración | **Implementada**, aprobada por Kevin. `CLAUDE.md` ya actualizado |
-| 2026-10-18 | 6 (tasas de fallo y duraciones) | Subir las tasas base de fallo (a 0,08–0,14) y alargar las reparaciones (P1=10, P2=8, P3=6, P4=4) | Las 6 máquinas suben el techo de la cola a 4, pero el techo no la llena: hace falta que las órdenes lleguen más rápido de lo que los técnicos las atienden. Medido en 1000 ticks: con los valores actuales la cola tiene contenido el 6 % de los ticks y máximo 2 órdenes; con estos valores, el 60 % de los ticks y máximo 4 | **Propuesta**, sin implementar. Son valores de Cristian |
+| 2026-10-18 | 6 (duraciones de reparación) | Alargar las reparaciones: P1=10, P2=8, P3=6, P4=4 | Es lo que hace que las órdenes lleguen más rápido de lo que los dos técnicos las atienden, y por tanto lo que llena la cola. Las **tasas de fallo de Cristian quedaron intactas** | **Implementada** |
+| 2026-10-18 | 7, paso 5 | Los ticks desde el mantenimiento se reinician **solo si la orden atendida era P4** | Una reparación correctiva arregla el fallo pero no es un servicio preventivo completo. Sin esta distinción, cada reparación aplazaba el preventivo y el carril P4 nunca se usaba | **Implementada**, aprobada por Kevin (opción 2) |
+| 2026-10-18 | 7, paso 1 | Acotar el factor de desgaste a 2 en la fórmula de probabilidad de fallo | Descubierto al medir: con el paso 5 anterior, la fórmula se vuelve un lazo de realimentación. El preventivo es la prioridad más baja, así que puede quedar esperando; entonces el contador crece, la máquina falla más, la cola se llena de trabajo correctivo y el preventivo se aleja más. Sin techo, la planta se saturaba (promedio de 8,2 órdenes en cola) | **Implementada** |
 | 2026-10-18 | 6, campo «máquina» de `OrdenTrabajo` | La orden guarda `indiceMaquina` y `etiquetaMaquina` en vez de una referencia a `Maquina` | Recupera la máquina del inventario en O(1), evita la referencia circular máquina↔orden y permite que la orden sea inmutable | **Implementada**, pendiente de revisión del equipo |
 | 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 

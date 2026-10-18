@@ -233,9 +233,15 @@ public final class Planta {
     /**
      * Paso 5: a cada técnico ocupado se le descuenta un tick.
      *
-     * <p>Al terminar, la máquina vuelve a operar sin anomalía ni alarma y con el contador de
-     * mantenimiento en cero, y el técnico se encola <strong>al final</strong> de la cola de
-     * disponibles, de modo que el trabajo se reparta de forma pareja.</p>
+     * <p>Al terminar, la máquina vuelve a operar sin anomalía ni alarma, y el técnico se encola
+     * <strong>al final</strong> de la cola de disponibles, de modo que el trabajo se reparta de
+     * forma pareja.</p>
+     *
+     * <p>El contador de mantenimiento <strong>solo se reinicia si la orden atendida era P4</strong>,
+     * es decir un mantenimiento preventivo. Una reparación correctiva arregla el fallo pero no es
+     * un servicio completo: cambiar un rodamiento no equivale a la revisión programada, así que el
+     * reloj del preventivo sigue corriendo. Sin esta distinción, en una planta con fallos frecuentes
+     * cada reparación aplazaba el preventivo y el carril P4 nunca llegaba a usarse.</p>
      */
     private void avanzarTrabajos() {
         for (Tecnico tecnico : tecnicos) {
@@ -251,8 +257,8 @@ public final class Planta {
             maquina.cambiarEstado(EstadoMaquina.OPERANDO);
             maquina.quitarAnomalia();
             maquina.quitarAlarma();
-            maquina.reiniciarMantenimiento();
             if (terminada.prioridad() == Prioridad.P4) {
+                maquina.reiniciarMantenimiento();
                 maquina.quitarPreventivaPendiente();
             }
             tecnicosLibres.add(tecnico);
