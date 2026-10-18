@@ -2,10 +2,15 @@ package edu.unal.planta.vista;
 
 import edu.unal.planta.modelo.Maquina;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 /**
  * Muestra el inventario de máquinas, que es un {@code ArrayList}.
@@ -18,6 +23,9 @@ import java.util.List;
  * mostrar una memoria que no sabemos si existe. Se muestra el comportamiento del tipo abstracto,
  * no una suposición.</p>
  *
+ * <p>Un clic sobre una fila selecciona esa máquina. El panel no sabe qué pasa después: solo avisa
+ * el índice a quien se haya registrado, que es la ventana.</p>
+ *
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -26,10 +34,45 @@ public final class PanelInventario extends PanelEstructura {
     private static final int ALTO_FILA = 32;
     private static final int ANCHO_INDICE = 24;
 
-    /** Prepara el panel. */
+    private IntConsumer alSeleccionar = indice -> { };
+
+    /** Prepara el panel y queda atento a los clics. */
     public PanelInventario() {
         super("INVENTARIO — ArrayList");
         setPreferredSize(new Dimension(250, 6 * ALTO_FILA + ALTO_CABECERA + 2 * MARGEN));
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        setToolTipText("Clic para seleccionar una máquina");
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent evento) {
+                avisarSeleccion(evento.getY());
+            }
+        });
+    }
+
+    /**
+     * Registra a quién avisarle cuando el operador seleccione una máquina.
+     *
+     * @param accion qué hacer con el índice de la máquina elegida
+     */
+    public void alSeleccionar(IntConsumer accion) {
+        this.alSeleccionar = accion;
+    }
+
+    /**
+     * Traduce la posición vertical de un clic en el índice de la máquina y avisa.
+     *
+     * @param y coordenada vertical del clic, en píxeles del panel
+     */
+    private void avisarSeleccion(int y) {
+        if (planta() == null) {
+            return;
+        }
+        Insets margen = getInsets();
+        int fila = (y - margen.top) / ALTO_FILA;
+        if (fila >= 0 && fila < planta().inventario().size()) {
+            alSeleccionar.accept(fila);
+        }
     }
 
     @Override

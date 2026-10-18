@@ -163,7 +163,20 @@ public abstract class PanelEstructura extends JPanel {
                 margen.left,
                 margen.top,
                 Math.max(0, getWidth() - margen.left - margen.right),
-                Math.max(0, getHeight() - margen.top - margen.bottom));
+                Math.max(0, getHeight() - margen.top - margen.bottom - altoReservadoAbajo()));
+    }
+
+    /**
+     * Alto que el panel reserva en la parte inferior para componentes de Swing, por ejemplo un
+     * botón. Por omisión no reserva nada.
+     *
+     * <p>Lo necesitan los paneles que mezclan dibujo y componentes: sin esta reserva, el dibujo
+     * pasaría por debajo del botón.</p>
+     *
+     * @return alto en píxeles que no se debe dibujar
+     */
+    protected int altoReservadoAbajo() {
+        return 0;
     }
 
     // ---------------------------------------------------------------------------------

@@ -115,6 +115,17 @@ Convención de la columna **Autoría**:
 | `test/.../PanelesVistaTest.java` | IA | Una prueba: que ningún panel falle al dibujarse |
 | `docs/img/ventana.png` | — | Captura generada del programa |
 
+### Etapa 5 — Controlador e integración
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `controlador/ControladorPlanta.java` | IA | Reloj y acciones del operador, según la sección 8 |
+| `vista/AccionesOperador.java` | IA | Frontera entre vista y controlador |
+| `vista/PanelControlesMaquina.java` | IA | Controles de la sección 9 |
+| `vista/VentanaPrincipal.java`, `vista/PanelInventario.java`, `vista/PanelPila.java` | IA | Interacción agregada sobre los paneles de la etapa 4 |
+| `App.java` | IA | Armado final del patrón MVC |
+| `test/.../ControladorPlantaTest.java` | IA | Cuatro pruebas de las acciones del operador |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

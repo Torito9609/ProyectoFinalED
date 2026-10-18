@@ -55,6 +55,7 @@ class PanelesVistaTest {
         return List.of(
                 new PanelInventario(),
                 new PanelDetalleMaquina(),
+                new PanelControlesMaquina(),
                 new PanelColaCircular(),
                 new PanelColaEventos(),
                 new PanelColaTecnicos(),
