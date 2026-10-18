@@ -106,8 +106,11 @@ class PlantaTest {
             planta.tick();
         }
 
+        // Se cuentan solo las de esta máquina: otras máquinas tienen sus propios intervalos y
+        // también cumplen el suyo dentro de esta ventana de ticks.
         long ordenesPreventivas = planta.bitacora().stream()
                 .filter(linea -> linea.contains("Preventivo:"))
+                .filter(linea -> linea.contains(prensa.etiqueta()))
                 .count();
 
         assertEquals(1, ordenesPreventivas,

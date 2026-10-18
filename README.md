@@ -8,7 +8,7 @@ Proyecto final del curso **Estructuras de Datos** — Universidad Nacional de Co
 
 ## Qué hace
 
-Simula una planta industrial con tres máquinas que reportan lecturas de sensores. El sistema genera
+Simula una planta industrial con seis máquinas que reportan lecturas de sensores. El sistema genera
 fallos, detecta anomalías en las lecturas, las clasifica por prioridad (P1 a P4, con un esquema
 inspirado en la norma ISA-18.2) y genera órdenes de mantenimiento que asigna a los técnicos
 disponibles.

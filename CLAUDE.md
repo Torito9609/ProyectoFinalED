@@ -29,7 +29,7 @@ El proyecto es incremental: las entregas 2 y 3 añadirán estructuras sobre esta
 
 ## 2. Qué hace el programa
 
-Simula una planta con **3 máquinas** que reportan lecturas de sensores. El sistema:
+Simula una planta con **6 máquinas** que reportan lecturas de sensores. El sistema:
 1. Genera fallos aleatorios en las máquinas.
 2. Detecta anomalías en las lecturas.
 3. Las clasifica por prioridad (P1 a P4), con un esquema inspirado en ISA-18.2 (prioridad según severidad y tiempo de respuesta).
@@ -127,6 +127,8 @@ edu.unal.planta
 **Por qué `EventoFallo` y `OrdenTrabajo` están separados:** así funciona en la industria. El PLC detecta, el SCADA clasifica y el sistema de mantenimiento genera la orden. Esta separación justifica que existan dos colas distintas.
 
 ### Máquinas iniciales (valores PROVISIONALES — los define Cristian)
+
+Son **6 máquinas** y no 3. El cambio se decidió el 18 de octubre, tras medir la simulación: una máquina con anomalía activa no desarrolla otra, así que con 3 máquinas y 2 técnicos la cola con prioridad nunca pasaba de **una** orden y los paneles de colas se veían vacíos en toda la demostración. Con 6 el techo sube a 4. Ver `docs/BITACORA_DESARROLLO.md`.
 Todos los parámetros deben estar en **un solo lugar** (una clase de configuración o fábrica de máquinas) para poder ajustarlos sin tocar la lógica.
 
 | Etiqueta | Tipo | Sensores | Criticidad |
@@ -134,12 +136,15 @@ Todos los parámetros deben estar en **un solo lugar** (una clase de configuraci
 | `PRENSA-01` | Prensa hidráulica | temperatura aceite (°C), presión (bar), vibración (mm/s) | Alta |
 | `TORNO-01` | Torno CNC | temperatura husillo (°C), corriente motor (A), vibración (mm/s) | Media |
 | `ROBOT-01` | Brazo robótico de soldadura | temperatura motor (°C), corriente (A), vibración (mm/s) | Media |
+| `COMPRES-01` | Compresor de tornillo | temperatura descarga (°C), presión (bar), vibración (mm/s) | Alta |
+| `HORNO-01` | Horno de tratamiento térmico | temperatura cámara (°C), temperatura carcasa (°C), consumo de gas (m³/h) | Media |
+| `BOMBA-01` | Bomba centrífuga | temperatura rodamiento (°C), presión descarga (bar), vibración (mm/s) | Alta |
 
 Condición para los valores: nominal + ruido debe quedar **claramente por debajo** del umbral de advertencia, para que no haya falsas alarmas sin anomalía.
 
 Otros valores provisionales:
 - Capacidad de la cola circular: **12 lecturas** por máquina.
-- Técnicos: **2** (menos técnicos que máquinas, para que se formen filas).
+- Técnicos: **2** (bastante menos técnicos que máquinas, para que se formen filas).
 - Duración de reparación en ticks: P1 = 8, P2 = 6, P3 = 4, P4 = 3.
 
 ---
@@ -223,7 +228,7 @@ Qué muestra cada panel:
 ## 10. Alcance
 
 **Mínimo obligatorio (Entrega 1):**
-- 3 máquinas fijas, 2 técnicos.
+- 6 máquinas fijas, 2 técnicos.
 - Iniciar, pausar, paso a paso y reiniciar con la misma semilla.
 - Los 6 paneles descritos.
 - Inyectar fallo, parar o arrancar máquina, cambiar carga, deshacer.

@@ -87,6 +87,14 @@ Convención de la columna **Autoría**:
 | `modelo/Planta.java` | IA | Los ocho pasos del tick, en el orden de la sección 7 |
 | `test/.../PlantaTest.java` | IA | Seis pruebas de la simulación completa |
 
+### Ajuste del inventario a 6 máquinas
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ConfiguracionPlanta.java` | Mixto | **Decisión de Kevin**; las tres máquinas nuevas y sus sensores los redactó la IA y los valores quedan sujetos a revisión de Cristian |
+| `CLAUDE.md` (secciones 2, 6 y 10) | Mixto | Actualizado para reflejar la decisión del equipo |
+| `test/.../ConfiguracionPlantaTest.java` | IA | Prueba de que cada magnitud cae en su zona de umbrales |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

@@ -36,6 +36,41 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Ajuste — 2026-10-18 — El inventario sube de 3 a 6 máquinas
+
+**Responsable:** decisión de Kevin, implementada con Claude Code.
+
+Se agregaron `COMPRES-01` (compresor de tornillo), `HORNO-01` (horno de tratamiento térmico) y
+`BOMBA-01` (bomba centrífuga), cada una con tres sensores. Es un cambio **solo de configuración**:
+no se tocó ni una línea de lógica. `CLAUDE.md` quedó actualizado en sus secciones 2, 6 y 10.
+
+Se agregó también una prueba que recorre las 6 máquinas, sus 18 sensores y las 3 magnitudes, y
+verifica que **cada magnitud deje la lectura en su zona de umbrales incluso con el ruido en
+contra**: leve entre advertencia y alto, moderada entre alto y crítico, severa sobre el crítico. Es
+la prueba que protege los ajustes de valores de Cristian, porque si una zona queda más estrecha que
+el ruido del sensor, una anomalía severa podría dejar de clasificarse como P1 y la demostración
+fallaría sin dar ninguna señal.
+
+### Medición del efecto
+
+| | Antes (3 máquinas) | Después (6 máquinas) | Con las tasas propuestas |
+|---|---|---|---|
+| Ticks con órdenes en cola | 1 % | 6 % | 60 % |
+| Máximo de órdenes en cola | 1 | 2 | 4 |
+| Ticks con eventos sin clasificar | — | 1 % | 4 % |
+
+Subir las máquinas levanta el **techo** de la cola, pero no la llena: para eso hace falta que las
+órdenes lleguen más rápido de lo que los técnicos las atienden. La tercera columna corresponde a la
+propuesta de tasas y duraciones que figura en la tabla de desviaciones, medida pero **no
+implementada**, porque esos valores son de Cristian.
+
+Esa propuesta tiene un efecto secundario que hay que resolver antes de adoptarla: con tantos fallos,
+cada reparación reinicia el contador de mantenimiento y **el carril P4 nunca se llena** (0 % de los
+ticks). Las dos salidas son bajar los intervalos preventivos, o reiniciar el contador solo cuando la
+orden atendida es P4, que es más realista pero se aparta del paso 5 de la sección 7.
+
+---
+
 ## Etapa 3 — 2026-10-18 — La simulación funcionando, sin interfaz
 
 **Responsable:** Kevin, con asistencia de Claude Code.
@@ -284,7 +319,8 @@ todavía no se han aprobado.
 | Fecha | Sección de `CLAUDE.md` | Cambio propuesto | Razón | Estado |
 |---|---|---|---|---|
 | 2026-10-18 | 7, paso 7 (preventivo) | Marcar en `Maquina` un `boolean` de preventiva pendiente, en vez de recorrer el carril P4 de la cola con prioridad para saber si ya hay una | Recorrer el carril es O(n) y obliga a inspeccionar la cola desde afuera. El indicador es O(1) y respeta mejor el tipo abstracto de datos | **Implementada**, aprobada por Kevin |
-| 2026-10-18 | 6 y 10 (tres máquinas, dos técnicos) | Aumentar el número de máquinas iniciales, o alargar las reparaciones, para que las colas se llenen de forma visible | Con tres máquinas hay a lo sumo tres fallos simultáneos, y con dos técnicos que toman la orden en el mismo tick la cola con prioridad nunca pasa de una orden. Los paneles de colas se verían vacíos en toda la demostración | **Pendiente de decisión del equipo** |
+| 2026-10-18 | 2, 6 y 10 (tres máquinas) | Subir el inventario inicial de **3 a 6 máquinas**, dejando los 2 técnicos | Con tres máquinas hay a lo sumo tres fallos simultáneos, y con dos técnicos que toman la orden en el mismo tick la cola con prioridad nunca pasa de una orden. Los paneles de colas se verían vacíos en toda la demostración | **Implementada**, aprobada por Kevin. `CLAUDE.md` ya actualizado |
+| 2026-10-18 | 6 (tasas de fallo y duraciones) | Subir las tasas base de fallo (a 0,08–0,14) y alargar las reparaciones (P1=10, P2=8, P3=6, P4=4) | Las 6 máquinas suben el techo de la cola a 4, pero el techo no la llena: hace falta que las órdenes lleguen más rápido de lo que los técnicos las atienden. Medido en 1000 ticks: con los valores actuales la cola tiene contenido el 6 % de los ticks y máximo 2 órdenes; con estos valores, el 60 % de los ticks y máximo 4 | **Propuesta**, sin implementar. Son valores de Cristian |
 | 2026-10-18 | 6, campo «máquina» de `OrdenTrabajo` | La orden guarda `indiceMaquina` y `etiquetaMaquina` en vez de una referencia a `Maquina` | Recupera la máquina del inventario en O(1), evita la referencia circular máquina↔orden y permite que la orden sea inmutable | **Implementada**, pendiente de revisión del equipo |
 | 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 
