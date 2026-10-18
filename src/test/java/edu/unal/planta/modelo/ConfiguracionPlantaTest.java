@@ -18,12 +18,12 @@ import org.junit.jupiter.api.Test;
 class ConfiguracionPlantaTest {
 
     @Test
-    @DisplayName("la planta arranca con tres máquinas operando y menos técnicos que máquinas")
+    @DisplayName("la planta arranca con seis máquinas operando y menos técnicos que máquinas")
     void inventarioInicial() {
         List<Maquina> maquinas = ConfiguracionPlanta.crearMaquinas();
         List<Tecnico> tecnicos = ConfiguracionPlanta.crearTecnicos();
 
-        assertEquals(3, maquinas.size());
+        assertEquals(6, maquinas.size());
         for (Maquina maquina : maquinas) {
             assertEquals(EstadoMaquina.OPERANDO, maquina.estado());
             assertEquals(ConfiguracionPlanta.CAPACIDAD_LECTURAS, maquina.lecturas().capacidad());
@@ -42,6 +42,42 @@ class ConfiguracionPlantaTest {
                 assertTrue(peorCaso < sensor.umbralAdvertencia(),
                         maquina.etiqueta() + " / " + sensor.nombre() + ": el peor caso del ruido es "
                                 + peorCaso + " y el umbral de advertencia es " + sensor.umbralAdvertencia());
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("cada magnitud deja la lectura en su zona de umbrales, pese al ruido del sensor")
+    void cadaMagnitudCaeEnSuZona() {
+        GeneradorFallos generador = new GeneradorFallos(ConfiguracionPlanta.SEMILLA_POR_DEFECTO);
+
+        for (Maquina maquina : ConfiguracionPlanta.crearMaquinas()) {
+            for (int indice = 0; indice < maquina.sensores().size(); indice++) {
+                Sensor sensor = maquina.sensor(indice);
+                for (Magnitud magnitud : Magnitud.values()) {
+                    double desplazamiento =
+                            generador.crear(maquina, indice, magnitud).desplazamiento();
+                    double peorAbajo = sensor.nominal() - sensor.ruido() + desplazamiento;
+                    double peorArriba = sensor.nominal() + sensor.ruido() + desplazamiento;
+                    String donde = maquina.etiqueta() + " / " + sensor.nombre() + " / " + magnitud;
+
+                    switch (magnitud) {
+                        case LEVE -> {
+                            assertTrue(peorAbajo >= sensor.umbralAdvertencia(),
+                                    donde + ": debe alcanzar la advertencia incluso con el ruido en contra");
+                            assertTrue(peorArriba < sensor.umbralAlto(),
+                                    donde + ": no debe llegar al umbral alto");
+                        }
+                        case MODERADA -> {
+                            assertTrue(peorAbajo >= sensor.umbralAlto(),
+                                    donde + ": debe alcanzar el umbral alto");
+                            assertTrue(peorArriba < sensor.umbralCritico(),
+                                    donde + ": no debe llegar al umbral crítico");
+                        }
+                        case SEVERA -> assertTrue(peorAbajo >= sensor.umbralCritico(),
+                                donde + ": debe superar el umbral crítico");
+                    }
+                }
             }
         }
     }

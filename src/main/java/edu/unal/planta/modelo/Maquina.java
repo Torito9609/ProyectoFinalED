@@ -35,6 +35,7 @@ public final class Maquina {
     private int ticksDesdeMantenimiento;
     private Anomalia anomalia;
     private boolean alarmaActiva;
+    private boolean preventivaPendiente;
 
     /**
      * Crea una máquina lista para operar.
@@ -75,6 +76,7 @@ public final class Maquina {
         this.ticksDesdeMantenimiento = 0;
         this.anomalia = null;
         this.alarmaActiva = false;
+        this.preventivaPendiente = false;
     }
 
     /**
@@ -303,6 +305,35 @@ public final class Maquina {
     }
 
     /**
+     * Indica si la máquina ya tiene una orden de mantenimiento preventivo esperando.
+     *
+     * <p>Este indicador evita que el paso del preventivo genere una orden P4 nueva en cada tick
+     * mientras la anterior sigue sin atenderse. La alternativa era recorrer el carril P4 de la cola
+     * con prioridad buscando una orden de esta máquina, que cuesta O(n) y obliga a inspeccionar la
+     * cola desde afuera; este indicador se consulta en O(1) y respeta el tipo abstracto de
+     * datos.</p>
+     *
+     * @return {@code true} si hay una orden preventiva pendiente
+     */
+    public boolean preventivaPendiente() {
+        return preventivaPendiente;
+    }
+
+    /**
+     * Marca que se emitió una orden de mantenimiento preventivo para esta máquina.
+     */
+    public void marcarPreventivaPendiente() {
+        this.preventivaPendiente = true;
+    }
+
+    /**
+     * Quita la marca de preventivo pendiente, porque la orden ya se atendió.
+     */
+    public void quitarPreventivaPendiente() {
+        this.preventivaPendiente = false;
+    }
+
+    /**
      * Agrega una lectura al historial reciente.
      *
      * <p>Si la cola circular está llena, la lectura más antigua se descarta.</p>
@@ -323,6 +354,7 @@ public final class Maquina {
         ticksDesdeMantenimiento = 0;
         anomalia = null;
         alarmaActiva = false;
+        preventivaPendiente = false;
         lecturas.vaciar();
     }
 

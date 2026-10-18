@@ -43,7 +43,7 @@ import java.util.Optional;
  * @author Cristian Robayo
  * @author Kevin Toro
  */
-public final class ColaPrioridadOrdenes {
+public final class ColaPrioridadOrdenes implements ColaPrioridadSoloLectura {
 
     /**
      * Una cola FIFO por nivel de prioridad. La posición del arreglo <strong>es</strong> el nivel:
@@ -105,6 +105,7 @@ public final class ColaPrioridadOrdenes {
      *
      * @return la siguiente orden, o un {@link Optional} vacío si no hay órdenes pendientes
      */
+    @Override
     public Optional<OrdenTrabajo> verSiguiente() {
         for (Deque<OrdenTrabajo> cola : niveles) {
             if (!cola.isEmpty()) {
@@ -123,6 +124,7 @@ public final class ColaPrioridadOrdenes {
      *
      * @return la prioridad del próximo en salir, o un {@link Optional} vacío si la cola está vacía
      */
+    @Override
     public Optional<Prioridad> nivelDelSiguiente() {
         return verSiguiente().map(OrdenTrabajo::prioridad);
     }
@@ -135,6 +137,7 @@ public final class ColaPrioridadOrdenes {
      *
      * @return cantidad total de órdenes pendientes
      */
+    @Override
     public int tamano() {
         int total = 0;
         for (Deque<OrdenTrabajo> cola : niveles) {
@@ -152,6 +155,7 @@ public final class ColaPrioridadOrdenes {
      * @return cantidad de órdenes en ese nivel
      * @throws NullPointerException si la prioridad es nula
      */
+    @Override
     public int tamanoNivel(Prioridad prioridad) {
         Objects.requireNonNull(prioridad, "La prioridad no puede ser nula");
         return niveles[prioridad.nivel()].size();
@@ -164,6 +168,7 @@ public final class ColaPrioridadOrdenes {
      *
      * @return {@code true} si los cuatro niveles están vacíos
      */
+    @Override
     public boolean estaVacia() {
         for (Deque<OrdenTrabajo> cola : niveles) {
             if (!cola.isEmpty()) {
@@ -185,6 +190,7 @@ public final class ColaPrioridadOrdenes {
      * @return lista no modificable con las órdenes del nivel, en orden FIFO
      * @throws NullPointerException si la prioridad es nula
      */
+    @Override
     public List<OrdenTrabajo> ordenesDe(Prioridad prioridad) {
         Objects.requireNonNull(prioridad, "La prioridad no puede ser nula");
         return List.copyOf(niveles[prioridad.nivel()]);

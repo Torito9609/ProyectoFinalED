@@ -75,6 +75,26 @@ Convención de la columna **Autoría**:
 | `modelo/ConfiguracionPlanta.java` | Mixto | Estructura generada por IA; **los valores de máquinas, sensores y umbrales los define Cristian** |
 | `test/.../ConfiguracionPlantaTest.java` | IA | Tres pruebas de las condiciones de la sección 6 |
 
+### Etapa 3 — Simulación
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ObservadorPlanta.java` | IA | Patrón Observador, exigido por la sección 4 |
+| `modelo/ColaPrioridadSoloLectura.java` | Mixto | **Interfaz pedida por Kevin**, igual que la de la cola circular |
+| `modelo/GeneradorFallos.java` | IA | Pesos y fórmula tomados de la sección 7 |
+| `modelo/Clasificador.java` | IA | Reglas de umbrales tomadas de la sección 7 |
+| `modelo/comandos/*.java` | IA | Patrón Comando, según la sección 8 |
+| `modelo/Planta.java` | IA | Los ocho pasos del tick, en el orden de la sección 7 |
+| `test/.../PlantaTest.java` | IA | Seis pruebas de la simulación completa |
+
+### Ajuste del inventario a 6 máquinas
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ConfiguracionPlanta.java` | Mixto | **Decisión de Kevin**; las tres máquinas nuevas y sus sensores los redactó la IA y los valores quedan sujetos a revisión de Cristian |
+| `CLAUDE.md` (secciones 2, 6 y 10) | Mixto | Actualizado para reflejar la decisión del equipo |
+| `test/.../ConfiguracionPlantaTest.java` | IA | Prueba de que cada magnitud cae en su zona de umbrales |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

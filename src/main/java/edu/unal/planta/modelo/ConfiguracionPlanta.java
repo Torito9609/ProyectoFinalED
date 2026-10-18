@@ -37,6 +37,9 @@ public final class ConfiguracionPlanta {
     /** Cuántas lecturas recientes conserva cada máquina en su cola circular. */
     public static final int CAPACIDAD_LECTURAS = 12;
 
+    /** Cuántas líneas conserva la bitácora antes de descartar las más viejas. */
+    public static final int MAX_LINEAS_BITACORA = 200;
+
     /**
      * Duración de la reparación en ticks, indexada por {@link Prioridad#nivel()}.
      *
@@ -100,7 +103,17 @@ public final class ConfiguracionPlanta {
     // ---------------------------------------------------------------------------------
 
     /**
-     * Crea las tres máquinas de la planta, en el orden en que aparecen en el inventario.
+     * Crea las seis máquinas de la planta, en el orden en que aparecen en el inventario.
+     *
+     * <p>Son seis y no tres por una razón de la simulación: una máquina con anomalía activa no
+     * desarrolla otra, así que el número de máquinas pone un techo a los fallos simultáneos. Con
+     * tres máquinas y dos técnicos, la cola con prioridad nunca llegaba a tener más de una orden y
+     * los paneles de colas se veían vacíos. Con seis, ese techo sube a cuatro.</p>
+     *
+     * <p>Ese techo es solo el límite superior. Lo que llena la cola de verdad es que las órdenes
+     * lleguen más rápido de lo que los técnicos las atienden, y eso depende de la tasa base de
+     * fallo y de la duración de las reparaciones. Un ensayo de 1000 ticks con los valores actuales
+     * da una cola con contenido en el 6 % de los ticks y un máximo de dos órdenes.</p>
      *
      * @return lista de máquinas recién creadas, todas operando
      */
@@ -141,6 +154,42 @@ public final class ConfiguracionPlanta {
                 100,
                 0.03,
                 60,
+                CAPACIDAD_LECTURAS));
+
+        maquinas.add(new Maquina(
+                "COMPRES-01",
+                "Compresor de tornillo",
+                List.of(
+                        new Sensor("Temperatura descarga", "°C", 85.0, 3.0, 100.0, 110.0, 125.0),
+                        new Sensor("Presión", "bar", 7.5, 0.2, 9.0, 9.8, 11.0),
+                        new Sensor("Vibración", "mm/s", 2.0, 0.3, 4.5, 7.1, 11.0)),
+                70,
+                0.05,
+                75,
+                CAPACIDAD_LECTURAS));
+
+        maquinas.add(new Maquina(
+                "HORNO-01",
+                "Horno de tratamiento térmico",
+                List.of(
+                        new Sensor("Temperatura cámara", "°C", 850.0, 10.0, 900.0, 940.0, 980.0),
+                        new Sensor("Temperatura carcasa", "°C", 60.0, 3.0, 80.0, 95.0, 110.0),
+                        new Sensor("Consumo de gas", "m³/h", 42.0, 2.0, 52.0, 58.0, 68.0)),
+                90,
+                0.035,
+                65,
+                CAPACIDAD_LECTURAS));
+
+        maquinas.add(new Maquina(
+                "BOMBA-01",
+                "Bomba centrífuga",
+                List.of(
+                        new Sensor("Temperatura rodamiento", "°C", 50.0, 2.0, 65.0, 75.0, 90.0),
+                        new Sensor("Presión descarga", "bar", 6.0, 0.25, 8.0, 9.0, 10.5),
+                        new Sensor("Vibración", "mm/s", 2.2, 0.35, 4.5, 7.1, 11.0)),
+                55,
+                0.055,
+                85,
                 CAPACIDAD_LECTURAS));
 
         return maquinas;
