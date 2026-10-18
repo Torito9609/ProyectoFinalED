@@ -129,8 +129,8 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Entregable | Estado |
 |---|---|
 | Esqueleto del proyecto (Maven, paquetes, JUnit) | Listo |
-| `ColaCircular` y `ColaPrioridadOrdenes` con pruebas | Pendiente |
-| Entidades del modelo | Pendiente |
+| `ColaCircular` y `ColaPrioridadOrdenes` con pruebas | Listo (45 pruebas) |
+| Entidades del modelo | Parcial: `Prioridad` y `OrdenTrabajo` |
 | Simulación (`Planta.tick()`) probada sin interfaz | Pendiente |
 | Interfaz Swing (6 paneles) | Pendiente |
 | Controlador e integración | Pendiente |
