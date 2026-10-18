@@ -36,6 +36,53 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Etapa 2 — 2026-10-18 — Entidades del modelo y configuración
+
+**Responsable:** Kevin, con asistencia de Claude Code.
+
+### Hecho
+
+- Enums **`EstadoMaquina`** (los cinco estados, con color) y **`Magnitud`** (leve, moderada,
+  severa).
+- Records de datos: **`Sensor`**, **`Lectura`**, **`Anomalia`** y **`EventoFallo`**.
+- **`Maquina`**, la única entidad con estado mutable, dueña de su propia `ColaCircular<Lectura>`.
+- **`Tecnico`**, con el ciclo asignar → avanzar → liberar.
+- **`estructuras/ColaCircularSoloLectura<T>`**, interfaz con las once operaciones de consulta de la
+  cola circular. `ColaCircular` la implementa y `Maquina.lecturas()` la devuelve, de modo que la
+  vista no tenga forma de modificar la estructura.
+- **`ConfiguracionPlanta`**, con todos los parámetros de la simulación en un solo archivo: semilla,
+  milisegundos por tick, capacidad de la cola circular, duraciones de reparación, pesos de
+  magnitud, nombres de los técnicos y la definición de las tres máquinas con sus nueve sensores.
+- **Tres pruebas**, deliberadamente pocas: los records son datos y no necesitan pruebas propias.
+
+### Decisiones
+
+| Decisión | Alternativa descartada | Razón |
+|---|---|---|
+| `Sensor` valida en su constructor que `nominal + ruido < umbralAdvertencia` | Confiar en que los valores estén bien escritos | Si no hay margen aparecen alarmas falsas por puro ruido, sin ninguna anomalía. En la presentación eso se vería como que el simulador no funciona. Ahora una configuración mal escrita falla al arrancar, no en la demostración |
+| `Lectura` guarda los valores en una `List<Double>` paralela a los sensores de la máquina | Un mapa de nombre de sensor a valor | La posición ya identifica la variable, y el mismo índice sirve para la lista de sensores y para los valores |
+| La fórmula de probabilidad de fallo vive en `Maquina.probabilidadFallo()` | Ponerla en `GeneradorFallos` | El cálculo no tiene aleatoriedad, solo depende del estado de la máquina. Así el generador se queda únicamente con el sorteo |
+| `Maquina.alarmaActiva` es un dato aparte del estado | Deducirlo de `estado == EN_ALARMA` | Una máquina puede estar DETENIDA o EN_MANTENIMIENTO y seguir teniendo su alarma pendiente |
+| Se creó la interfaz propia `ColaCircularSoloLectura<T>`, que `ColaCircular` implementa, y `Maquina.lecturas()` devuelve ese tipo | Devolver la cola circular tal cual, documentando que la vista solo lee | Una copia no sirve, porque el panel necesita el estado físico de la cola (capacidad, punteros, celda por celda). Con la interfaz, quien recibe la cola no tiene métodos para encolar ni desencolar: **la regla la hace cumplir el compilador, no la buena voluntad del programador**. Además es un uso directo de encapsulamiento y polimorfismo, que son materia del curso. Decisión tomada por Kevin |
+| Umbrales de vibración tomados de ISO 10816 (4,5 / 7,1 / 11,0 mm/s) | Inventar números | Es una norma real para máquinas industriales, así que ese dato se puede defender ante el profesor |
+| Solo tres pruebas en esta etapa | Probar cada entidad | Los records son datos sin lógica. Lo que sí puede estar mal son los valores de la configuración, y eso es justo lo que se prueba |
+
+### Verificación
+
+| Comando | Resultado |
+|---|---|
+| `./mvnw test` | BUILD SUCCESS — 48 pruebas, 0 fallos |
+| `./mvnw javadoc:javadoc` | BUILD SUCCESS, sin advertencias |
+
+### Pendiente
+
+- **Cristian:** revisar los valores provisionales de `ConfiguracionPlanta` (umbrales, tasas de
+  fallo, intervalos preventivos y cargas iniciales). Es un solo archivo y no hay que tocar lógica.
+- Etapa 3: `GeneradorFallos`, `Clasificador`, `ObservadorPlanta`, los comandos de deshacer y
+  `Planta.tick()` con sus ocho pasos, probado sin interfaz.
+
+---
+
 ## Etapa 1 — 2026-10-18 — Las dos estructuras con sus pruebas
 
 **Responsable:** Kevin, con asistencia de Claude Code.
@@ -188,7 +235,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 |---|---|---|
 | 0 | Cimientos: Maven, paquetes, JUnit, documentación base | **Terminada** (2026-10-18) |
 | 1 | `ColaCircular<T>` y `ColaPrioridadOrdenes`, con pruebas | **Terminada** (2026-10-18) |
-| 2 | Resto de las entidades del modelo y clase de configuración. `Prioridad` y `OrdenTrabajo` ya quedaron hechas en la etapa 1, porque la cola con prioridad las necesitaba | Pendiente |
+| 2 | Resto de las entidades del modelo y clase de configuración. `Prioridad` y `OrdenTrabajo` ya quedaron hechas en la etapa 1, porque la cola con prioridad las necesitaba | **Terminada** (2026-10-18) |
 | 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | Pendiente |
 | 4 | Interfaz Swing: los seis paneles | Pendiente |
 | 5 | Controlador, reloj e integración | Pendiente |
