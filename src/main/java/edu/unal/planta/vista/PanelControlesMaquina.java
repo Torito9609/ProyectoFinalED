@@ -33,14 +33,22 @@ import javax.swing.JSlider;
  */
 public final class PanelControlesMaquina extends PanelEstructura {
 
+    /** Elige qué sensor se muestra en la cola circular y cuál recibe el fallo inyectado. */
     private final JComboBox<String> listaSensores = new JComboBox<>();
+    /** Carga de trabajo de la máquina, entre 0 y 100 por ciento. */
     private final JSlider deslizadorCarga = new JSlider(0, 100, 50);
+    /** Muestra en números el valor del deslizador. */
     private final JLabel valorCarga = new JLabel("50%");
+    /** Para o arranca la máquina; su texto cambia según el estado en que esté. */
     private final JButton botonPararArrancar = new JButton("Parar");
+    /** Gravedad del fallo que se va a inyectar. */
     private final JComboBox<String> listaMagnitudes = new JComboBox<>();
+    /** Provoca la anomalía elegida sobre el sensor seleccionado. */
     private final JButton botonInyectar = new JButton("Inyectar fallo");
 
+    /** A quién se le piden las acciones del operador. Llega en {@link #conectar(AccionesOperador)}. */
     private AccionesOperador acciones;
+    /** A quién avisarle que el operador eligió otro sensor. */
     private IntConsumer alSeleccionarSensor = indice -> { };
 
     /** Evita que al sincronizar los controles con el modelo se disparen acciones del operador. */

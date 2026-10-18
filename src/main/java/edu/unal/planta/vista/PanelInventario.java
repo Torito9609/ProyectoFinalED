@@ -34,6 +34,7 @@ public final class PanelInventario extends PanelEstructura {
     private static final int ALTO_FILA = 32;
     private static final int ANCHO_INDICE = 24;
 
+    /** A quién avisarle que el operador eligió otra máquina. */
     private IntConsumer alSeleccionar = indice -> { };
 
     /** Prepara el panel y queda atento a los clics. */

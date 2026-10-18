@@ -36,6 +36,29 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Verificación — 2026-10-18 — Prueba de clonación limpia
+
+Antes de pasarle el repositorio a Cristian se clonó desde GitHub en una carpeta vacía y se
+construyó desde cero, tal como lo haría él. Resultado: `./mvnw test` pasa las 60 pruebas, `./mvnw
+package` genera el jar y la aplicación abre. El `mvnw` conserva su permiso de ejecución y no hace
+falta instalar Maven.
+
+### Incidencia: las verificaciones de Javadoc anteriores no eran válidas
+
+El clon limpio destapó **31 advertencias de Javadoc** que las verificaciones anteriores no habían
+mostrado. La causa: el plugin omite regenerar la documentación si la salida en `target/` está más
+reciente que las fuentes, así que las ejecuciones repetidas de `javadoc:javadoc` devolvían
+`BUILD SUCCESS` sin volver a analizar nada.
+
+Las 31 advertencias eran campos privados sin comentario, todos en el paquete `vista`; en `modelo`
+sí estaban documentados desde el principio. Ya quedaron corregidos y la verificación se repitió con
+`./mvnw clean javadoc:javadoc`, que fuerza la regeneración.
+
+**Para futuras verificaciones: usar siempre `clean` antes de `javadoc:javadoc`.** Sin eso el
+resultado no significa nada.
+
+---
+
 ## Etapa 5 — 2026-10-18 — Controlador e integración
 
 **Responsable:** Kevin, con asistencia de Claude Code.

@@ -39,8 +39,11 @@ public abstract class PanelEstructura extends JPanel {
     /** Alto que la cabecera reserva en la parte superior. */
     protected static final int ALTO_CABECERA = 22;
 
+    /** Nombre de la estructura, tal como aparece en la cabecera. */
     private final String titulo;
+    /** Último estado recibido; es {@code null} hasta el primer refresco. */
     private Planta planta;
+    /** Qué máquina y qué sensor está mirando el operador. */
     private SeleccionVista seleccion = SeleccionVista.INICIAL;
 
     /**

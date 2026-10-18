@@ -66,8 +66,11 @@ clase `edu.unal.planta.App`.
 Para generar la documentación Javadoc:
 
 ```bash
-./mvnw javadoc:javadoc    # queda en target/reports/apidocs/index.html
+./mvnw clean javadoc:javadoc    # queda en target/reports/apidocs/index.html
 ```
+
+El `clean` es necesario: sin él, el plugin omite regenerar la documentación si la salida anterior
+sigue siendo más reciente que las fuentes, y la verificación no comprueba nada.
 
 ## Estructura del proyecto
 
