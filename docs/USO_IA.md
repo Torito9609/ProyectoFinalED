@@ -64,6 +64,17 @@ Convención de la columna **Autoría**:
 | `test/.../ColaPrioridadOrdenesTest.java` | IA | Cubre los cuatro casos exigidos por el documento de diseño |
 | `docs/BITACORA_DESARROLLO.md` | IA | Entrada de la etapa 1 |
 
+### Etapa 2 — Entidades del modelo
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/EstadoMaquina.java`, `modelo/Magnitud.java` | IA | Estados y magnitudes tomados de las secciones 6 y 7 |
+| `modelo/Sensor.java`, `modelo/Lectura.java`, `modelo/Anomalia.java`, `modelo/EventoFallo.java` | IA | Campos tomados de la sección 6 |
+| `modelo/Maquina.java`, `modelo/Tecnico.java` | IA | Revisadas por el equipo |
+| `estructuras/ColaCircularSoloLectura.java` | Mixto | **Interfaz pedida por Kevin** para que la vista no pueda modificar la cola; implementada por IA |
+| `modelo/ConfiguracionPlanta.java` | Mixto | Estructura generada por IA; **los valores de máquinas, sensores y umbrales los define Cristian** |
+| `test/.../ConfiguracionPlantaTest.java` | IA | Tres pruebas de las condiciones de la sección 6 |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

@@ -45,7 +45,7 @@ import java.util.Optional;
  * @author Cristian Robayo
  * @author Kevin Toro
  */
-public final class ColaCircular<T> {
+public final class ColaCircular<T> implements ColaCircularSoloLectura<T> {
 
     /**
      * Arreglo de capacidad fija. Se declara {@code Object[]} y no {@code T[]} porque en Java no se
@@ -137,6 +137,7 @@ public final class ColaCircular<T> {
      * @return el elemento que está en el frente
      * @throws NoSuchElementException si la cola está vacía
      */
+    @Override
     public T verFrente() {
         if (estaVacia()) {
             throw new NoSuchElementException("No hay frente: la cola circular está vacía");
@@ -155,6 +156,7 @@ public final class ColaCircular<T> {
      * @return el último elemento encolado
      * @throws NoSuchElementException si la cola está vacía
      */
+    @Override
     public T verMasReciente() {
         if (estaVacia()) {
             throw new NoSuchElementException("No hay elemento reciente: la cola circular está vacía");
@@ -169,6 +171,7 @@ public final class ColaCircular<T> {
      *
      * @return {@code true} si el tamaño es cero
      */
+    @Override
     public boolean estaVacia() {
         return tamano == 0;
     }
@@ -180,6 +183,7 @@ public final class ColaCircular<T> {
      *
      * @return {@code true} si el tamaño es igual a la capacidad
      */
+    @Override
     public boolean estaLlena() {
         return tamano == celdas.length;
     }
@@ -191,6 +195,7 @@ public final class ColaCircular<T> {
      *
      * @return número de elementos, entre 0 y la capacidad
      */
+    @Override
     public int tamano() {
         return tamano;
     }
@@ -202,6 +207,7 @@ public final class ColaCircular<T> {
      *
      * @return número máximo de elementos simultáneos
      */
+    @Override
     public int capacidad() {
         return celdas.length;
     }
@@ -217,6 +223,7 @@ public final class ColaCircular<T> {
      *
      * @return índice del frente dentro del arreglo interno
      */
+    @Override
     public int indiceFrente() {
         return frente;
     }
@@ -232,6 +239,7 @@ public final class ColaCircular<T> {
      *
      * @return índice del final dentro del arreglo interno
      */
+    @Override
     public int indiceFinal() {
         return (frente + tamano) % celdas.length;
     }
@@ -246,6 +254,7 @@ public final class ColaCircular<T> {
      *
      * @return número de sobrescrituras acumuladas
      */
+    @Override
     public long sobrescrituras() {
         return sobrescrituras;
     }
@@ -263,6 +272,7 @@ public final class ColaCircular<T> {
      * @return el elemento de esa celda, o un {@link Optional} vacío si la celda no tiene nada
      * @throws IndexOutOfBoundsException si el índice está fuera del arreglo
      */
+    @Override
     public Optional<T> contenidoCelda(int indice) {
         if (indice < 0 || indice >= celdas.length) {
             throw new IndexOutOfBoundsException(
@@ -282,6 +292,7 @@ public final class ColaCircular<T> {
      *
      * @return lista no modificable con los elementos en orden de antigüedad
      */
+    @Override
     public List<T> elementosEnOrden() {
         List<T> copia = new ArrayList<>(tamano);
         for (int i = 0; i < tamano; i++) {
