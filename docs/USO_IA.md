@@ -104,6 +104,17 @@ Convención de la columna **Autoría**:
 | `modelo/ConfiguracionPlanta.java` (duraciones) | IA | Calibrado midiendo tres variantes; las tasas de fallo siguen siendo de Cristian |
 | `CLAUDE.md` (sección 7, pasos 1 y 5) | Mixto | Actualizado para reflejar las decisiones |
 
+### Etapa 4 — Paneles de la vista
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `vista/Colores.java`, `vista/SeleccionVista.java` | IA | Paleta y estado de selección |
+| `vista/PanelEstructura.java` | IA | Clase base con método plantilla |
+| `vista/Panel*.java` (7 paneles) | IA | Diseño acordado con Kevin antes de implementar; revisados sobre renders PNG |
+| `vista/VentanaPrincipal.java` | IA | Distribución de la sección 9 del documento de diseño |
+| `test/.../PanelesVistaTest.java` | IA | Una prueba: que ningún panel falle al dibujarse |
+| `docs/img/ventana.png` | — | Captura generada del programa |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

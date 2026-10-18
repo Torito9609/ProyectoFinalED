@@ -36,6 +36,59 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Etapa 4 — 2026-10-18 — Los paneles de la interfaz
+
+**Responsable:** Kevin, con asistencia de Claude Code.
+
+Ocho paneles más la ventana: `PanelInventario`, `PanelDetalleMaquina`, `PanelColaCircular`,
+`PanelColaEventos`, `PanelColaTecnicos`, `PanelColaPrioridad`, `PanelPila`, `PanelBitacora` y
+`VentanaPrincipal`, con `Colores` y `SeleccionVista` como apoyo. Solo visualización: los controles
+llegan con el controlador, porque toda acción del usuario debe pasar por él.
+
+### La decisión que ordenó el diseño
+
+La sección 9 pide **no dibujar estado interno que `java.util` no expone**, y eso parte los paneles
+en dos familias:
+
+- `ColaCircular` es propia y expone celdas, punteros y sobrescrituras, así que su panel dibuja **el
+  arreglo real**, con los huecos y el final dando la vuelta.
+- Las otras cuatro son de `java.util`, así que sus paneles dibujan **solo la secuencia de
+  elementos**. Nada de celdas ni de capacidad inventada.
+
+Esa diferencia queda visible en pantalla y es exactamente lo que el profesor puede preguntar.
+
+### Decisiones
+
+| Decisión | Alternativa descartada | Razón |
+|---|---|---|
+| Clase base `PanelEstructura` con método plantilla: ella pinta la cabecera y cada subclase solo define `dibujarContenido` | Que cada panel se dibujara entero por su cuenta | Los ocho paneles se ven como una familia sin repetir código de presentación, y la ventana los refresca con **una sola llamada polimórfica** sobre una lista, sin saber cuál es cuál |
+| Dibujo con `paintComponent` en vez de componentes Swing | `JLabel` dentro de `GridLayout` | Hacen falta celdas vacías y punteros ubicados con precisión; con layout managers habría tocado pelear por cada píxel |
+| `PanelBitacora` sí usa `JTextArea` en un `JScrollPane` | Dibujar el texto a mano | Un registro necesita desplazamiento y selección con el ratón, y Swing ya lo resuelve. Para eso se agregó el gancho `actualizar()` a la clase base |
+| El espacio sobrante de la ventana se lo lleva la bitácora | Repartirlo entre los paneles de estructuras | Los paneles tienen un alto natural y estirarlos solo agrega vacío; una bitácora más alta sí muestra más historia |
+| `SeleccionVista` vive en la vista, no en `Planta` | Guardar la selección en el modelo | La planta funciona igual sin importar qué celda tenga seleccionada el usuario: es estado de presentación |
+
+### Verificación
+
+Los paneles se revisaron **mirándolos**: se renderizan a PNG sin abrir ventana, lo que permitió
+corregir dos defectos antes de entregarlos, uno de ellos un recorte de la segunda fila del panel de
+técnicos. La captura del resultado quedó en `docs/img/ventana.png`.
+
+| Comando | Resultado |
+|---|---|
+| `./mvnw test` | BUILD SUCCESS — 56 pruebas, 0 fallos |
+| `./mvnw javadoc:javadoc` | BUILD SUCCESS, sin advertencias |
+
+Una sola prueba nueva, y cubre lo que de verdad puede romperse: que los ocho paneles se dibujen sin
+excepción para **cada máquina** del inventario, con la planta recién creada (sin ninguna lectura) y
+con la simulación en marcha. Ese es el caso que dejaría la ventana en blanco al arrancar.
+
+### Pendiente
+
+- Etapa 5: controlador, `javax.swing.Timer`, botones, selección con el ratón, inyectar fallo y
+  deshacer.
+
+---
+
 ## Ajuste — 2026-10-18 — Calibración de la simulación
 
 **Responsable:** decisión de Kevin (opción 2), calibración medida con Claude Code.
@@ -380,6 +433,6 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | 1 | `ColaCircular<T>` y `ColaPrioridadOrdenes`, con pruebas | **Terminada** (2026-10-18) |
 | 2 | Resto de las entidades del modelo y clase de configuración. `Prioridad` y `OrdenTrabajo` ya quedaron hechas en la etapa 1, porque la cola con prioridad las necesitaba | **Terminada** (2026-10-18) |
 | 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | **Terminada** (2026-10-18) |
-| 4 | Interfaz Swing: los seis paneles | Pendiente |
+| 4 | Interfaz Swing: los paneles de las estructuras | **Terminada** (2026-10-18) |
 | 5 | Controlador, reloj e integración | Pendiente |
 | 6 | Manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video | Pendiente |
