@@ -25,6 +25,7 @@ public final class PanelPila extends PanelEstructura {
     private static final int ALTO_CAJA = 26;
     private static final int ALTO_BOTON = 30;
 
+    /** Revierte la acción que está en la cima de la pila. */
     private final JButton botonDeshacer = new JButton("Deshacer");
 
     /** Prepara el panel con su botón de deshacer. */

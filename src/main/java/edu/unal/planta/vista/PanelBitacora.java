@@ -23,6 +23,7 @@ import javax.swing.JTextArea;
  */
 public final class PanelBitacora extends PanelEstructura {
 
+    /** Área donde se vuelca la bitácora. No es editable: el usuario solo lee y selecciona. */
     private final JTextArea texto = new JTextArea();
 
     /** Prepara el panel con su área de texto desplazable. */

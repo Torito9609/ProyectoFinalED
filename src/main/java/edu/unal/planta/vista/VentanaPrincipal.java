@@ -39,25 +39,42 @@ import javax.swing.SwingConstants;
  */
 public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
 
+    /** Todos los paneles, para refrescarlos con una sola llamada polimórfica. */
     private final List<PanelEstructura> paneles = new ArrayList<>();
+    /** Muestra el tick actual y la semilla. */
     private final JLabel estado = new JLabel();
+    /** Arranca o pausa el reloj; su texto refleja si la simulación está corriendo. */
     private final JButton botonEjecutar = new JButton("▶ Iniciar");
+    /** Avanza un solo tick. */
     private final JButton botonPaso = new JButton("Paso");
+    /** Vuelve al estado inicial con la misma semilla. */
     private final JButton botonReiniciar = new JButton("Reiniciar");
 
+    /** Panel del arreglo dinámico de máquinas. */
     private final PanelInventario panelInventario = new PanelInventario();
+    /** Panel con el estado y los sensores de la máquina seleccionada. */
     private final PanelDetalleMaquina panelDetalle = new PanelDetalleMaquina();
+    /** Panel con las acciones que el operador puede ejecutar. */
     private final PanelControlesMaquina panelControles = new PanelControlesMaquina();
+    /** Panel de la cola circular de lecturas. */
     private final PanelColaCircular panelCircular = new PanelColaCircular();
+    /** Panel de la cola FIFO de eventos por clasificar. */
     private final PanelColaEventos panelEventos = new PanelColaEventos();
+    /** Panel de la cola FIFO de técnicos disponibles. */
     private final PanelColaTecnicos panelTecnicos = new PanelColaTecnicos();
+    /** Panel de los cuatro carriles de la cola con prioridad. */
     private final PanelColaPrioridad panelPrioridad = new PanelColaPrioridad();
+    /** Panel de la pila de acciones deshacibles. */
     private final PanelPila panelPila = new PanelPila();
+    /** Panel con el registro de lo que ocurre en cada tick. */
     private final PanelBitacora panelBitacora = new PanelBitacora();
 
+    /** A quién se le piden las acciones del operador: el controlador, visto como interfaz. */
     private final AccionesOperador acciones;
 
+    /** Qué máquina y qué sensor está mirando el operador. Es estado de la vista, no del modelo. */
     private SeleccionVista seleccion = SeleccionVista.INICIAL;
+    /** Última planta recibida, para poder repintar cuando solo cambia la selección. */
     private Planta plantaActual;
 
     /**
