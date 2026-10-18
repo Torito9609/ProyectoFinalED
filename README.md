@@ -56,8 +56,8 @@ ofrece ninguna que **sobrescriba** el elemento más antiguo al llenarse.
 # Ejecutar la aplicación
 java -jar target/simulador-planta.jar
 
-# Opcional: abrirla con la simulación ya avanzada, para ver las colas con trabajo
-java -jar target/simulador-planta.jar 150
+# Opcional: usar otra semilla (la misma semilla repite la misma simulación)
+java -jar target/simulador-planta.jar 42
 ```
 
 Desde IntelliJ IDEA: abrir la carpeta del proyecto, dejar que importe el `pom.xml` y ejecutar la
@@ -84,6 +84,20 @@ src/main/java/edu/unal/planta/
 El proyecto sigue el patrón **Modelo-Vista-Controlador**. La dependencia va en un solo sentido: la
 vista y el controlador conocen el modelo, pero el modelo no conoce a ninguno de los dos. Por eso la
 simulación completa se puede probar con JUnit sin abrir una ventana.
+
+## Cómo usarlo
+
+| Control | Qué hace |
+|---|---|
+| **▶ Iniciar / ⏸ Pausar** | Arranca y detiene el reloj de la simulación |
+| **Paso** | Avanza un solo tick, para observar con calma qué cambió |
+| **Reiniciar** | Vuelve al estado inicial con la misma semilla |
+| Clic en el inventario | Selecciona la máquina que se muestra en los paneles de detalle y de cola circular |
+| **Sensor** | Elige qué variable se grafica en la cola circular |
+| **Carga** | Sube o baja la carga de la máquina, que influye en su probabilidad de fallo |
+| **Parar / Arrancar** | Detiene o reanuda la máquina a mano |
+| **Inyectar fallo** | Provoca una anomalía de la magnitud elegida, para forzar un caso en la demostración |
+| **Deshacer** | Revierte la última acción del operador, si todavía tiene sentido revertirla |
 
 ## Flujo de trabajo con Git
 
@@ -138,6 +152,6 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Entidades del modelo y configuración | Listo |
 | Simulación (`Planta.tick()`) probada sin interfaz | Listo |
 | Interfaz Swing (paneles de las 5 estructuras) | Listo |
-| Controlador e integración | Pendiente |
+| Controlador e integración | Listo |
 | Manual de usuario y documento explicativo | Pendiente |
 | Video | Pendiente |

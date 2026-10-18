@@ -4,29 +4,35 @@ import edu.unal.planta.modelo.ObservadorPlanta;
 import edu.unal.planta.modelo.Planta;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * Ventana principal: arma los paneles y los refresca cuando la planta cambia.
+ * Ventana principal: arma los paneles, los refresca cuando la planta cambia y traslada al
+ * controlador lo que pide el operador.
  *
- * <p>Implementa {@link ObservadorPlanta}, así que la planta le avisa sin conocerla. Esa es la pieza
- * que mantiene la separación del modelo y la vista: el modelo no importa nada de Swing y, de
- * hecho, la simulación corre igual sin que exista esta clase.</p>
+ * <p>Implementa {@link ObservadorPlanta}, así que la planta le avisa sin conocerla, y habla con el
+ * controlador a través de {@link AccionesOperador}, así que tampoco lo conoce. La ventana está en
+ * el medio sin depender de ninguno de los dos extremos.</p>
  *
  * <h2>Un solo punto de refresco</h2>
  * <p>La ventana guarda sus paneles en una lista de {@link PanelEstructura} y los refresca con una
  * sola llamada polimórfica. No sabe cuál panel dibuja la cola circular y cuál los carriles de
  * prioridad: cada uno sabe dibujarse a sí mismo. Agregar un panel nuevo es agregarlo a la lista.</p>
  *
- * <p>En esta etapa la ventana solo muestra. Los botones y la selección con el ratón llegan con el
- * controlador, porque toda acción del usuario debe pasar por él.</p>
+ * <h2>Qué decide la ventana y qué no</h2>
+ * <p>La selección de máquina y de sensor la resuelve aquí, porque no modifica la planta: solo
+ * cambia lo que el operador está mirando. Todo lo que sí cambia el modelo —parar una máquina,
+ * mover la carga, inyectar un fallo, deshacer, avanzar el reloj— se delega al controlador.</p>
  *
  * @author Cristian Robayo
  * @author Kevin Toro
@@ -35,9 +41,13 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
 
     private final List<PanelEstructura> paneles = new ArrayList<>();
     private final JLabel estado = new JLabel();
+    private final JButton botonEjecutar = new JButton("▶ Iniciar");
+    private final JButton botonPaso = new JButton("Paso");
+    private final JButton botonReiniciar = new JButton("Reiniciar");
 
     private final PanelInventario panelInventario = new PanelInventario();
     private final PanelDetalleMaquina panelDetalle = new PanelDetalleMaquina();
+    private final PanelControlesMaquina panelControles = new PanelControlesMaquina();
     private final PanelColaCircular panelCircular = new PanelColaCircular();
     private final PanelColaEventos panelEventos = new PanelColaEventos();
     private final PanelColaTecnicos panelTecnicos = new PanelColaTecnicos();
@@ -45,24 +55,35 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
     private final PanelPila panelPila = new PanelPila();
     private final PanelBitacora panelBitacora = new PanelBitacora();
 
+    private final AccionesOperador acciones;
+
     private SeleccionVista seleccion = SeleccionVista.INICIAL;
+    private Planta plantaActual;
 
     /**
-     * Arma la ventana con todos sus paneles.
+     * Arma la ventana con todos sus paneles y la conecta con el controlador.
+     *
+     * @param acciones a quién pedirle las acciones del operador
+     * @throws NullPointerException si las acciones son nulas
      */
-    public VentanaPrincipal() {
+    public VentanaPrincipal(AccionesOperador acciones) {
         super("Simulador de Monitoreo y Mantenimiento de Planta");
+        this.acciones = Objects.requireNonNull(acciones, "La ventana necesita un controlador");
+
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1100, 700));
 
         paneles.add(panelInventario);
         paneles.add(panelDetalle);
+        paneles.add(panelControles);
         paneles.add(panelCircular);
         paneles.add(panelEventos);
         paneles.add(panelTecnicos);
         paneles.add(panelPrioridad);
         paneles.add(panelPila);
         paneles.add(panelBitacora);
+
+        conectarPaneles();
 
         // Los paneles de estructuras conservan su alto natural, y el espacio sobrante de la
         // ventana se lo lleva la bitácora, que es la única que gana algo con ser más alta.
@@ -89,34 +110,68 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
     }
 
     /**
-     * Construye la barra donde se muestran el tick y la semilla.
+     * Enlaza cada panel con la acción que debe provocar.
      *
-     * <p>Los botones de control se agregan cuando exista el controlador.</p>
+     * <p>Los paneles no reciben el controlador: avisan lo que pasó y la ventana decide a quién
+     * trasladarlo. Por eso un panel se puede probar y dibujar sin que exista ningún controlador.</p>
+     */
+    private void conectarPaneles() {
+        panelInventario.alSeleccionar(indice -> cambiarSeleccion(seleccion.conMaquina(indice)));
+        panelControles.alSeleccionarSensor(indice -> cambiarSeleccion(seleccion.conSensor(indice)));
+        panelControles.conectar(acciones);
+        panelPila.alDeshacer(acciones::deshacer);
+
+        botonEjecutar.addActionListener(evento -> {
+            acciones.alternarEjecucion();
+            sincronizarBotones();
+        });
+        botonPaso.addActionListener(evento -> {
+            acciones.paso();
+            sincronizarBotones();
+        });
+        botonReiniciar.addActionListener(evento -> {
+            acciones.reiniciar();
+            sincronizarBotones();
+        });
+    }
+
+    /**
+     * Construye la barra con los controles de la simulación y el estado del reloj.
      *
      * @return la barra superior
      */
     private JPanel barraSuperior() {
-        JPanel barra = new JPanel(new BorderLayout());
-        barra.setBackground(Colores.PANEL);
-        barra.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Colores.BORDE),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-
-        JLabel titulo = new JLabel("Simulador de planta");
+        JLabel titulo = new JLabel("Simulador de planta   ");
         titulo.setFont(Colores.FUENTE_TITULO);
         titulo.setForeground(Colores.TEXTO);
+
+        botonEjecutar.setToolTipText("Arranca o pausa el reloj de la simulación");
+        botonPaso.setToolTipText("Avanza un solo tick, para observar con calma qué cambió");
+        botonReiniciar.setToolTipText("Vuelve al estado inicial con la misma semilla");
+
+        JPanel botones = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        botones.setBackground(Colores.PANEL);
+        botones.add(botonEjecutar);
+        botones.add(botonPaso);
+        botones.add(botonReiniciar);
 
         estado.setFont(Colores.FUENTE_VALOR);
         estado.setForeground(Colores.TEXTO_SUAVE);
         estado.setHorizontalAlignment(SwingConstants.RIGHT);
 
+        JPanel barra = new JPanel(new BorderLayout());
+        barra.setBackground(Colores.PANEL);
+        barra.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Colores.BORDE),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
         barra.add(titulo, BorderLayout.WEST);
+        barra.add(botones, BorderLayout.CENTER);
         barra.add(estado, BorderLayout.EAST);
         return barra;
     }
 
     /**
-     * Construye la columna del inventario y el detalle de la máquina.
+     * Construye la columna del inventario, el detalle y los controles.
      *
      * @return la columna izquierda
      */
@@ -125,6 +180,7 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
         columna.setBackground(Colores.FONDO);
         columna.add(panelInventario, BorderLayout.NORTH);
         columna.add(panelDetalle, BorderLayout.CENTER);
+        columna.add(panelControles, BorderLayout.SOUTH);
         return columna;
     }
 
@@ -155,12 +211,13 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
     /**
      * Cambia qué máquina y qué sensor se están mirando, y vuelve a dibujar.
      *
-     * @param nueva  selección nueva
-     * @param planta planta que hay que volver a mostrar
+     * @param nueva selección nueva
      */
-    public void cambiarSeleccion(SeleccionVista nueva, Planta planta) {
+    public void cambiarSeleccion(SeleccionVista nueva) {
         this.seleccion = nueva;
-        plantaCambio(planta);
+        if (plantaActual != null) {
+            plantaCambio(plantaActual);
+        }
     }
 
     /**
@@ -173,6 +230,13 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
     }
 
     /**
+     * Ajusta el botón de arranque al estado real del reloj.
+     */
+    private void sincronizarBotones() {
+        botonEjecutar.setText(acciones.estaCorriendo() ? "⏸ Pausar" : "▶ Iniciar");
+    }
+
+    /**
      * {@inheritDoc}
      *
      * <p>Refresca todos los paneles con una sola llamada polimórfica. La ventana no sabe qué dibuja
@@ -180,7 +244,9 @@ public final class VentanaPrincipal extends JFrame implements ObservadorPlanta {
      */
     @Override
     public void plantaCambio(Planta planta) {
+        this.plantaActual = planta;
         estado.setText("Tick: " + planta.tickActual() + "     Semilla: " + planta.semilla());
+        sincronizarBotones();
         for (PanelEstructura panel : paneles) {
             panel.refrescar(planta, seleccion);
         }

@@ -1,9 +1,11 @@
 package edu.unal.planta.vista;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.List;
+import javax.swing.JButton;
 
 /**
  * Muestra la pila de acciones del operador, con la cima arriba.
@@ -21,11 +23,41 @@ import java.util.List;
 public final class PanelPila extends PanelEstructura {
 
     private static final int ALTO_CAJA = 26;
+    private static final int ALTO_BOTON = 30;
 
-    /** Prepara el panel. */
+    private final JButton botonDeshacer = new JButton("Deshacer");
+
+    /** Prepara el panel con su botón de deshacer. */
     public PanelPila() {
         super("PILA — deshacer");
         setPreferredSize(new Dimension(210, 220));
+
+        botonDeshacer.setFont(Colores.FUENTE_ETIQUETA);
+        botonDeshacer.setToolTipText("Revierte la última acción del operador (la cima de la pila)");
+        add(botonDeshacer, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Registra qué hacer cuando el operador pulse "Deshacer".
+     *
+     * @param accion acción a ejecutar
+     */
+    public void alDeshacer(Runnable accion) {
+        for (var oyente : botonDeshacer.getActionListeners()) {
+            botonDeshacer.removeActionListener(oyente);
+        }
+        botonDeshacer.addActionListener(evento -> accion.run());
+    }
+
+    @Override
+    protected int altoReservadoAbajo() {
+        return ALTO_BOTON;
+    }
+
+    @Override
+    protected void actualizar() {
+        // Sin acciones apiladas no hay nada que deshacer, y el botón lo dice.
+        botonDeshacer.setEnabled(planta() != null && !planta().accionesDeshacibles().isEmpty());
     }
 
     @Override

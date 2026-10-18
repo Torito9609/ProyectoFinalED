@@ -36,6 +36,59 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Etapa 5 — 2026-10-18 — Controlador e integración
+
+**Responsable:** Kevin, con asistencia de Claude Code.
+
+Con esta etapa queda cubierto el mínimo obligatorio de la sección 10: la aplicación funciona
+completa.
+
+### Hecho
+
+- **`controlador/ControladorPlanta`**, dueño del `javax.swing.Timer` y único camino por el que
+  pasan las acciones que modifican el modelo.
+- **`vista/AccionesOperador`**, la interfaz que separa la vista del controlador.
+- **`vista/PanelControlesMaquina`**: selector de sensor, carga, parar/arrancar e inyectar fallo.
+- Barra con **Iniciar/Pausar, Paso y Reiniciar**; clic en el inventario para seleccionar máquina;
+  botón **Deshacer** en el panel de la pila.
+- **`App`** deja de ser provisional y arma el MVC completo.
+
+### Decisiones
+
+| Decisión | Alternativa descartada | Razón |
+|---|---|---|
+| `AccionesOperador` se declara en el paquete **vista** y la implementa el controlador | Declararla en `controlador`, o pasarle el controlador a los paneles | Así la vista no importa nada de `controlador` y el controlador no importa nada de Swing: los dos dependen del contrato, no uno del otro. Es la misma idea de `ObservadorPlanta`, pero en el sentido contrario |
+| Los paneles avisan con un `IntConsumer` y la ventana decide a quién trasladarlo | Que cada panel recibiera el controlador | Un panel se puede dibujar y probar sin que exista ningún controlador, y de hecho así lo hace la prueba de la vista |
+| Seleccionar máquina o sensor **no** pasa por el controlador | Hacer pasar toda interacción por él | Seleccionar no modifica la planta, solo cambia lo que el operador está mirando: es estado de presentación |
+| Los comandos se construyen justo antes de ejecutarse y nunca se guardan | Crearlos una vez y reutilizarlos | Un comando toma nota del estado **al construirse**. Uno guardado recordaría un estado viejo y al deshacerlo restauraría algo equivocado |
+| El botón de parar se deshabilita cuando no aplica, y además el controlador ignora la acción | Solo una de las dos | La vista evita que el operador pulse algo que no va a ocurrir; la comprobación del controlador es la red de seguridad |
+| Controles de la máquina en un panel aparte del de detalle | Mezclar botones dentro del panel dibujado | El de detalle se dibuja a mano y el de controles necesita componentes de Swing de verdad; mezclarlos obligaba a reservar espacio a mano y a pelear con el `BorderLayout` |
+
+### Incidencia
+
+La prueba de reproducibilidad falló al principio, pero el fallo era de la prueba: las 29 líneas de
+bitácora eran idénticas salvo la primera, que dice "Planta iniciada" al arrancar y "Planta
+reiniciada" al reiniciar. Se ajustó la aserción para comparar lo que de verdad debe reproducirse.
+
+### Verificación
+
+| Comando | Resultado |
+|---|---|
+| `./mvnw test` | BUILD SUCCESS — 60 pruebas, 0 fallos |
+| `./mvnw javadoc:javadoc` | BUILD SUCCESS, sin advertencias |
+| `java -jar target/simulador-planta.jar` | La aplicación abre y funciona |
+
+Cuatro pruebas nuevas, y ninguna toca el reloj: `javax.swing.Timer` es de la librería estándar y
+probarlo sería probar a Swing. Se prueba que un paso avance exactamente un tick, que reiniciar
+repita la misma simulación con la misma semilla, que parar una máquina se pueda deshacer, y que las
+acciones que no aplican se ignoren en vez de fallar.
+
+### Pendiente
+
+- Etapa 6: manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video.
+
+---
+
 ## Etapa 4 — 2026-10-18 — Los paneles de la interfaz
 
 **Responsable:** Kevin, con asistencia de Claude Code.
@@ -434,5 +487,5 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | 2 | Resto de las entidades del modelo y clase de configuración. `Prioridad` y `OrdenTrabajo` ya quedaron hechas en la etapa 1, porque la cola con prioridad las necesitaba | **Terminada** (2026-10-18) |
 | 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | **Terminada** (2026-10-18) |
 | 4 | Interfaz Swing: los paneles de las estructuras | **Terminada** (2026-10-18) |
-| 5 | Controlador, reloj e integración | Pendiente |
+| 5 | Controlador, reloj e integración | **Terminada** (2026-10-18) |
 | 6 | Manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video | Pendiente |
