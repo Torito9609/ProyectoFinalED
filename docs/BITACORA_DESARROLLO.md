@@ -36,6 +36,64 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Etapa 1 — 2026-10-18 — Las dos estructuras con sus pruebas
+
+**Responsable:** Kevin, con asistencia de Claude Code.
+
+### Hecho
+
+- **`estructuras/ColaCircular<T>`**, la única estructura implementada por el equipo. Arreglo de
+  capacidad fija, con puntero al frente y el final calculado como `(frente + tamaño) % capacidad`.
+  Encolar, desencolar y consultar son O(1) incluso al sobrescribir. Incluye las consultas de solo
+  lectura que necesita la vista: capacidad, tamaño, índices de frente y final, contenido de una
+  celda física (que puede estar vacía), elementos en orden lógico y contador de sobrescrituras.
+- **`modelo/Prioridad`**, enum de los cuatro niveles con su descripción, su acción y su color.
+- **`modelo/OrdenTrabajo`**, `record` inmutable con la orden ya clasificada.
+- **`modelo/ColaPrioridadOrdenes`**, arreglo de cuatro `ArrayDeque` indexado por nivel. Insertar es
+  O(1) y extraer O(k) con k = 4.
+- **45 pruebas JUnit** en dos archivos, agrupadas con `@Nested` y descritas con `@DisplayName` en
+  español, de modo que el informe de pruebas se lea como una lista de propiedades de cada
+  estructura.
+
+### Decisiones
+
+| Decisión | Alternativa descartada | Razón |
+|---|---|---|
+| `Prioridad` guarda el color como entero RGB (`0xRRGGBB`) | Guardar un `java.awt.Color` | El modelo no puede importar `java.awt`. El modelo define **qué** color corresponde a cada prioridad y la vista lo convierte, así que la decisión de diseño se conserva sin romper la arquitectura |
+| `OrdenTrabajo` guarda el índice de la máquina en el inventario, más su etiqueta | Guardar una referencia a `Maquina` | El índice recupera la máquina del `ArrayList` en O(1), que es precisamente la razón por la que el inventario es un arreglo dinámico. La etiqueta deja la orden legible por sí sola en la vista y en la bitácora. Además evita una referencia circular entre máquina y orden, y permite que la orden sea inmutable |
+| `OrdenTrabajo` es un `record` | Una clase mutable | Una orden de trabajo es un documento histórico: una vez emitida no cambia. Lo que cambia es su ubicación, y de eso se encargan las estructuras. Al ser inmutable se puede entregar a la vista sin riesgo |
+| Un bloque estático en `Prioridad` verifica que `nivel == ordinal()` | Confiar en que nadie reordene las constantes | `ColaPrioridadOrdenes` usa el nivel como índice de su arreglo. Si alguien reordena el enum y olvida corregir los niveles, el programa falla al cargar la clase en vez de asignar las órdenes al carril equivocado |
+| `ColaCircular` rechaza elementos nulos | Aceptarlos | Una celda nula es la forma de representar "celda vacía" para el panel. Aceptar nulos volvería ambigua esa lectura |
+| `tamano()` de la cola con prioridad suma los cuatro niveles | Mantener un contador aparte | Sumar cuatro números es O(k) con k = 4, y evita sostener un dato que podría quedar desincronizado con las colas |
+| Se agregó `verMasReciente()` a `ColaCircular` | Dejar solo `verFrente()` | El paso 3 del tick compara contra los umbrales **la última** lectura, no la más antigua. Es O(1) por aritmética de índices |
+
+### Verificación
+
+| Comando | Resultado |
+|---|---|
+| `./mvnw test` | BUILD SUCCESS — **45 pruebas, 0 fallos** |
+| `./mvnw javadoc:javadoc` | BUILD SUCCESS, sin advertencias |
+
+Casos obligatorios cubiertos, según la sección 5 del documento de diseño:
+
+- **`ColaCircular`:** cola vacía, llenado exacto, sobrescritura, varias vueltas completas,
+  desencolar después de dar la vuelta y capacidad 1. Se agregaron además el rechazo de capacidad
+  inválida y de nulos, el acceso a celdas fuera de rango, y la comprobación de que las listas que
+  recibe la vista son copias no modificables.
+- **`ColaPrioridadOrdenes`:** orden por prioridad, FIFO dentro del mismo nivel, una P1 insertada de
+  última que sale primero, y extraer con la estructura vacía. Se agregó el contrato del enum
+  `Prioridad`, del que depende el índice del arreglo.
+
+### Pendiente
+
+- Etapa 2: resto de las entidades del modelo (`Sensor`, `Lectura`, `Maquina`, `Anomalia`,
+  `EventoFallo`, `EstadoMaquina`, `Tecnico`) y la clase de configuración centralizada.
+- Cristian debe definir los valores reales de máquinas, sensores y umbrales.
+- Queda por aprobar la decisión de que `OrdenTrabajo` guarde el índice de la máquina en vez de la
+  referencia; está registrada en la tabla de desviaciones.
+
+---
+
 ## Etapa 0 — 2026-10-18 — Cimientos del proyecto
 
 **Responsable:** Kevin, con asistencia de Claude Code.
@@ -116,6 +174,8 @@ todavía no se han aprobado.
 | Fecha | Sección de `CLAUDE.md` | Cambio propuesto | Razón | Estado |
 |---|---|---|---|---|
 | 2026-10-18 | 7, paso 7 (preventivo) | Marcar en `Maquina` un `boolean` de preventiva pendiente, en vez de recorrer el carril P4 de la cola con prioridad para saber si ya hay una | Recorrer el carril es O(n) y obliga a inspeccionar la cola desde afuera. El indicador es O(1) y respeta mejor el tipo abstracto de datos | **Propuesta**, sin implementar |
+| 2026-10-18 | 6, campo «máquina» de `OrdenTrabajo` | La orden guarda `indiceMaquina` y `etiquetaMaquina` en vez de una referencia a `Maquina` | Recupera la máquina del inventario en O(1), evita la referencia circular máquina↔orden y permite que la orden sea inmutable | **Implementada**, pendiente de revisión del equipo |
+| 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 
 ---
 
@@ -127,8 +187,8 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | Etapa | Contenido | Estado |
 |---|---|---|
 | 0 | Cimientos: Maven, paquetes, JUnit, documentación base | **Terminada** (2026-10-18) |
-| 1 | `ColaCircular<T>` y `ColaPrioridadOrdenes`, con pruebas | Pendiente |
-| 2 | Entidades del modelo y clase de configuración | Pendiente |
+| 1 | `ColaCircular<T>` y `ColaPrioridadOrdenes`, con pruebas | **Terminada** (2026-10-18) |
+| 2 | Resto de las entidades del modelo y clase de configuración. `Prioridad` y `OrdenTrabajo` ya quedaron hechas en la etapa 1, porque la cola con prioridad las necesitaba | Pendiente |
 | 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | Pendiente |
 | 4 | Interfaz Swing: los seis paneles | Pendiente |
 | 5 | Controlador, reloj e integración | Pendiente |

@@ -52,6 +52,18 @@ Convención de la columna **Autoría**:
 | `docs/DOCUMENTO_EXPLICATIVO.md` | IA | Solo el índice; el contenido lo escribe el equipo |
 | `docs/USO_IA.md` | IA | Este documento |
 
+### Etapa 1 — Estructuras de datos
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `estructuras/ColaCircular.java` | IA | Implementada contra la especificación de la sección 5 de `CLAUDE.md`; el equipo verificó la aritmética de índices y la complejidad declarada en cada método |
+| `modelo/Prioridad.java` | IA | Niveles, acciones y colores tomados de la sección 7 |
+| `modelo/OrdenTrabajo.java` | IA | Campos tomados de la sección 6 |
+| `modelo/ColaPrioridadOrdenes.java` | IA | Implementada contra la especificación de la sección 5 |
+| `test/.../ColaCircularTest.java` | IA | Cubre los seis casos borde exigidos por el documento de diseño |
+| `test/.../ColaPrioridadOrdenesTest.java` | IA | Cubre los cuatro casos exigidos por el documento de diseño |
+| `docs/BITACORA_DESARROLLO.md` | IA | Entrada de la etapa 1 |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
@@ -62,6 +74,7 @@ Convención de la columna **Autoría**:
 |---|---|---|
 | Documento de diseño (`CLAUDE.md`) | 0 % | Escrito por el equipo |
 | Esqueleto del proyecto (etapa 0) | ~95 % | Configuración de Maven y documentación de paquetes |
+| Estructuras de datos y sus pruebas (etapa 1) | ~95 % | Generadas contra una especificación escrita por el equipo, que define capacidad, punteros, complejidades y casos de prueba obligatorios |
 
 **Estimación global del proyecto:** *(se calcula al cerrar la última etapa, sobre el total de líneas
 de código fuente)*

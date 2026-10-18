@@ -284,7 +284,8 @@ El enunciado exige declarar el porcentaje de código generado con IA, así que s
 
 ## 15. Instrucciones para el asistente (Claude Code)
 
-- Trabajar **por etapas, una a la vez**, siguiendo el orden de la sección 11. Al terminar cada etapa: resumir qué se hizo y **esperar confirmación** antes de seguir.
+- Trabajar **por etapas, una a la vez**, siguiendo el orden de la sección 11. Al terminar cada etapa: resumir qué se hizo y **esperar confirmación** antes de seguir. Antes de empezar una etapa, contar qué se va a hacer.
+- **Mantenerlo simple.** Las pruebas cubren los casos que exige este documento, no todos los casos imaginables: unas pocas pruebas claras por estructura, sin casos defensivos extra salvo que el equipo los pida. Preferir la solución directa antes que la extensible. Antes de agregar clases, capas, interfaces o métodos que este documento no pida, **proponerlo** en vez de implementarlo. El criterio es que el equipo pueda explicar todo el código en clase.
 - **Explicar cada clase que se cree:** su responsabilidad, la estructura que usa y la complejidad de sus operaciones. El equipo debe poder defender cada línea ante el profesor.
 - Respetar las decisiones de la sección 5. **No usar** `PriorityQueue`, `Stack`, `LinkedList` ni `Vector`. No proponer heaps ni otras estructuras no lineales en esta entrega.
 - No agregar dependencias distintas de JUnit 5.
