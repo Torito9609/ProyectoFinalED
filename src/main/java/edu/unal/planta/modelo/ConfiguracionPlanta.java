@@ -37,6 +37,9 @@ public final class ConfiguracionPlanta {
     /** Cuántas lecturas recientes conserva cada máquina en su cola circular. */
     public static final int CAPACIDAD_LECTURAS = 12;
 
+    /** Cuántas líneas conserva la bitácora antes de descartar las más viejas. */
+    public static final int MAX_LINEAS_BITACORA = 200;
+
     /**
      * Duración de la reparación en ticks, indexada por {@link Prioridad#nivel()}.
      *

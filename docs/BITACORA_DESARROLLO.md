@@ -36,6 +36,69 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Etapa 3 — 2026-10-18 — La simulación funcionando, sin interfaz
+
+**Responsable:** Kevin, con asistencia de Claude Code.
+
+### Hecho
+
+- **`ObservadorPlanta`**, interfaz propia del patrón Observador. Es la pieza que permite que el
+  modelo no conozca la vista: al terminar cada tick, `Planta` avisa sin saber quién escucha.
+- **`ColaPrioridadSoloLectura`**, la interfaz de solo consulta de la cola con prioridad, igual que
+  la de la cola circular en la etapa 2.
+- **`GeneradorFallos`**, la única clase con aleatoriedad, con un solo `Random` con semilla.
+- **`Clasificador`**, que convierte evento en orden comparando únicamente contra los umbrales.
+- **`comandos/ComandoOperador`** más sus dos implementaciones: `PararOArrancarMaquina` y
+  `CambiarCargaMaquina`.
+- **`Planta`**, la fachada con las cinco estructuras y `tick()` con sus ocho pasos.
+- **`Maquina.preventivaPendiente`**, el indicador aprobado por Kevin.
+- **Seis pruebas** de la simulación completa, sin interfaz gráfica.
+
+### Decisiones
+
+| Decisión | Alternativa descartada | Razón |
+|---|---|---|
+| El desplazamiento de una anomalía apunta al **centro** de la zona de umbrales que corresponde a su magnitud | Sortear un valor dentro de la zona | Apuntando al centro, el ruido normal del sensor no alcanza a sacar la lectura de su zona, así que una anomalía severa siempre termina en P1. El comportamiento queda predecible sin que el clasificador sepa nada de la magnitud |
+| El ruido de las lecturas también sale de `GeneradorFallos` | Un `Random` aparte en `Planta` | Todo el azar debe salir del mismo generador con semilla, o la simulación deja de ser reproducible |
+| La bitácora es un `ArrayDeque` con tope de 200 líneas | Un `ArrayList` que crece sin límite | Al llenarse hay que descartar las líneas más viejas por el frente, que en un deque es O(1). Queda documentado que **no es una de las cinco estructuras del enunciado**, sino un registro auxiliar |
+| `Planta.accionesDeshacibles()` entrega textos, no comandos | Entregar la lista de comandos | Si la vista recibiera los comandos podría ejecutarlos o revertirlos por su cuenta. Con texto, deshacer solo ocurre por `Planta.deshacer()` |
+| El desgaste (`envejecer`) solo avanza en las máquinas que están funcionando | Avanzarlo en todas | Una máquina detenida o en mantenimiento no se desgasta |
+
+### Verificación
+
+| Comando | Resultado |
+|---|---|
+| `./mvnw test` | BUILD SUCCESS — 54 pruebas, 0 fallos |
+| `./mvnw javadoc:javadoc` | BUILD SUCCESS, sin advertencias |
+
+Las seis pruebas nuevas cubren cadenas completas del tick, no métodos sueltos: reproducibilidad con
+la misma semilla, una anomalía severa que termina en orden P1 asignada, un solo evento clasificado
+por tick, la reparación que devuelve la máquina a operar, el preventivo que no se repite gracias al
+indicador, y el descarte de un comando cuando la simulación ya cambió el estado.
+
+### Hallazgo: las colas casi nunca se llenan
+
+Un ensayo de 1000 ticks con la semilla 7 mostró que la cola con prioridad **está vacía el 99 % de
+los ticks y nunca pasa de una orden**. La causa no es un error, es aritmética del escenario:
+
+- Una máquina con anomalía activa no desarrolla otra, y una máquina en alarma, detenida o en
+  mantenimiento tampoco genera lecturas nuevas.
+- Por lo tanto, con **tres** máquinas hay como máximo tres fallos simultáneos en toda la planta.
+- Con **dos** técnicos que reciben trabajo en el mismo tick en que la orden se clasifica, la cola no
+  puede acumular más de una orden.
+
+El problema es de presentación, no de lógica: los dos paneles de colas son el centro de la entrega y
+se verían vacíos durante toda la demostración. Está pendiente de decisión del equipo (ver la tabla
+de desviaciones).
+
+### Pendiente
+
+- Decidir cómo hacer que las colas se llenen de forma visible.
+- **Cristian:** revisar los valores de `ConfiguracionPlanta`.
+- Etapa 4: los seis paneles de la interfaz Swing.
+
+---
+
 ## Etapa 2 — 2026-10-18 — Entidades del modelo y configuración
 
 **Responsable:** Kevin, con asistencia de Claude Code.
@@ -220,7 +283,8 @@ todavía no se han aprobado.
 
 | Fecha | Sección de `CLAUDE.md` | Cambio propuesto | Razón | Estado |
 |---|---|---|---|---|
-| 2026-10-18 | 7, paso 7 (preventivo) | Marcar en `Maquina` un `boolean` de preventiva pendiente, en vez de recorrer el carril P4 de la cola con prioridad para saber si ya hay una | Recorrer el carril es O(n) y obliga a inspeccionar la cola desde afuera. El indicador es O(1) y respeta mejor el tipo abstracto de datos | **Propuesta**, sin implementar |
+| 2026-10-18 | 7, paso 7 (preventivo) | Marcar en `Maquina` un `boolean` de preventiva pendiente, en vez de recorrer el carril P4 de la cola con prioridad para saber si ya hay una | Recorrer el carril es O(n) y obliga a inspeccionar la cola desde afuera. El indicador es O(1) y respeta mejor el tipo abstracto de datos | **Implementada**, aprobada por Kevin |
+| 2026-10-18 | 6 y 10 (tres máquinas, dos técnicos) | Aumentar el número de máquinas iniciales, o alargar las reparaciones, para que las colas se llenen de forma visible | Con tres máquinas hay a lo sumo tres fallos simultáneos, y con dos técnicos que toman la orden en el mismo tick la cola con prioridad nunca pasa de una orden. Los paneles de colas se verían vacíos en toda la demostración | **Pendiente de decisión del equipo** |
 | 2026-10-18 | 6, campo «máquina» de `OrdenTrabajo` | La orden guarda `indiceMaquina` y `etiquetaMaquina` en vez de una referencia a `Maquina` | Recupera la máquina del inventario en O(1), evita la referencia circular máquina↔orden y permite que la orden sea inmutable | **Implementada**, pendiente de revisión del equipo |
 | 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 
@@ -236,7 +300,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | 0 | Cimientos: Maven, paquetes, JUnit, documentación base | **Terminada** (2026-10-18) |
 | 1 | `ColaCircular<T>` y `ColaPrioridadOrdenes`, con pruebas | **Terminada** (2026-10-18) |
 | 2 | Resto de las entidades del modelo y clase de configuración. `Prioridad` y `OrdenTrabajo` ya quedaron hechas en la etapa 1, porque la cola con prioridad las necesitaba | **Terminada** (2026-10-18) |
-| 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | Pendiente |
+| 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | **Terminada** (2026-10-18) |
 | 4 | Interfaz Swing: los seis paneles | Pendiente |
 | 5 | Controlador, reloj e integración | Pendiente |
 | 6 | Manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video | Pendiente |

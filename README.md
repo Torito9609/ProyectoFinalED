@@ -131,7 +131,7 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Esqueleto del proyecto (Maven, paquetes, JUnit) | Listo |
 | `ColaCircular` y `ColaPrioridadOrdenes` con pruebas | Listo |
 | Entidades del modelo y configuración | Listo |
-| Simulación (`Planta.tick()`) probada sin interfaz | Pendiente |
+| Simulación (`Planta.tick()`) probada sin interfaz | Listo |
 | Interfaz Swing (6 paneles) | Pendiente |
 | Controlador e integración | Pendiente |
 | Manual de usuario y documento explicativo | Pendiente |
