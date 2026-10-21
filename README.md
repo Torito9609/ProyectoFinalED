@@ -1,4 +1,4 @@
-# Simulador de Monitoreo y Mantenimiento de Plant
+# Simulador de Monitoreo y Mantenimiento de Planta
 
 Proyecto final del curso **Estructuras de Datos** — Universidad Nacional de Colombia.
 
