@@ -136,7 +136,7 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 
 - [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo usar el simulador
 - [`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.md) — por qué y cómo se usó cada
-  estructura *(pendiente)*
+  estructura
 - [`docs/BITACORA_DESARROLLO.md`](docs/BITACORA_DESARROLLO.md) — registro de avance del equipo:
   qué se hizo en cada etapa y qué se decidió
 - [`docs/USO_IA.md`](docs/USO_IA.md) — declaración del uso de herramientas de IA
@@ -157,5 +157,5 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Interfaz Swing (paneles de las 5 estructuras) | Listo |
 | Controlador e integración | Listo |
 | Manual de usuario | Listo |
-| Documento explicativo | Pendiente |
+| Documento explicativo | Listo |
 | Video | Pendiente |
