@@ -133,6 +133,12 @@ Convención de la columna **Autoría**:
 | `docs/MANUAL_USUARIO.md` | IA | Redactado sobre el índice acordado por el equipo; nombres de botones, colores y mensajes tomados del código de la vista y del modelo. Pendiente de revisión del equipo |
 | `docs/img/manual/*.png` (15 capturas) | — | Generadas dibujando la ventana real del programa con la semilla 7; el programa que las genera no forma parte del repositorio |
 
+### Documento explicativo
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `docs/DOCUMENTO_EXPLICATIVO.md` | IA | Redactado sobre el índice acordado y las decisiones de las secciones 5, 7 y 8 de `CLAUDE.md` y de `BITACORA_DESARROLLO.md`; fragmentos de código copiados del código real. Pendiente de revisión del equipo |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
