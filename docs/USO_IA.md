@@ -126,6 +126,13 @@ Convención de la columna **Autoría**:
 | `App.java` | IA | Armado final del patrón MVC |
 | `test/.../ControladorPlantaTest.java` | IA | Cuatro pruebas de las acciones del operador |
 
+### Manual de usuario
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `docs/MANUAL_USUARIO.md` | IA | Redactado sobre el índice acordado por el equipo; nombres de botones, colores y mensajes tomados del código de la vista y del modelo. Pendiente de revisión del equipo |
+| `docs/img/manual/*.png` (15 capturas) | — | Generadas dibujando la ventana real del programa con la semilla 7; el programa que las genera no forma parte del repositorio |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

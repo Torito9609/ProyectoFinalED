@@ -134,7 +134,7 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 
 ## Documentación
 
-- [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo usar el simulador *(pendiente)*
+- [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo usar el simulador
 - [`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.md) — por qué y cómo se usó cada
   estructura *(pendiente)*
 - [`docs/BITACORA_DESARROLLO.md`](docs/BITACORA_DESARROLLO.md) — registro de avance del equipo:
@@ -156,5 +156,6 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Simulación (`Planta.tick()`) probada sin interfaz | Listo |
 | Interfaz Swing (paneles de las 5 estructuras) | Listo |
 | Controlador e integración | Listo |
-| Manual de usuario y documento explicativo | Pendiente |
+| Manual de usuario | Listo |
+| Documento explicativo | Pendiente |
 | Video | Pendiente |
