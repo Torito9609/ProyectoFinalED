@@ -436,8 +436,26 @@ con 10 000, extraer revisa como máximo 4 colas.
 Además, sus costos son O(log n) para insertar y extraer, que dependen de la cantidad de órdenes.
 Los nuestros son O(1) y O(4).
 
-**Una sola lista ordenada por prioridad.** Para insertar en orden hay que buscar la posición y
-**desplazar** los elementos que siguen: O(n). Nuestra versión inserta en O(1).
+**Una sola lista ordenada por prioridad.** Es la versión que vimos en clase, con una lista enlazada.
+Extraer es O(1), porque la más urgente siempre está en la cabeza. Pero **insertar es O(n)**, y el
+motivo depende de cómo esté hecha la lista:
+
+- **Con una lista enlazada**, hay que **recorrer** los nodos desde la cabeza hasta encontrar la
+  posición. Una vez ahí, enlazar el nodo nuevo es O(1): no se mueve ningún elemento.
+- **Con un arreglo ordenado**, la posición se puede buscar rápido, pero hay que **desplazar** una
+  posición todos los elementos que siguen para abrir el hueco.
+
+En los dos casos el costo crece con la cantidad de órdenes. Nuestra versión inserta en O(1).
+
+Además, en la lista ordenada el orden de llegada entre iguales **depende de programarlo bien**: la
+orden nueva debe quedar **después** de todas las de su misma prioridad. Si el recorrido se detiene
+en la primera de igual prioridad, la nueva queda delante y el orden se invierte. En nuestra versión
+ese error no puede ocurrir, porque cada nivel es una cola y solo se puede entrar por el final.
+
+**Nuestra versión no compite con la lista enlazada.** Cada uno de los cuatro niveles es una cola, y
+esa cola podría estar hecha con nodos enlazados en lugar de `ArrayDeque`. La idea central del diseño
+es **el arreglo indexado por prioridad**, no cómo está implementado cada carril. Elegimos
+`ArrayDeque` para los carriles por las razones de la sección 4.
 
 **Una sola cola, buscando la más prioritaria al extraer.** Insertar sería O(1), pero extraer exigiría
 recorrer todas las órdenes y sacar una del medio: O(n). Además, sacar del medio no es una operación
@@ -447,7 +465,8 @@ de cola.
 |---|---|---|---|
 | **Arreglo de 4 colas (nuestra)** | **O(1)** | **O(4)** | **Garantizado por construcción** |
 | `PriorityQueue` | O(log n) | O(log n) | **No garantizado** |
-| Lista ordenada | O(n) | O(1) | Depende de cómo se inserte |
+| Lista enlazada ordenada (vista en clase) | O(n), por el recorrido | O(1) | Solo si se inserta después de los iguales |
+| Arreglo ordenado | O(n), por el desplazamiento | O(1) | Solo si se inserta después de los iguales |
 | Una cola sin orden | O(1) | O(n) | Depende de cómo se busque |
 
 ### Limitación de la elección
@@ -538,6 +557,28 @@ Java tiene una clase llamada `Stack`, y **la descartamos a propósito**:
 3. **La documentación oficial de Java recomienda no usarla.** La propia página de `Stack` dice que
    la interfaz `Deque` ofrece *"un conjunto más completo y consistente de operaciones de pila"* y
    que debe preferirse.
+
+### Y la pila con nodos que vimos en clase
+
+En clase implementamos la pila como una lista enlazada: cada elemento es un nodo que apunta al de
+abajo, y la pila guarda una referencia a la cima. Esa versión es correcta y tiene el mismo costo:
+
+| | Lista enlazada (clase) | `ArrayDeque` (proyecto) |
+|---|---|---|
+| `push` | O(1): se crea un nodo y pasa a ser la cima | O(1) amortizado: se escribe en el arreglo, que crece si se llena |
+| `pop` | O(1): la cima pasa a ser el nodo de abajo | O(1) |
+| Memoria por elemento | Un objeto nodo completo, con el dato y la referencia al siguiente | Una referencia en el arreglo |
+| Ventaja principal | Nunca hay que copiar elementos | Menos memoria y menos objetos que recolectar |
+
+Las dos implementan **el mismo tipo abstracto de datos**: solo se toca la cima, y lo último en
+entrar es lo primero en salir. Elegimos `ArrayDeque` porque ya viene probada en la librería
+estándar, ocupa menos memoria y la documentación de Java la recomienda para pilas. Implementar
+nuestra propia pila con nodos no habría agregado ningún comportamiento nuevo. La única estructura que
+implementamos fue la cola circular, porque ninguna clase de Java ofrece lo que necesitábamos.
+
+El "costo" de la versión enlazada, crear un objeto por elemento, no se nota en una pila de unas
+pocas acciones del operador. La decisión no se tomó por rendimiento, sino por **usar la herramienta
+estándar cuando ya existe**, y dedicar el esfuerzo de implementación a la que no existe.
 
 ### Qué se puede deshacer y qué no
 
