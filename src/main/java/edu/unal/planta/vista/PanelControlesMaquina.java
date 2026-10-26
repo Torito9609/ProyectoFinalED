@@ -33,6 +33,10 @@ import javax.swing.JSlider;
  */
 public final class PanelControlesMaquina extends PanelEstructura {
 
+    /** Ayuda del botón "Inyectar fallo" cuando está disponible. */
+    private static final String AYUDA_INYECTAR =
+            "Provoca una anomalía a mano, para forzar un caso en la demostración";
+
     /** Elige qué sensor se muestra en la cola circular y cuál recibe el fallo inyectado. */
     private final JComboBox<String> listaSensores = new JComboBox<>();
     /** Carga de trabajo de la máquina, entre 0 y 100 por ciento. */
@@ -140,6 +144,7 @@ public final class PanelControlesMaquina extends PanelEstructura {
             sincronizarSensores(maquina);
             sincronizarCarga(maquina);
             sincronizarBotonDeEstado(maquina);
+            sincronizarBotonInyectar(maquina);
         } finally {
             sincronizando = false;
         }
@@ -191,6 +196,22 @@ public final class PanelControlesMaquina extends PanelEstructura {
         botonPararArrancar.setToolTipText(parada || operando
                 ? null
                 : "No se puede: la máquina está " + maquina.estado().descripcion().toLowerCase());
+    }
+
+    /**
+     * Deshabilita "Inyectar fallo" si la máquina ya tiene un fallo activo.
+     *
+     * <p>Una máquina guarda un solo fallo a la vez, y el modelo rechaza un segundo. El botón lo
+     * refleja para que no parezca que la máquina acepta varios.</p>
+     *
+     * @param maquina máquina seleccionada
+     */
+    private void sincronizarBotonInyectar(Maquina maquina) {
+        boolean conFallo = maquina.tieneAnomalia() || maquina.alarmaActiva();
+        botonInyectar.setEnabled(!conFallo);
+        botonInyectar.setToolTipText(conFallo
+                ? "No se puede: la máquina ya tiene un fallo activo"
+                : AYUDA_INYECTAR);
     }
 
     /**
@@ -250,7 +271,7 @@ public final class PanelControlesMaquina extends PanelEstructura {
     private JPanel filaBotones() {
         botonPararArrancar.setFont(Colores.FUENTE_ETIQUETA);
         botonInyectar.setFont(Colores.FUENTE_ETIQUETA);
-        botonInyectar.setToolTipText("Provoca una anomalía a mano, para forzar un caso en la demostración");
+        botonInyectar.setToolTipText(AYUDA_INYECTAR);
 
         JPanel fila = new JPanel(new GridLayout(1, 2, 4, 0));
         fila.setBackground(Colores.PANEL);

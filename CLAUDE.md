@@ -222,6 +222,7 @@ Qué muestra cada panel:
 - **Pila:** vertical, con la cima arriba y la descripción de cada acción.
 - **Bitácora:** una línea por evento relevante ("Tick 42: PRENSA-01 vibración 9.8 mm/s → P2").
 - **Inyectar fallo:** el operador elige sensor y magnitud para la máquina seleccionada. Sirve para forzar casos en la demo.
+  **Se rechaza si la máquina ya tiene una anomalía o una alarma activa** (el botón se deshabilita y el modelo registra el rechazo en la bitácora). Una máquina guarda un solo fallo: aceptar otro lo reemplazaría, y una falla severa podía desaparecer detrás de una leve. Decisión del 26 de octubre; soportar varios fallos por máquina queda para otra entrega. Ver `docs/BITACORA_DESARROLLO.md`.
 
 **No dibujar estado interno que `java.util` no expone** (por ejemplo, la capacidad del `ArrayList`). Se muestra el comportamiento del tipo abstracto, no una memoria inventada.
 

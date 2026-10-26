@@ -340,7 +340,9 @@ demostración.
 
 ![Fallo inyectado en PRENSA-01](img/manual/demo-1-inyectar.png)
 
-1. Seleccione la máquina. Conviene que esté **Operando** y sin alarma.
+1. Seleccione la máquina. Debe estar **sin fallo activo**: si ya tiene una anomalía o una alarma,
+   el botón **Inyectar fallo** aparece deshabilitado, porque cada máquina guarda un solo fallo a
+   la vez.
 2. En **Sensor**, elija el sensor que va a fallar.
 3. En **Magnitud**, elija la gravedad:
 
@@ -451,8 +453,13 @@ estaría siempre vacía y no se notaría el orden de llegada.
 
 **Inyecté un fallo y no pasó nada. ¿Por qué?**
 La alarma aparece en el siguiente tick: pulse **Paso**. Si aun así no aparece, revise el estado de
-la máquina. Si ya tenía una alarma activa, no genera otra (ver la primera pregunta). Si estaba en
-mantenimiento o detenida, no lee sensores, y el técnico borra el fallo al terminar la reparación.
+la máquina. Si estaba en *Parada manual*, no lee sensores: el fallo aparecerá al arrancarla.
+
+**¿Por qué el botón Inyectar fallo está desactivado?**
+La máquina ya tiene un fallo activo: una anomalía que todavía no se ha leído, o una alarma que aún
+no termina de atenderse. Cada máquina guarda un solo fallo a la vez; si aceptara otro, reemplazaría
+al anterior y una falla severa podría desaparecer detrás de una leve. El botón vuelve a activarse
+cuando el técnico termina la reparación.
 
 **¿Por qué el botón Parar está desactivado?**
 Solo se puede parar o arrancar una máquina que esté *Operando* o en *Parada manual*. Pase el cursor

@@ -139,6 +139,14 @@ Convención de la columna **Autoría**:
 |---|---|---|
 | `docs/DOCUMENTO_EXPLICATIVO.md` | IA | Redactado sobre el índice acordado y las decisiones de las secciones 5, 7 y 8 de `CLAUDE.md` y de `BITACORA_DESARROLLO.md`; fragmentos de código copiados del código real. Pendiente de revisión del equipo |
 
+### Bloqueo de la inyección sobre un fallo activo (26 de octubre)
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Planta.java` (`inyectarFallo`) | Mixto | **Decisión de Kevin**, tras reproducir con IA los casos en que un fallo reemplazaba a otro; implementada por IA |
+| `vista/PanelControlesMaquina.java` (botón Inyectar) | Mixto | **Decisión de Kevin** de restringirlo también desde la interfaz; implementada por IA |
+| `test/.../PlantaTest.java` | IA | Dos pruebas: una severa no se pierde detrás de una leve, y una máquina con alarma no acepta otro fallo |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

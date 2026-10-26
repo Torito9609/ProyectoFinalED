@@ -381,12 +381,22 @@ public final class Planta {
      * evento, revertirla obligaría a sacar elementos del medio de las colas, lo que rompe el tipo
      * abstracto de datos.</p>
      *
+     * <p>Se rechaza si la máquina ya tiene una anomalía o una alarma activa. Una máquina guarda un
+     * solo fallo a la vez: aceptar otro reemplazaría el anterior, y una falla severa podría
+     * desaparecer detrás de una leve. Es la misma regla que sigue el generador aleatorio. El
+     * rechazo queda en la bitácora.</p>
+     *
      * @param indiceMaquina posición de la máquina en el inventario
      * @param indiceSensor  sensor que se va a desviar
      * @param magnitud      gravedad del fallo que se quiere provocar
      */
     public void inyectarFallo(int indiceMaquina, int indiceSensor, Magnitud magnitud) {
         Maquina maquina = inventario.get(indiceMaquina);
+        if (maquina.tieneAnomalia() || maquina.alarmaActiva()) {
+            registrar("Inyección rechazada: " + maquina.etiqueta() + " ya tiene un fallo activo");
+            notificar();
+            return;
+        }
         maquina.activarAnomalia(generador.crear(maquina, indiceSensor, magnitud));
         registrar("Inyectado por el operador: anomalía " + magnitud.descripcion().toLowerCase()
                 + " en " + maquina.etiqueta() + " / " + maquina.sensor(indiceSensor).nombre());

@@ -25,6 +25,7 @@ class PlantaTest {
     private static final long SEMILLA = 7L;
     private static final int PRENSA = 0;
     private static final int TORNO = 1;
+    private static final int PRESION = 1;
     private static final int VIBRACION = 2;
 
     @Test
@@ -141,6 +142,36 @@ class PlantaTest {
         assertTrue(planta.bitacora().stream().anyMatch(linea -> linea.contains("Descartado")),
                 "el descarte debe quedar registrado en la bitácora");
         assertTrue(planta.accionesDeshacibles().isEmpty(), "el comando salió de la pila");
+    }
+
+    @Test
+    @DisplayName("un fallo inyectado no reemplaza a otro que aún no se ha leído")
+    void inyeccionNoReemplazaAnomaliaPendiente() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
+        planta.inyectarFallo(PRENSA, PRESION, Magnitud.LEVE);
+
+        planta.tick();
+
+        assertEquals(Prioridad.P1, ordenEnCurso(planta).orElseThrow().prioridad(),
+                "la severa no debe desaparecer detrás de la leve");
+        assertTrue(planta.bitacora().stream().anyMatch(linea -> linea.contains("rechazada")),
+                "el rechazo debe quedar registrado en la bitácora");
+    }
+
+    @Test
+    @DisplayName("una máquina con alarma activa no acepta otro fallo inyectado")
+    void inyeccionRechazadaConAlarmaActiva() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.LEVE);
+        planta.tick();
+        assertTrue(planta.maquina(PRENSA).alarmaActiva());
+
+        planta.inyectarFallo(PRENSA, PRESION, Magnitud.SEVERA);
+
+        Anomalia anomalia = planta.maquina(PRENSA).anomalia().orElseThrow();
+        assertEquals(Magnitud.LEVE, anomalia.magnitud(), "la anomalía original sigue intacta");
+        assertEquals(VIBRACION, anomalia.indiceSensor());
     }
 
     /**
