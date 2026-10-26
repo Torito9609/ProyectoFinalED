@@ -128,7 +128,7 @@ edu.unal.planta
 
 ### Máquinas iniciales (valores PROVISIONALES — los define Cristian)
 
-Son **6 máquinas** y no 3. El cambio se decidió el 18 de octubre, tras medir la simulación: una máquina con anomalía activa no desarrolla otra, así que con 3 máquinas y 2 técnicos la cola con prioridad nunca pasaba de **una** orden y los paneles de colas se veían vacíos en toda la demostración. Con 6 el techo sube a 4. Ver `docs/BITACORA_DESARROLLO.md`.
+Son **6 máquinas** y no 3. El cambio se decidió el 18 de octubre, tras medir la simulación: una máquina con anomalía activa no desarrolla otra, así que con 3 máquinas y 2 técnicos la cola con prioridad nunca pasaba de **una** orden y los paneles de colas se veían vacíos en toda la demostración. Con 6, la cola llegó a un máximo de 4 órdenes en la medición (no es un tope: una máquina puede tener a la vez una correctiva y un preventivo P4). Ver `docs/BITACORA_DESARROLLO.md`.
 Todos los parámetros deben estar en **un solo lugar** (una clase de configuración o fábrica de máquinas) para poder ajustarlos sin tocar la lógica.
 
 | Etiqueta | Tipo | Sensores | Criticidad |
