@@ -694,7 +694,8 @@ MVC del proyecto.
 ### Por qué 6 máquinas y 2 técnicos
 
 Una máquina con un fallo activo no desarrolla otro, así que el número de máquinas pone un **techo**
-a los fallos simultáneos. En una primera versión con 3 máquinas, medimos 1000 ticks y **la cola con
+a los fallos simultáneos. Las órdenes sí pueden superar ese número, porque una máquina puede tener
+a la vez una correctiva y un preventivo P4. En una primera versión con 3 máquinas, medimos 1000 ticks y **la cola con
 prioridad nunca pasó de una orden**: los paneles se habrían visto vacíos. Con 6 máquinas,
 reparaciones de 4 a 10 ticks y 2 técnicos, la cola tiene órdenes en cerca del **38 % de los ticks**,
 con un máximo de 4. La planta se ve ocupada pero no saturada. El detalle de esa calibración está en
