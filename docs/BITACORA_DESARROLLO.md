@@ -229,7 +229,7 @@ fallaría sin dar ninguna señal.
 | Máximo de órdenes en cola | 1 | 2 | 4 |
 | Ticks con eventos sin clasificar | — | 1 % | 4 % |
 
-Subir las máquinas levanta el **techo** de la cola, pero no la llena: para eso hace falta que las
+Subir las máquinas aumenta cuántas órdenes pueden acumularse, pero no llena la cola: para eso hace falta que las
 órdenes lleguen más rápido de lo que los técnicos las atienden. La tercera columna corresponde a la
 propuesta de tasas y duraciones que figura en la tabla de desviaciones, medida pero **no
 implementada**, porque esos valores son de Cristian.
@@ -286,11 +286,11 @@ indicador, y el descarte de un comando cuando la simulación ya cambió el estad
 Un ensayo de 1000 ticks con la semilla 7 mostró que la cola con prioridad **está vacía el 99 % de
 los ticks y nunca pasa de una orden**. La causa no es un error, es aritmética del escenario:
 
-- Una máquina con anomalía activa no desarrolla otra, y una máquina en alarma, detenida o en
-  mantenimiento tampoco genera lecturas nuevas.
+- Una máquina con anomalía activa no desarrolla otra, y una máquina en alarma no genera eventos
+  nuevos; detenida o en mantenimiento, tampoco genera lecturas.
 - Por lo tanto, con **tres** máquinas hay como máximo tres fallos simultáneos en toda la planta.
 - Con **dos** técnicos que reciben trabajo en el mismo tick en que la orden se clasifica, la cola no
-  puede acumular más de una orden.
+  llegó a acumular más de una orden.
 
 El problema es de presentación, no de lógica: los dos paneles de colas son el centro de la entrega y
 se verían vacíos durante toda la demostración. Está pendiente de decisión del equipo (ver la tabla
