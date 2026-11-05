@@ -4,42 +4,45 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Desde la Entrega 2 el proyecto es un backend Spring Boot (CLAUDE.md, seccion 3).
+         El padre fija las versiones de todas las dependencias y plugins, asi que la
+         construccion sigue siendo reproducible sin declarar versiones sueltas. -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.2</version>
+        <relativePath/>
+    </parent>
+
     <groupId>edu.unal.planta</groupId>
     <artifactId>simulador-planta</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Simulador de Monitoreo y Mantenimiento de Planta</name>
     <description>
-        Simulador de una planta industrial con tres maquinas que reportan lecturas de sensores.
+        Backend del simulador de plantas industriales con maquinas que reportan lecturas de sensores.
         Proyecto del curso Estructuras de Datos, Universidad Nacional de Colombia.
-        Usa cinco estructuras lineales: arreglo dinamico, cola circular propia, cola FIFO,
-        cola con prioridad por niveles y pila.
+        Entrega 1: estructuras lineales. Entrega 2: arboles, monticulos y arbol de segmentos.
     </description>
 
     <properties>
-        <!-- Java 21 LTS: se compila con release=21 para que el bytecode sea portable
-             aunque el JDK instalado sea mas nuevo. -->
-        <maven.compiler.release>21</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <!-- Unica dependencia externa permitida en el proyecto. -->
-        <junit.version>5.14.4</junit.version>
-
-        <!-- Versiones de plugins fijadas para que la construccion sea reproducible. -->
-        <plugin.compiler.version>3.14.1</plugin.compiler.version>
-        <plugin.surefire.version>3.6.0</plugin.surefire.version>
-        <plugin.jar.version>3.4.2</plugin.jar.version>
-        <plugin.javadoc.version>3.12.0</plugin.javadoc.version>
+        <!-- Java 21 LTS: el padre de Spring Boot lo traduce a maven.compiler.release. -->
+        <java.version>21</java.version>
     </properties>
 
+    <!-- Unicas dependencias permitidas (CLAUDE.md, seccion 3). -->
     <dependencies>
-        <!-- junit-jupiter agrupa api, params y engine en un solo artefacto. -->
+        <!-- API REST: Spring MVC, Tomcat embebido y Jackson para JSON. -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+
+        <!-- Pruebas: JUnit Jupiter, Spring Test y MockMvc para probar los endpoints. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -47,39 +50,22 @@
     <build>
         <finalName>simulador-planta</finalName>
         <plugins>
+            <!-- Empaqueta un jar ejecutable con sus dependencias: java -jar target/simulador-planta.jar.
+                 La clase principal se declara porque, mientras exista la App de Swing (hasta el
+                 commit 3 de la seccion 17), hay dos metodos main en el proyecto. -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${plugin.compiler.version}</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${plugin.surefire.version}</version>
-            </plugin>
-
-            <!-- Genera un jar ejecutable: no hay dependencias de runtime, asi que
-                 basta con declarar la clase principal en el manifiesto. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${plugin.jar.version}</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>edu.unal.planta.App</mainClass>
-                        </manifest>
-                    </archive>
+                    <mainClass>edu.unal.planta.AplicacionPlanta</mainClass>
                 </configuration>
             </plugin>
 
             <!-- Documentacion en linea de codigo exigida por el enunciado:
-                 mvn javadoc:javadoc deja el resultado en target/reports/apidocs. -->
+                 ./mvnw clean javadoc:javadoc deja el resultado en target/reports/apidocs. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${plugin.javadoc.version}</version>
                 <configuration>
                     <locale>es</locale>
                     <encoding>UTF-8</encoding>

@@ -562,8 +562,8 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 
 | Etapa | Commits | Contenido | Estado |
 |---|---|---|---|
-| A | 1 | Decisión y diseño | **En revisión** (2026-11-05) |
-| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | Pendiente |
+| A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
+| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | En curso: commit 2 en revisión |
 | C | 9–10 | `ArbolNario` y `ArbolSegmentos` | Pendiente |
 | D | 11–18 | Modelo de la Entrega 2 | Pendiente |
 | E | 19–23 | API de la Entrega 2 | Pendiente |

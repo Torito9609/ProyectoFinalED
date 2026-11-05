@@ -154,6 +154,14 @@ Convención de la columna **Autoría**:
 | `CLAUDE.md` (secciones 1, 3, 4, 9–13, 15, 16 y 17) | Mixto | **Decisiones del equipo:** migrar a Spring Boot, frontend aparte, árboles, overhaul con técnicos fijos del fabricante, fallo ponderado y modo manual. La IA propuso las estructuras y las alternativas descartadas, que el equipo aprobó, y redactó el texto |
 | `docs/BITACORA_DESARROLLO.md` | IA | Entrada de la etapa A, desviaciones y control de etapas |
 
+### Entrega 2 — Commit 2: proyecto Spring Boot
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `pom.xml` | IA | Padre de Spring Boot 4.1.2 (última estable, verificada en Maven Central), los dos starters permitidos por la sección 3 y el plugin de empaquetado |
+| `AplicacionPlanta.java` | IA | Punto de entrada de Spring |
+| `test/.../AplicacionPlantaTest.java` | IA | Prueba de humo: el contexto carga |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
