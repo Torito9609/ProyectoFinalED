@@ -36,6 +36,40 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 2 — 2026-11-05 — El proyecto ya es Spring Boot
+**Responsable:** Kevin, con Claude Code
+
+### Hecho
+- `pom.xml` hereda de `spring-boot-starter-parent` **4.1.2**, la última estable en Maven Central el 5 de noviembre.
+  Solo usa `spring-boot-starter-webmvc` y `spring-boot-starter-webmvc-test`. JUnit ya no se declara: llega por el
+  starter de pruebas.
+- Se agregó `AplicacionPlanta` (punto de entrada de Spring) con una prueba de humo de que el contexto carga.
+- La interfaz Swing **sigue en el código**: se retira en el commit 3.
+
+### Decisiones
+- En Spring Boot 4 los starters cambiaron de nombre: `spring-boot-starter-webmvc` reemplaza a
+  `spring-boot-starter-web`, y MockMvc viene en `spring-boot-starter-webmvc-test`.
+- Mientras convivan dos `main` (el de `App` y el de `AplicacionPlanta`), la clase principal se declara en
+  `spring-boot-maven-plugin`. El commit 3 quita esa línea.
+
+### Verificación
+- `./mvnw clean test`: **63 pruebas**, que son las 62 de antes más la nueva.
+  Surefire muestra "0 pruebas" para `ColaCircularTest` y `ColaPrioridadOrdenesTest` porque solo contienen clases
+  `@Nested`, que reporta aparte. **No es una pérdida:** se comprobó sumando el atributo `tests` de los
+  `TEST-*.xml` antes y después del cambio.
+- `./mvnw clean javadoc:javadoc`: sin advertencias.
+- `java -jar target/simulador-planta.jar` arranca Tomcat en ~1,4 s. Responde 404 porque todavía no hay endpoints.
+
+### Incidencias
+- Un `git push` falló con un error de permisos y funcionó al reintentarlo. Fue un fallo pasajero de conexión,
+  no de credenciales.
+
+### Pendiente
+- **Siguiente paso: commit 3**, retirar la interfaz Swing. El plan detallado se presentó al equipo, pero **aún no está
+  aprobado**. Está en `docs/sesiones/2026-11-05.md`, sección "Dónde quedamos".
+
+---
+
 ## Entrega 2, etapa A — 2026-11-05 — Migración a Spring Boot y diseño con árboles
 **Responsable:** Kevin (decisiones del equipo), redacción con Claude Code
 
@@ -563,7 +597,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | Etapa | Commits | Contenido | Estado |
 |---|---|---|---|
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
-| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | En curso: commit 2 en revisión |
+| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | En curso: commit 2 hecho (`c3b2b55`); **siguiente: commit 3** |
 | C | 9–10 | `ArbolNario` y `ArbolSegmentos` | Pendiente |
 | D | 11–18 | Modelo de la Entrega 2 | Pendiente |
 | E | 19–23 | API de la Entrega 2 | Pendiente |

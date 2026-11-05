@@ -5,7 +5,7 @@ Equipo: **Cristian Robayo** y **Kevin Toro**.
 
 Este documento es la fuente de verdad del diseño. Cualquier cambio de decisión se registra aquí antes de implementarlo.
 
-**Estado:** la Entrega 1 está cerrada (versión Swing, etiqueta de Git `entrega-1`). La Entrega 2 está en curso en la rama `entrega-2`: el proyecto migra a **Spring Boot** y este repositorio queda como **backend**. El frontend vive en un repositorio aparte. El diseño de la Entrega 2 está en la sección 16 y su plan de commits en la sección 17.
+**Estado:** la Entrega 1 está cerrada (versión Swing, etiqueta de Git `entrega-1`). La Entrega 2 está en curso en la rama `entrega-2`: el proyecto migra a **Spring Boot** y este repositorio queda como **backend**. El frontend vive en un repositorio aparte. El diseño de la Entrega 2 está en la sección 16 y su plan de commits en la sección 17. **El avance (qué commit sigue) se lleva en la tabla "Control de etapas" de `docs/BITACORA_DESARROLLO.md`**, y el resumen de cada sesión de trabajo en `docs/sesiones/`.
 
 ---
 
