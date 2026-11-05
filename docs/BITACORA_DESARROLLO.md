@@ -36,6 +36,47 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, etapa A — 2026-11-05 — Migración a Spring Boot y diseño con árboles
+**Responsable:** Kevin (decisiones del equipo), redacción con Claude Code
+
+### Hecho
+- Se registró en `CLAUDE.md` el diseño completo de la Entrega 2 (sección 16) y su plan de 25 commits pequeños (sección 17).
+- Se actualizaron las secciones 1, 3, 4, 9, 10, 11, 12, 13 y 15 para reflejar la migración.
+- Se creó la rama `entrega-2`.
+
+### Decisiones
+- **Migrar a Spring Boot y separar el frontend en otro repositorio.** En la Entrega 1 quedó claro que el profesor
+  evalúa las estructuras de datos: su justificación, su uso y su implementación. El framework no suma ni resta, pero
+  una interfaz atractiva sí suma. Una interfaz web permite íconos, animaciones y dibujar árboles con mucho menos
+  esfuerzo que Swing. El modelo no cambia porque nunca dependió de la vista (regla 1 de la sección 4).
+  Se consideró `HttpServer` del JDK sin dependencias, y se descartó: habría que escribir a mano el JSON y el enrutamiento.
+- **La concurrencia ahora existe y se controla con un único dueño sincronizado.** Tomcat usa varios hilos, así que
+  `ServicioSimulacion` serializa todo acceso al modelo. Reemplaza la garantía del EDT de Swing.
+- **Estructuras de la Entrega 2:**
+  - árbol n-ario propio para la jerarquía de compañías;
+  - `TreeSet` para el ranking por puntaje de fallos;
+  - `PriorityQueue` con secuencia para las solicitudes de overhaul;
+  - `ArrayDeque` para los técnicos del fabricante;
+  - árbol de segmentos propio para el historial.
+  Las justificaciones y las alternativas descartadas están en la sección 16.
+- **El ranking se actualiza cuando hay un evento, no cada cierto tiempo:** eliminar → sumar → insertar, solo al
+  clasificar un fallo, al terminar un overhaul o con un reemplazo. Reconstruir el orden en cada tick costaría
+  O(n log n) aunque no haya fallos nuevos.
+- **Fallo ponderado por severidad:** P1 = 3, P2 = 2, P3 = 1, P4 = 0.
+- **Técnicos del fabricante fijos y compartidos**, no creados bajo demanda: sin escasez no se forma cola y el
+  montículo no decide nada.
+- **El árbol de segmentos se justifica por el máximo en un rango, no por la suma:** como los fallos solo se agregan en
+  el tick actual, las sumas prefijas resolverían los totales en O(1).
+- **Modo manual que se alterna en vivo.** El usuario dispara operaciones del tipo de dato, nunca elige elementos.
+
+### Pendiente
+- Crear la etiqueta `entrega-1` sobre `main` antes del commit 2 (requiere permiso del equipo).
+- Cristian: valores de las compañías, del overhaul y de los umbrales (sección 16, "Valores iniciales").
+- Definir en el commit 16 qué pasa con una orden P4 pendiente de una máquina que entra en overhaul.
+- Confirmar la fecha de presentación de la Entrega 2.
+
+---
+
 ## Verificación — 2026-10-18 — Prueba de clonación limpia
 
 Antes de pasarle el repositorio a Cristian se clonó desde GitHub en una carpeta vacía y se
@@ -495,6 +536,9 @@ todavía no se han aprobado.
 | 2026-10-18 | 7, paso 1 | Acotar el factor de desgaste a 2 en la fórmula de probabilidad de fallo | Descubierto al medir: con el paso 5 anterior, la fórmula se vuelve un lazo de realimentación. El preventivo es la prioridad más baja, así que puede quedar esperando; entonces el contador crece, la máquina falla más, la cola se llena de trabajo correctivo y el preventivo se aleja más. Sin techo, la planta se saturaba (promedio de 8,2 órdenes en cola) | **Implementada** |
 | 2026-10-18 | 6, campo «máquina» de `OrdenTrabajo` | La orden guarda `indiceMaquina` y `etiquetaMaquina` en vez de una referencia a `Maquina` | Recupera la máquina del inventario en O(1), evita la referencia circular máquina↔orden y permite que la orden sea inmutable | **Implementada**, pendiente de revisión del equipo |
 | 2026-10-26 | 9, «Inyectar fallo» | Rechazar la inyección en una máquina con anomalía o alarma activa: el modelo lo registra en la bitácora y el botón se deshabilita | Al probarlo se vio que `Maquina` guarda una sola anomalía y la inyección la **reemplazaba** sin comparar severidades: una severa seguida de una leve salía como P3; una severa inyectada sobre una máquina en alarma cambiaba la lectura pero nunca se clasificaba (la orden seguía en P3); y una inyectada durante el mantenimiento se borraba al terminar la reparación. El generador aleatorio ya respetaba esta regla; solo la inyección del operador la rompía. Soportar varios fallos por máquina queda para otra entrega | **Implementada**, aprobada por Kevin |
+| 2026-11-05 | 3 y 4 (stack y arquitectura) | Migrar de Swing a Spring Boot; el frontend pasa a otro repositorio; las dependencias permitidas pasan a ser los starters web MVC y de pruebas | Una interfaz web hace más atractivo el proyecto, y eso suma en la evaluación; el framework es neutral. El modelo no cambia | **Aprobada** por el equipo; `CLAUDE.md` ya actualizado |
+| 2026-11-05 | 4, regla 4 (reloj en el EDT) | El reloj pasa a ser `@Scheduled`, y todo acceso al modelo se serializa en `ServicioSimulacion` con métodos `synchronized` | Con Tomcat hay varios hilos; el EDT ya no existe | **Aprobada**; `CLAUDE.md` ya actualizado |
+| 2026-11-05 | 5 y 15 (`PriorityQueue` prohibida) | Permitir `PriorityQueue` solo para las solicitudes de overhaul, con número de secuencia como desempate | Los montículos ya se vieron en el curso, y la secuencia resuelve el orden de llegada entre empates | **Aprobada**; `CLAUDE.md` ya actualizado |
 | 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 
 ---
@@ -513,3 +557,14 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | 4 | Interfaz Swing: los paneles de las estructuras | **Terminada** (2026-10-18) |
 | 5 | Controlador, reloj e integración | **Terminada** (2026-10-18) |
 | 6 | Manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video | Pendiente |
+
+**Entrega 2:** el control se lleva por commits, según la sección 17 de `CLAUDE.md`.
+
+| Etapa | Commits | Contenido | Estado |
+|---|---|---|---|
+| A | 1 | Decisión y diseño | **En revisión** (2026-11-05) |
+| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | Pendiente |
+| C | 9–10 | `ArbolNario` y `ArbolSegmentos` | Pendiente |
+| D | 11–18 | Modelo de la Entrega 2 | Pendiente |
+| E | 19–23 | API de la Entrega 2 | Pendiente |
+| F | 24–25 | Documentación | Pendiente |

@@ -147,6 +147,13 @@ Convención de la columna **Autoría**:
 | `vista/PanelControlesMaquina.java` (botón Inyectar) | Mixto | **Decisión de Kevin** de restringirlo también desde la interfaz; implementada por IA |
 | `test/.../PlantaTest.java` | IA | Dos pruebas: una severa no se pierde detrás de una leve, y una máquina con alarma no acepta otro fallo |
 
+### Entrega 2 — Commit 1: decisión y diseño (5 de noviembre)
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `CLAUDE.md` (secciones 1, 3, 4, 9–13, 15, 16 y 17) | Mixto | **Decisiones del equipo:** migrar a Spring Boot, frontend aparte, árboles, overhaul con técnicos fijos del fabricante, fallo ponderado y modo manual. La IA propuso las estructuras y las alternativas descartadas, que el equipo aprobó, y redactó el texto |
+| `docs/BITACORA_DESARROLLO.md` | IA | Entrada de la etapa A, desviaciones y control de etapas |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
@@ -155,7 +162,7 @@ Convención de la columna **Autoría**:
 
 | Componente | Generado con IA | Observación |
 |---|---|---|
-| Documento de diseño (`CLAUDE.md`) | 0 % | Escrito por el equipo |
+| Documento de diseño (`CLAUDE.md`) | 0 % en la Entrega 1; mixto desde la Entrega 2 | Las secciones de la Entrega 2 las redactó la IA sobre decisiones del equipo |
 | Esqueleto del proyecto (etapa 0) | ~95 % | Configuración de Maven y documentación de paquetes |
 | Estructuras de datos y sus pruebas (etapa 1) | ~95 % | Generadas contra una especificación escrita por el equipo, que define capacidad, punteros, complejidades y casos de prueba obligatorios |
 

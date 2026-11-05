@@ -5,6 +5,8 @@ Equipo: **Cristian Robayo** y **Kevin Toro**.
 
 Este documento es la fuente de verdad del diseño. Cualquier cambio de decisión se registra aquí antes de implementarlo.
 
+**Estado:** la Entrega 1 está cerrada (versión Swing, etiqueta de Git `entrega-1`). La Entrega 2 está en curso en la rama `entrega-2`: el proyecto migra a **Spring Boot** y este repositorio queda como **backend**. El frontend vive en un repositorio aparte. El diseño de la Entrega 2 está en la sección 16 y su plan de commits en la sección 17.
+
 ---
 
 ## 1. Contexto y requisitos de la Entrega 1
@@ -25,6 +27,14 @@ Lo que evalúa el profesor: **el funcionamiento y la claridad de la explicación
 
 El proyecto es incremental: las entregas 2 y 3 añadirán estructuras sobre esta base. Esta entrega se limita a estructuras **lineales**.
 
+### Entrega 2
+
+**Presentación:** fecha por definir.
+
+- Temas vistos en el curso que se pueden usar: árboles (n-arios, de búsqueda, balanceados, B), montículos, conjuntos y árboles de segmentos. Se siguen permitiendo las estructuras de la librería de Java.
+- Lo que evalúa el profesor: que **las estructuras de datos queden muy claras**, es decir por qué se eligió cada una, cómo se usa y cómo está implementada. El framework no suma ni resta. Que el proyecto se vea atractivo **sí suma**.
+- Decisión del 5 de noviembre de 2026: **migrar a Spring Boot** y separar el frontend en otro repositorio. Así la interfaz puede ser web, más visual e interactiva, y el modelo y las estructuras no cambian. Ver la sección 16 y `docs/BITACORA_DESARROLLO.md`.
+
 ---
 
 ## 2. Qué hace el programa
@@ -42,33 +52,45 @@ Simula una planta con **6 máquinas** que reportan lecturas de sensores. El sist
 ## 3. Stack técnico
 
 - **Java 21** (LTS), proyecto **Maven**, IDE **IntelliJ IDEA**.
-- Interfaz: **Swing**.
-- Pruebas: **JUnit 5**. Es la única dependencia externa permitida.
-- Sin frameworks adicionales.
+- **Desde la Entrega 2: Spring Boot**, en la última versión estable de la línea 4.x, que se fija en el `pom.xml`.
+  Las únicas dependencias permitidas son el starter **web MVC**, que trae Tomcat y Jackson para JSON, y el starter
+  **de pruebas**, que trae JUnit Jupiter y MockMvc. No se agregan bases de datos, seguridad, Lombok ni otros starters.
+- Interfaz: un frontend web en un **repositorio aparte**, que consume la API REST de este repositorio.
+  La interfaz Swing de la Entrega 1 se retira del código y queda en la etiqueta `entrega-1`.
+- Pruebas: JUnit para las estructuras y el modelo; MockMvc para los endpoints.
 
 ---
 
-## 4. Arquitectura: MVC
+## 4. Arquitectura: MVC con la vista en otro repositorio
 
 Paquete raíz: `edu.unal.planta`
 
 ```
 edu.unal.planta
-├── App                      → punto de entrada: crea modelo, vista y controlador
-├── estructuras/             → ColaCircular (propia). Genérica, sin dependencias del dominio
-├── modelo/                  → dominio y simulación. NO importa nada de javax.swing ni java.awt
+├── AplicacionPlanta         → punto de entrada de Spring Boot
+├── estructuras/             → estructuras propias, genéricas y sin dependencias del dominio
+│                              (ColaCircular; en la Entrega 2, ArbolNario y ArbolSegmentos)
+├── modelo/                  → dominio y simulación. Java puro: NO importa Spring, javax.swing ni java.awt
 │   └── comandos/            → acciones del operador que se pueden deshacer
-├── vista/                   → ventana principal y un panel por estructura
-└── controlador/             → temporizador, botones y acciones del operador
+├── servicio/                → ServicioSimulacion: dueño único del modelo, reloj y acceso serializado
+└── api/                     → controladores REST (@RestController) y manejo de errores
+    └── dto/                 → records inmutables que viajan como JSON
 ```
 
+La **vista** es el frontend web, en otro repositorio. Los **controladores** son las clases de `api/`, que reciben
+las acciones del usuario y llaman al servicio.
+
+La Entrega 1 tenía `App`, `vista/` (Swing) y `controlador/` (`javax.swing.Timer`). Se conservan en la etiqueta `entrega-1`.
+
 ### Reglas de la arquitectura (no se negocian)
-1. **El modelo no conoce la vista.** Cuando cambia, notifica a observadores mediante una interfaz propia del modelo, por ejemplo `ObservadorPlanta`. Así se podría reemplazar Swing por consola sin tocar el modelo.
-2. **La vista solo lee el modelo y dibuja.** No modifica el estado.
-3. **Todas las acciones del usuario pasan por el controlador**, que llama métodos del modelo.
-4. **El reloj de la simulación es `javax.swing.Timer`.** Se ejecuta en el hilo de eventos de Swing (EDT), así que no hay concurrencia ni condiciones de carrera. No usar `Thread` ni `java.util.Timer`.
-5. **Aleatoriedad reproducible:** un único `Random` con semilla configurable. La misma semilla debe producir la misma simulación, lo que permite repetir la demo y el video.
-6. La vista accede a las estructuras en **solo lectura**: recibe copias o vistas no modificables, nunca la estructura original.
+1. **El modelo no conoce la vista ni el framework.** `modelo/` y `estructuras/` no importan nada de Spring. Por eso la migración no cambia el modelo y sus pruebas siguen pasando tal cual. `ObservadorPlanta` se conserva en el modelo, aunque la API no lo necesita: consulta el estado cuando se lo piden.
+2. **La API solo expone DTOs.** Ningún endpoint devuelve un objeto del modelo. Los DTOs son `record` inmutables que se construyen copiando el estado, igual que en la Entrega 1 la vista recibía copias o vistas no modificables.
+3. **Todas las acciones del usuario pasan por un endpoint**, que llama al servicio, y el servicio llama al modelo. Los controladores REST no tienen lógica de simulación.
+4. **Un único dueño del modelo y acceso serializado.** Tomcat atiende cada petición en un hilo distinto y el reloj corre en otro, así que **sí hay concurrencia**. `ServicioSimulacion` es el único que guarda el modelo, y todos sus métodos públicos son `synchronized`, incluido el tick: una petición nunca ve un tick a medias, y dos acciones nunca se mezclan. Es la misma garantía que daba el EDT de Swing en la Entrega 1. Los DTOs se construyen **dentro** del método sincronizado, para que la foto sea consistente.
+5. **El reloj es un `@Scheduled`** con un intervalo fijo configurado en `application.properties`. En cada disparo llama al tick del servicio solo si la simulación está en ejecución. No se crean hilos a mano.
+6. **Aleatoriedad reproducible:** una semilla configurable. Con varias compañías hay una **semilla maestra**, y de ella se derivan las semillas de cada compañía de forma determinista. La misma semilla produce la misma simulación.
+7. **El frontend consulta por sondeo** (`GET` periódico del estado). No se usan WebSockets ni SSE en esta entrega.
+8. El contrato de la API se documenta en `docs/API.md`, que es lo que lee el repositorio del frontend.
 
 ---
 
@@ -193,7 +215,12 @@ Patrón **Comando**: cada acción deshacible guarda lo necesario para revertirse
 
 ---
 
-## 9. Interfaz (Swing)
+## 9. Interfaz
+
+> **Desde la Entrega 2, la interfaz es el frontend web del otro repositorio.** El diagrama de abajo es la
+> distribución de la ventana Swing de la Entrega 1 (etiqueta `entrega-1`). Lo que se conserva como requisito para
+> el frontend es la lista "Qué muestra cada panel": cada estructura debe seguir viéndose con su comportamiento real.
+> Las vistas nuevas de la Entrega 2 están en la sección 16.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
@@ -243,11 +270,24 @@ Qué muestra cada panel:
 - Gráfica de las lecturas de la cola circular.
 - Control de velocidad de la simulación.
 
-**Fuera de alcance:** conexión a PLC reales, persistencia en archivos o base de datos, estructuras no lineales.
+**Fuera de alcance (Entrega 1):** conexión a PLC reales, persistencia en archivos o base de datos, estructuras no lineales.
+
+**Mínimo obligatorio (Entrega 2, backend):**
+- Paridad con la Entrega 1 a través de la API REST: control de la simulación, estado de cada estructura y acciones del operador.
+- Varias compañías en un árbol n-ario, con totales por rama.
+- Ranking de máquinas por puntaje de fallos, por compañía y global, con su recomendación (overhaul o reemplazo).
+- Solicitudes de overhaul atendidas por técnicos del fabricante, y reemplazo de máquinas.
+- Historial de fallos consultable por ventana de ticks (árbol de segmentos).
+- Modo manual que se puede activar y desactivar con la simulación en marcha.
+- Pruebas JUnit de cada estructura nueva y del modelo; pruebas MockMvc de los endpoints.
+
+**Fuera de alcance (Entrega 2):** autenticación de usuarios (el "superusuario" es una vista, no un login), persistencia, WebSockets, despliegue en la nube.
 
 ---
 
 ## 11. Plan de trabajo
+
+> Plan de la **Entrega 1**, ya cumplido. El plan de la Entrega 2 son los commits de la sección 17.
 
 | Día | Kevin | Cristian |
 |---|---|---|
@@ -270,6 +310,14 @@ Qué muestra cada panel:
 - [ ] `docs/USO_IA.md`: herramientas usadas, en qué partes y el porcentaje estimado
 - [ ] Video de máximo 5 minutos (enlace en el README)
 
+**Entrega 2 (este repositorio):**
+- [ ] Javadoc en todas las clases y métodos públicos nuevos, con la complejidad de cada operación en las estructuras
+- [ ] `docs/API.md`: el contrato de la API para el frontend
+- [ ] `docs/DOCUMENTO_EXPLICATIVO.md`: una sección nueva con el por qué y el cómo de cada estructura de la Entrega 2. **Es lo que más evalúa el profesor**
+- [ ] `README.md`: cómo ejecutar el backend y el enlace al repositorio del frontend
+- [ ] `docs/USO_IA.md` actualizado
+- [ ] El manual de usuario y el video dependen del frontend: se coordinan con ese repositorio
+
 ---
 
 ## 13. Convenciones de código
@@ -277,7 +325,8 @@ Qué muestra cada panel:
 - Identificadores en español, sin tildes ni ñ (`Maquina`, `ColaCircular`, `tamano`). Comentarios y Javadoc en español, con tildes.
 - Javadoc obligatorio en clases y métodos públicos. En las estructuras, indicar la **complejidad** de cada operación.
 - Clases pequeñas con una sola responsabilidad.
-- El modelo nunca importa `javax.swing` ni `java.awt`.
+- El modelo y las estructuras nunca importan `javax.swing`, `java.awt` ni `org.springframework`.
+- Rutas de la API en español, sin tildes y en minúscula con guiones (`/api/companias/{id}/clasificar-siguiente`). Los campos JSON van en camelCase y en español.
 - Constantes y parámetros de simulación centralizados, sin números sueltos en la lógica.
 
 ---
@@ -292,12 +341,152 @@ El enunciado exige declarar el porcentaje de código generado con IA, así que s
 
 ## 15. Instrucciones para el asistente (Claude Code)
 
-- Trabajar **por etapas, una a la vez**, siguiendo el orden de la sección 11. Al terminar cada etapa: resumir qué se hizo y **esperar confirmación** antes de seguir. Antes de empezar una etapa, contar qué se va a hacer.
+- Trabajar **por etapas, una a la vez**, siguiendo el orden de la sección 11 (Entrega 1) o de la sección 17 (Entrega 2). Al terminar cada etapa: resumir qué se hizo y **esperar confirmación** antes de seguir. Antes de empezar una etapa, contar qué se va a hacer.
+- **Commits pequeños y revisables (Entrega 2):** un commit de la sección 17 a la vez. Antes de cada commit: ejecutar `./mvnw test`, resumir el diff, pedir permiso y esperar la revisión manual del equipo. No juntar varios commits del plan en uno.
 - **Mantenerlo simple.** Las pruebas cubren los casos que exige este documento, no todos los casos imaginables: unas pocas pruebas claras por estructura, sin casos defensivos extra salvo que el equipo los pida. Preferir la solución directa antes que la extensible. Antes de agregar clases, capas, interfaces o métodos que este documento no pida, **proponerlo** en vez de implementarlo. El criterio es que el equipo pueda explicar todo el código en clase.
 - **Explicar cada clase que se cree:** su responsabilidad, la estructura que usa y la complejidad de sus operaciones. El equipo debe poder defender cada línea ante el profesor.
-- Respetar las decisiones de la sección 5. **No usar** `PriorityQueue`, `Stack`, `LinkedList` ni `Vector`. No proponer heaps ni otras estructuras no lineales en esta entrega.
-- No agregar dependencias distintas de JUnit 5.
+- Respetar las decisiones de las secciones 5 y 16. **No usar** `Stack`, `LinkedList` ni `Vector`. `PriorityQueue` se usa **solo** donde lo dice la sección 16 (solicitudes de overhaul, con secuencia como desempate); la cola P1–P4 sigue siendo la de la sección 5.
+- No agregar dependencias distintas de las de la sección 3 (Spring Boot web MVC y el starter de pruebas).
+- El modelo y las estructuras no importan Spring. Si una tarea parece exigirlo, la lógica va en `servicio/` o en `api/`.
 - Si una decisión de este documento resulta inviable o contradictoria, **decirlo y proponer el cambio antes de implementarlo**, y actualizar este documento.
 - Ejecutar las pruebas antes de declarar terminada una etapa.
 - **No hacer `commit` ni `push` sin pedir permiso.**
 - Al cerrar cada etapa, actualizar `docs/USO_IA.md` con los archivos generados.
+
+---
+
+## 16. Entrega 2: diseño
+
+### Qué se agrega
+Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y un **superusuario** que las ve todas e interactúa con cada una. Lo que gana el superusuario:
+- un dashboard propio;
+- un ranking de máquinas por fallos;
+- una recomendación de **overhaul** o **reemplazo** para cada máquina;
+- un **modo manual** para operar la simulación a mano.
+
+### Estructuras de la Entrega 2
+
+| Estructura | Implementación | Uso en el proyecto | Justificación |
+|---|---|---|---|
+| Árbol n-ario | **`ArbolNario<T>` propio** (cada nodo guarda sus hijos en un `ArrayList`) | Jerarquía organización → compañías → máquinas | Es una jerarquía real. El tick global es un **preorden**, y los totales por rama del dashboard son un **postorden**: cada nodo suma lo de sus hijos. Agregar un hijo cuesta O(1) amortizado y los recorridos O(n). Java no trae un árbol n-ario genérico; por eso es propio, igual que `ColaCircular` en la Entrega 1. |
+| Árbol de búsqueda balanceado | `TreeSet<Maquina>` (árbol rojo-negro) envuelto en `RankingFallos` | Ranking por puntaje de fallos: uno por compañía y uno global | El orden siempre está listo. Insertar y eliminar cuestan O(log n), y el recorrido en orden da el ranking en O(n). `tailSet`/`headSet` dan la consulta por rango "puntaje ≥ umbral", que son las candidatas a overhaul. La altura queda acotada a 2·log2(n+1) aunque las máquinas lleguen ordenadas. |
+| Montículo | `PriorityQueue<SolicitudOverhaul>` (montículo binario) | Solicitudes de overhaul aprobadas, de todas las compañías | Los técnicos del fabricante son pocos y compartidos, así que cuando se acumulan solicitudes debe salir la máquina en peor estado. Insertar y extraer cuestan O(log n). El comparador desempata por **número de secuencia**, y eso garantiza el orden de llegada entre empates, que era la razón para descartarlo en la Entrega 1. |
+| Cola FIFO | `ArrayDeque<TecnicoExterno>` | Técnicos del fabricante libres | Mismo patrón que los técnicos internos: al terminar, el técnico se encola al final. |
+| Árbol de segmentos | **`ArbolSegmentos` propio** (arreglo de tamaño 2·potencia de 2; cada nodo guarda la suma y el máximo) | Historial de puntaje de fallos por tick: uno por compañía y uno global | Responde "total y **pico** de fallos entre el tick a y el b" en O(log n), con una ventana que elige el usuario. Actualizar una posición cuesta O(log n). El horizonte de ticks es fijo y se configura. |
+
+### Alternativas descartadas (para responder preguntas)
+- **Ordenar el inventario cada vez que se pide el ranking:** cuesta O(n log n) por consulta, y el frontend consulta en cada sondeo. El `TreeSet` lo cambia por O(log n) por fallo. El argumento es de **lecturas contra escrituras**: hay muchas más consultas que fallos.
+- **AVL propio:** daría lo mismo que `TreeSet`, y como la librería está permitida, el rojo-negro es suficiente.
+- **Montículo para el ranking:** da la peor máquina en O(1), pero no da la lista ordenada, y `PriorityQueue` no permite cambiar una clave en su lugar.
+- **Sumas prefijas en vez del árbol de segmentos:** los fallos siempre se agregan en el tick actual, nunca en el pasado. Para **sumas** en un rango bastaría un arreglo de sumas prefijas: agregar O(1) y consultar O(1). **El árbol de segmentos se justifica por el máximo en un rango arbitrario**, que las sumas prefijas no pueden responder. Si alguna vez solo se pidieran totales, sobraría.
+- **Árbol B:** está pensado para minimizar los accesos a disco con nodos grandes. Aquí todo está en memoria y hay pocas máquinas.
+- **Técnicos del fabricante creados bajo demanda:** si siempre hay un técnico disponible, la cola nunca se forma y el montículo no tiene nada que decidir. Un número fijo de técnicos, compartidos entre compañías, es lo realista.
+
+### Puntaje de fallos y recomendación
+- `Prioridad` gana un **peso**: P1 = 3, P2 = 2, P3 = 1 y P4 = 0, porque un preventivo no es un fallo.
+- `Maquina` gana dos campos: `puntajeFallos`, ponderado y acumulado desde el último overhaul, y `numeroOverhauls`.
+- `Recomendacion` (enum `NINGUNA` / `OVERHAUL` / `REEMPLAZO`) es un **dato derivado**: se calcula, no se guarda.
+  - `puntajeFallos ≥ umbralOverhaul` → OVERHAUL.
+  - `numeroOverhauls ≥ maximoOverhauls` y además supera el umbral → REEMPLAZO.
+- **El puntaje solo cambia en un lugar:** `RankingFallos.sumarFallo(maquina, peso)` hace **eliminar → sumar → insertar**, en el ranking de la compañía y en el global. Si la clave cambiara con la máquina dentro del `TreeSet`, el árbol quedaría desordenado y `remove` dejaría de encontrarla, sin lanzar ningún error. **Esta trampa debe aparecer en el documento explicativo.**
+- **El ranking se actualiza cuando hay un evento, no cada cierto tiempo:** en el paso 4 del tick, cuando se clasifica un evento como P1–P3, ya sea en automático o en manual. También se reinserta al terminar un overhaul (el puntaje vuelve a 0), y con un reemplazo la máquina vieja sale y la nueva entra.
+- Las etiquetas se repiten entre compañías. El comparador del ranking global ordena por puntaje descendente, luego por compañía y luego por etiqueta. El de cada compañía, por puntaje descendente y luego por etiqueta. Sin el desempate, el `TreeSet` trataría dos máquinas distintas como la misma.
+
+### Overhaul y reemplazo
+1. Al clasificar un evento se actualiza el ranking, y la recomendación aparece en la API. **La recomendación no asigna a nadie.**
+2. El superusuario o la compañía **aprueba** el overhaul. La solicitud entra al montículo con el puntaje de ese momento **congelado** como clave. Mientras espera, la máquina sigue operando, y su clave no cambia, por la misma trampa del `TreeSet`. Una máquina con una solicitud pendiente no puede tener otra.
+3. En cada tick, mientras haya técnicos del fabricante libres, se **mira la cima** del montículo. Si la máquina está libre, se extrae la solicitud, se le asigna un técnico y la máquina pasa al estado nuevo **`EN_OVERHAUL`**. "Libre" significa sin alarma activa, sin orden correctiva pendiente y fuera de mantenimiento.
+   Si la máquina de la cima **no** está libre, la asignación espera a un tick siguiente. No se salta a la segunda solicitud, porque eso violaría el tipo abstracto de datos.
+4. Una máquina `EN_OVERHAUL` no lee sensores, no falla y no genera preventivos. Al terminar:
+   - el puntaje vuelve a 0 y `numeroOverhauls` sube en 1;
+   - se reinician los ticks desde el mantenimiento, porque el overhaul **es** un servicio completo;
+   - la máquina se reinserta en los rankings y vuelve a OPERANDO;
+   - el técnico vuelve al final de su cola.
+5. **Reemplazo:** se aprueba sobre una máquina con recomendación REEMPLAZO que no esté `EN_OVERHAUL`. La máquina nueva usa el mismo tipo y la misma etiqueta, con `numeroOverhauls` y puntaje en 0. Entra en el **mismo índice** del `ArrayList` del inventario (`set`, O(1)), así se respeta la regla de que las máquinas no se eliminan, y se actualizan la jerarquía y los dos rankings. Es inmediato: no usa técnicos.
+- **Pendiente de definir en el commit 16:** qué pasa con una orden P4 pendiente de una máquina que entra en overhaul. Se propone antes de implementarlo.
+
+### Orden de un tick de la organización (`Organizacion.tick()`)
+1. Recorrer las compañías en **preorden** y ejecutar `Planta.tick()` en cada una (pasos 1–7 de la sección 7; el paso 4 actualiza los rankings).
+2. **Avanzar overhauls:** a cada técnico del fabricante ocupado se le resta un tick, y se cierran los que terminan.
+3. **Asignar overhauls** con la regla de la cima (solo en modo automático).
+4. Registrar en los árboles de segmentos (el de la compañía y el global) el puntaje sumado en este tick.
+5. Incrementar el tick de la organización.
+
+### Modo manual
+- Se puede **activar y desactivar con la simulación en marcha** (`AUTOMATICO` ↔ `MANUAL`). El tiempo sigue corriendo: las lecturas, la detección y el avance de los trabajos siguen siendo automáticos.
+- En modo manual se apagan los pasos automáticos que el usuario quiere hacer a mano:
+  - el **paso 1** (fallos aleatorios): los fallos se inyectan;
+  - el **paso 4** (clasificar): un botón para *clasificar el siguiente evento*;
+  - el **paso 6** (asignar): un botón para *asignar la siguiente orden*;
+  - la **asignación de overhauls**: un botón para *asignar el siguiente overhaul*.
+- **El usuario dispara operaciones; no elige elementos.** "Asignar a mano" no significa escoger cualquier orden o cualquier técnico. Eso sería sacar un elemento que no es el siguiente de la cola con prioridad, o saltarse la FIFO de técnicos, y viola el tipo abstracto de datos. Es el mismo argumento de la sección 8. El botón ejecuta la operación del tipo de dato (`extraer`, `desencolar`), y la estructura decide qué sale.
+
+### Valores iniciales (PROVISIONALES — los define Cristian)
+- **3 compañías**, cada una con las 6 máquinas de la sección 6 y 2 técnicos internos, con semillas derivadas de la maestra.
+- **2 técnicos del fabricante**, compartidos. El overhaul dura **30 ticks**.
+- `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 2. Horizonte del historial: 2000 ticks.
+- Todos estos valores van en `ConfiguracionPlanta` (o en una `ConfiguracionOrganizacion` si crece demasiado; se propone antes de crearla).
+
+### Superficie de la API (borrador; el contrato final está en `docs/API.md`)
+- **Simulación:** `GET /api/simulacion`; `POST /api/simulacion/iniciar | pausar | paso | reiniciar`; `PUT /api/simulacion/modo`.
+- **Organización:** `GET /api/companias` (árbol con totales por rama); `GET /api/companias/{id}`, con el estado completo de una planta: inventario, cola circular, eventos, técnicos, cola con prioridad, pila y bitácora.
+- **Operador (por compañía):** inyectar un fallo, parar o arrancar, cambiar la carga, deshacer, clasificar el siguiente evento y asignar la siguiente orden.
+- **Superusuario:** `GET /api/ranking` (global o por compañía); `POST /api/overhauls` (aprobar), `GET /api/overhauls` (montículo y técnicos del fabricante), `POST /api/overhauls/asignar-siguiente`; `POST .../reemplazo`; `GET /api/historial?desde=&hasta=&compania=`.
+- **Errores:** `400` si la entrada es inválida, `404` si la compañía o la máquina no existe, y `409` si la acción no se permite en el estado actual (por ejemplo, inyectar un fallo en una máquina con alarma). El cuerpo lleva el mensaje en español.
+
+### Vistas que el frontend debe ofrecer (requisito para el otro repositorio)
+- **Vista de compañía:** los paneles de la sección 9 para una compañía.
+- **Vista de superusuario (dashboard):**
+  - el árbol de compañías con los totales por rama;
+  - el ranking global con sus recomendaciones;
+  - el montículo de solicitudes y los técnicos del fabricante;
+  - una gráfica del historial con una ventana [a, b] seleccionable, que muestre el total y el pico;
+  - el interruptor de modo.
+- Como en la Entrega 1, cada estructura se dibuja con su comportamiento real, sin inventar estado interno que la librería no expone.
+
+---
+
+## 17. Entrega 2: plan de commits
+
+Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las pruebas en verde y se revisa a mano antes del siguiente (sección 15). Cada uno actualiza `docs/USO_IA.md` con sus archivos.
+
+**Por qué la migración va primero:** así el repositorio del frontend puede empezar contra una API real con paridad de la Entrega 1, mientras aquí se construyen las estructuras nuevas. El modelo de la Entrega 1 ya está probado, así que no se rompe el orden "modelo probado → vista". La única consecuencia es el commit 19, que mueve las rutas de `/api/planta` a `/api/companias/{id}`, y se anuncia en `docs/API.md`.
+
+**Antes del commit 2:** crear la etiqueta `entrega-1` sobre `main`, con el permiso del equipo para crearla y publicarla.
+
+### Etapa A — Decisión
+1. `docs: registrar la migración a Spring Boot y el diseño de la Entrega 2`: este documento, la bitácora y `USO_IA.md`.
+
+### Etapa B — Migración a Spring Boot (paridad con la Entrega 1, el modelo no cambia)
+2. `build: convertir el proyecto a Spring Boot`: padre de Spring Boot, los dos starters, `spring-boot-maven-plugin`, `AplicacionPlanta` y una prueba de que el contexto carga.
+3. `refactor: retirar la interfaz Swing`: se eliminan `App`, `vista/`, `controlador/`, `PanelesVistaTest` y `ControladorPlantaTest`. Las pruebas del modelo siguen pasando sin cambios.
+4. `feat: servicio de simulación`: `ServicioSimulacion` con sus métodos `synchronized`, el `@Scheduled`, iniciar, pausar, paso y reiniciar, y el intervalo en `application.properties`. Pruebas sin HTTP.
+5. `feat: DTOs del estado de la planta`: `record`s para la máquina, la lectura, la cola circular (con frente, final, celdas y sobrescrituras), los eventos, los técnicos, los cuatro carriles, la pila y la bitácora. Prueba de que son copias.
+6. `feat: endpoints de control y consulta`: `GET /api/planta`, `GET /api/simulacion` y `POST` para iniciar, pausar, paso y reiniciar. Pruebas MockMvc.
+7. `feat: endpoints de acciones del operador`: inyectar un fallo, parar o arrancar, cambiar la carga y deshacer, más el manejador de errores 400/404/409. Pruebas MockMvc.
+8. `feat: CORS para el frontend local y contrato de la API`: configuración de CORS para `localhost`, `docs/API.md` y el README con cómo ejecutar el backend.
+
+### Etapa C — Estructuras nuevas (`estructuras/`, genéricas y sin dominio)
+9. `feat: árbol n-ario genérico`: agregar un hijo, eliminar un hijo, preorden y postorden. Pruebas: un árbol de un solo nodo, los dos recorridos y la eliminación.
+10. `feat: árbol de segmentos de suma y máximo`: actualizar una posición y consultar un rango. Pruebas: el rango completo, un rango de un elemento, un máximo a mitad del rango y una actualización.
+
+### Etapa D — Modelo de la Entrega 2 (sin HTTP, todo probado)
+11. `feat: peso de fallo, puntaje y recomendación`: `Prioridad.peso`, los campos nuevos de `Maquina`, `Recomendacion` y los umbrales. Pruebas de la recomendación.
+12. `feat: ranking de fallos por compañía`: `RankingFallos`, conectado al paso 4. Prueba: tras N ticks, el recorrido del ranking coincide con ordenar el inventario.
+13. `feat: organización con varias compañías`: `Organizacion`, la jerarquía con `ArbolNario`, las semillas derivadas, el tick en preorden y el ranking global. Prueba: misma semilla, mismo resultado.
+14. `feat: modo manual`: el modo en `Planta` y `Organizacion`, `clasificarSiguiente` y `asignarSiguiente`. Pruebas: en manual no se generan fallos aleatorios ni se asigna nada solo.
+15. `feat: solicitudes de overhaul y técnicos del fabricante`: `SolicitudOverhaul`, `TecnicoExterno`, aprobar (con rechazo de duplicadas), el montículo con secuencia y la cola FIFO. Pruebas: el mayor puntaje sale primero y los empates salen por orden de llegada.
+16. `feat: ejecutar overhauls en el tick`: `EN_OVERHAUL`, la regla de la cima y el cierre del overhaul. **Se propone primero la regla pendiente sobre la P4.** Pruebas: no consume técnicos internos y vuelve con puntaje 0 y reinsertada.
+17. `feat: reemplazo de máquina`: `set` en el inventario, la jerarquía y los dos rankings. Prueba.
+18. `feat: historial con árbol de segmentos`: uno por compañía y uno global, alimentados en el tick. Prueba de suma y pico en una ventana.
+
+### Etapa E — API de la Entrega 2
+19. `refactor: el servicio usa la organización y rutas por compañía`: `/api/companias` y `/api/companias/{id}/...`, con `docs/API.md` actualizado.
+20. `feat: endpoints del modo manual`.
+21. `feat: endpoints del ranking y las recomendaciones`.
+22. `feat: endpoints de overhaul y reemplazo`.
+23. `feat: endpoint del historial por ventana de ticks`.
+
+### Etapa F — Documentación
+24. `docs: documento explicativo de la Entrega 2`: el por qué y el cómo de cada estructura de la sección 16, con sus complejidades, la trampa de la clave que cambia y la justificación del árbol de segmentos frente a las sumas prefijas.
+25. `docs: README, USO_IA y cierre de la bitácora de la Entrega 2`.
