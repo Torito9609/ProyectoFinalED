@@ -1,20 +1,24 @@
 /**
- * Raíz del simulador de monitoreo y mantenimiento de planta.
+ * Raíz del simulador de monitoreo y mantenimiento de planta (backend).
  *
- * <p>El proyecto sigue el patrón Modelo-Vista-Controlador y se reparte en
- * cuatro paquetes:</p>
+ * <p>El proyecto sigue el patrón Modelo-Vista-Controlador, con la vista en otro
+ * repositorio: un frontend web que consume la API REST de este. Aquí el código
+ * se reparte en cuatro paquetes:</p>
  *
  * <ul>
  *   <li>{@link edu.unal.planta.estructuras}: estructuras de datos genéricas,
  *       sin ninguna dependencia del dominio.</li>
- *   <li>{@link edu.unal.planta.modelo}: dominio y simulación. No conoce la vista.</li>
- *   <li>{@link edu.unal.planta.vista}: interfaz Swing. Solo lee el modelo y dibuja.</li>
- *   <li>{@link edu.unal.planta.controlador}: traduce las acciones del usuario y el
- *       reloj de la simulación en llamadas al modelo.</li>
+ *   <li>{@link edu.unal.planta.modelo}: dominio y simulación. Java puro: no
+ *       conoce la vista ni el framework.</li>
+ *   <li>{@code servicio}: el único dueño del modelo. Serializa el acceso y
+ *       lleva el reloj de la simulación.</li>
+ *   <li>{@code api}: los controladores REST, que traducen las peticiones del
+ *       frontend en llamadas al servicio y responden con DTOs.</li>
  * </ul>
  *
- * <p>La dependencia entre paquetes va en un solo sentido: vista y controlador
- * conocen el modelo, pero el modelo no conoce a ninguno de los dos. Gracias a
- * eso la simulación podría ejecutarse sin interfaz gráfica.</p>
+ * <p>La dependencia entre paquetes va en un solo sentido: la API conoce el
+ * servicio y el servicio conoce el modelo, pero el modelo no conoce a ninguno
+ * de los dos. Gracias a eso la simulación se prueba completa con JUnit, sin
+ * levantar un servidor.</p>
  */
 package edu.unal.planta;

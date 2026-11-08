@@ -3,9 +3,9 @@ package edu.unal.planta.modelo;
 /**
  * Estado en que se encuentra una máquina de la planta.
  *
- * <p>Como el enum {@link Prioridad}, guarda su color como entero {@code 0xRRGGBB} y no como un
- * color de Swing, porque el modelo no puede importar {@code java.awt}. El panel de inventario lo
- * convierte para pintar cada celda.</p>
+ * <p>Como el enum {@link Prioridad}, guarda su color como entero {@code 0xRRGGBB} y no como una
+ * clase de color de alguna tecnología gráfica, porque el modelo no depende de la vista. La vista lo
+ * convierte para pintar cada celda del inventario.</p>
  *
  * @author Cristian Robayo
  * @author Kevin Toro

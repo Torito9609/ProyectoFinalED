@@ -61,7 +61,7 @@ java -jar target/simulador-planta.jar 42
 ```
 
 Desde IntelliJ IDEA: abrir la carpeta del proyecto, dejar que importe el `pom.xml` y ejecutar la
-clase `edu.unal.planta.App`.
+clase `edu.unal.planta.AplicacionPlanta`.
 
 Para generar la documentación Javadoc:
 
@@ -76,31 +76,23 @@ sigue siendo más reciente que las fuentes, y la verificación no comprueba nada
 
 ```
 src/main/java/edu/unal/planta/
-├── App.java              punto de entrada: arma modelo, vista y controlador
+├── AplicacionPlanta.java punto de entrada de Spring Boot
 ├── estructuras/          estructuras propias y genéricas (ColaCircular)
-├── modelo/               dominio y simulación; no conoce la interfaz gráfica
-│   └── comandos/         acciones del operador que se pueden deshacer
-├── vista/                ventana principal y un panel por estructura (Swing)
-└── controlador/          reloj de la simulación y acciones del usuario
+└── modelo/               dominio y simulación; Java puro, no conoce la vista ni el framework
+    └── comandos/         acciones del operador que se pueden deshacer
 ```
 
-El proyecto sigue el patrón **Modelo-Vista-Controlador**. La dependencia va en un solo sentido: la
-vista y el controlador conocen el modelo, pero el modelo no conoce a ninguno de los dos. Por eso la
-simulación completa se puede probar con JUnit sin abrir una ventana.
+Desde la Entrega 2 este repositorio es el **backend**: la vista es un frontend web en otro
+repositorio. Los paquetes `servicio/` (dueño único del modelo y reloj) y `api/` (controladores REST
+y DTOs) llegan en los siguientes commits. La dependencia va en un solo sentido: la API conoce el
+servicio y el servicio conoce el modelo, pero el modelo no conoce a ninguno. Por eso la simulación
+completa se puede probar con JUnit sin levantar un servidor.
 
 ## Cómo usarlo
 
-| Control | Qué hace |
-|---|---|
-| **▶ Iniciar / ⏸ Pausar** | Arranca y detiene el reloj de la simulación |
-| **Paso** | Avanza un solo tick, para observar con calma qué cambió |
-| **Reiniciar** | Vuelve al estado inicial con la misma semilla |
-| Clic en el inventario | Selecciona la máquina que se muestra en los paneles de detalle y de cola circular |
-| **Sensor** | Elige qué variable se grafica en la cola circular |
-| **Carga** | Sube o baja la carga de la máquina, que influye en su probabilidad de fallo |
-| **Parar / Arrancar** | Detiene o reanuda la máquina a mano |
-| **Inyectar fallo** | Provoca una anomalía de la magnitud elegida, para forzar un caso en la demostración |
-| **Deshacer** | Revierte la última acción del operador, si todavía tiene sentido revertirla |
+La interfaz Swing de la Entrega 1 se retiró del código y se conserva en la etiqueta `entrega-1`
+(`git switch --detach entrega-1`). Su manual está en `docs/MANUAL_USUARIO.md`. La forma de usar la
+Entrega 2 se documenta cuando la API tenga paridad con la Entrega 1.
 
 ## Flujo de trabajo con Git
 

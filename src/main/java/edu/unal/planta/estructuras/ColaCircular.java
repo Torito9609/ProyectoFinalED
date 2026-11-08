@@ -38,8 +38,8 @@ import java.util.Optional;
  * sobrescribir. No hay copias ni desplazamientos de elementos. Las únicas operaciones O(n) son las
  * que por naturaleza recorren la cola: {@link #elementosEnOrden()} y {@link #vaciar()}.</p>
  *
- * <p>Esta clase no es segura para uso concurrente. No hace falta: toda la simulación se ejecuta en
- * el hilo de eventos de Swing.</p>
+ * <p>Esta clase no es segura para uso concurrente. No hace falta: quien es dueño del modelo
+ * serializa el acceso, así que nunca la usan dos hilos a la vez.</p>
  *
  * @param <T> tipo de los elementos almacenados; en el proyecto son lecturas de sensores
  * @author Cristian Robayo

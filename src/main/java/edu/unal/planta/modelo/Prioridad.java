@@ -18,7 +18,7 @@ package edu.unal.planta.modelo;
  * <h2>Sobre el color</h2>
  * <p>El color se guarda como un entero <strong>RGB</strong> en formato {@code 0xRRGGBB}, no como un
  * {@code java.awt.Color}. La razón es la regla de arquitectura del proyecto: ninguna clase del
- * modelo importa {@code java.awt} ni {@code javax.swing}. La vista convierte este número en un
+ * modelo importa nada de la vista ni del framework. La vista convierte este número en un
  * color cuando lo necesita. Así el modelo define <em>qué</em> color le corresponde a cada prioridad
  * sin depender de la tecnología que lo dibuje.</p>
  *
@@ -110,7 +110,7 @@ public enum Prioridad {
     /**
      * Devuelve el color asociado a la prioridad, en formato {@code 0xRRGGBB}.
      *
-     * <p>La vista lo convierte a un color de Swing; el modelo no conoce esa clase.</p>
+     * <p>La vista lo convierte al color de su propia tecnología; el modelo no la conoce.</p>
      *
      * <p>Complejidad: O(1).</p>
      *

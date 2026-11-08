@@ -162,6 +162,16 @@ Convención de la columna **Autoría**:
 | `AplicacionPlanta.java` | IA | Punto de entrada de Spring |
 | `test/.../AplicacionPlantaTest.java` | IA | Prueba de humo: el contexto carga |
 
+### Entrega 2 — Commit 3: retirar la interfaz Swing
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `App.java`, `vista/`, `controlador/`, `PanelesVistaTest`, `ControladorPlantaTest` | — | Eliminados; se conservan en la etiqueta `entrega-1` |
+| `package-info.java` (raíz) | IA | Describe los paquetes `estructuras`, `modelo`, `servicio` y `api` |
+| Javadoc de `ObservadorPlanta`, `EstadoMaquina`, `Prioridad`, `Planta`, `modelo/package-info` y `ColaCircular` | IA | Solo texto: ya no hablan de Swing ni del hilo de eventos. La lógica no cambia |
+| `pom.xml` | IA | Se quita la `mainClass` explícita: queda un solo `main` |
+| `README.md` | IA | Árbol de paquetes y nota que remite a la etiqueta `entrega-1` |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

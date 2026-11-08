@@ -51,14 +51,10 @@
         <finalName>simulador-planta</finalName>
         <plugins>
             <!-- Empaqueta un jar ejecutable con sus dependencias: java -jar target/simulador-planta.jar.
-                 La clase principal se declara porque, mientras exista la App de Swing (hasta el
-                 commit 3 de la seccion 17), hay dos metodos main en el proyecto. -->
+                 La clase principal se detecta sola: AplicacionPlanta es el unico metodo main. -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>edu.unal.planta.AplicacionPlanta</mainClass>
-                </configuration>
             </plugin>
 
             <!-- Documentacion en linea de codigo exigida por el enunciado:

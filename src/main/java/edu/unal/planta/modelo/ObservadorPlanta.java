@@ -6,12 +6,13 @@ package edu.unal.planta.modelo;
  * <p>Es la pieza que sostiene la regla de arquitectura más importante del proyecto: <strong>el
  * modelo no conoce la vista</strong>. Al terminar cada tick, {@link Planta} avisa a sus
  * observadores a través de esta interfaz, sin saber quiénes son ni qué hacen con el aviso. En la
- * aplicación el observador es la ventana de Swing, que se vuelve a dibujar; en las pruebas es un
- * contador que verifica cuántas veces avisó; y podría ser una salida por consola sin tocar una
- * línea del modelo.</p>
+ * Entrega 1 el observador era la ventana de Swing, que se volvía a dibujar; en las pruebas es un
+ * contador que verifica cuántas veces avisó.</p>
  *
- * <p>Es el patrón Observador, y la razón por la que el paquete {@code modelo} no importa nada de
- * Swing.</p>
+ * <p>Desde la Entrega 2 la aplicación no lo necesita: el frontend web consulta el estado cuando lo
+ * quiere, a través de la API. La interfaz se conserva porque es la que demuestra que el modelo no
+ * depende de quién lo use: el paquete {@code modelo} no importa nada de la vista ni del framework.
+ * Es el patrón Observador.</p>
  *
  * @author Cristian Robayo
  * @author Kevin Toro

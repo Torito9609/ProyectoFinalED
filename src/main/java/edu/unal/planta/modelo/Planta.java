@@ -33,7 +33,7 @@ import java.util.Queue;
  * descartar las líneas más viejas por el frente, en O(1).</p>
  *
  * <h2>Reglas de arquitectura</h2>
- * <p>Esta clase no importa nada de Swing ni de AWT. Cuando el estado cambia, avisa a sus
+ * <p>Esta clase no importa nada de la vista ni del framework. Cuando el estado cambia, avisa a sus
  * {@link ObservadorPlanta} y no sabe quién escucha. Todo lo que entrega a la vista es de solo
  * lectura: copias inmutables, listas no modificables o interfaces sin métodos de modificación.</p>
  *
@@ -104,8 +104,8 @@ public final class Planta {
      * asignar nuevos, para que un técnico que acaba de terminar pueda recibir otra orden en el
      * mismo tick.</p>
      *
-     * <p>Al final avisa a los observadores. Se ejecuta en el hilo de eventos de Swing, así que no
-     * hay concurrencia que manejar.</p>
+     * <p>Al final avisa a los observadores. No es segura para hilos: quien la use debe serializar
+     * el acceso, como hace el servicio de simulación con sus métodos {@code synchronized}.</p>
      */
     public void tick() {
         generarFallos();

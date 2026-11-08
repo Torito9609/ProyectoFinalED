@@ -6,10 +6,11 @@
  * simulación un tick a la vez.</p>
  *
  * <p><strong>Regla de arquitectura:</strong> ninguna clase de este paquete
- * importa {@code javax.swing} ni {@code java.awt}. Cuando el estado cambia, el
- * modelo avisa a sus observadores mediante una interfaz propia; quién escuche y
- * cómo lo dibuje no es asunto suyo. Esa separación es la que permite probar la
- * simulación completa con JUnit, sin abrir una ventana.</p>
+ * importa nada de la vista ni del framework ({@code org.springframework},
+ * {@code javax.swing}, {@code java.awt}). Cuando el estado cambia, el modelo
+ * avisa a sus observadores mediante una interfaz propia; quién escuche y cómo lo
+ * dibuje no es asunto suyo. Esa separación es la que permite probar la
+ * simulación completa con JUnit, sin levantar un servidor.</p>
  *
  * <p>La aleatoriedad proviene de un único generador con semilla configurable,
  * de modo que la misma semilla reproduce exactamente la misma simulación.</p>
