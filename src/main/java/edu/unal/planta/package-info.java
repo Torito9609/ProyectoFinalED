@@ -10,7 +10,7 @@
  *       sin ninguna dependencia del dominio.</li>
  *   <li>{@link edu.unal.planta.modelo}: dominio y simulación. Java puro: no
  *       conoce la vista ni el framework.</li>
- *   <li>{@code servicio}: el único dueño del modelo. Serializa el acceso y
+ *   <li>{@link edu.unal.planta.servicio}: el único dueño del modelo. Serializa el acceso y
  *       lleva el reloj de la simulación.</li>
  *   <li>{@code api}: los controladores REST, que traducen las peticiones del
  *       frontend en llamadas al servicio y responden con DTOs.</li>

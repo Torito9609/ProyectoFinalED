@@ -2,6 +2,7 @@ package edu.unal.planta;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Punto de entrada del backend Spring Boot.
@@ -14,10 +15,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * dependen del framework (sección 4 de {@code CLAUDE.md}). Spring solo los toca a través del
  * servicio.</p>
  *
+ * <p>{@code @EnableScheduling} activa el reloj de la simulación: sin esta anotación, Spring
+ * ignoraría el método {@code @Scheduled} del servicio.</p>
+ *
  * @author Cristian Robayo
  * @author Kevin Toro
  */
 @SpringBootApplication
+@EnableScheduling
 public class AplicacionPlanta {
 
     /**

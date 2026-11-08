@@ -31,9 +31,6 @@ public final class ConfiguracionPlanta {
     /** Semilla por omisión del generador aleatorio. La misma semilla repite la misma simulación. */
     public static final long SEMILLA_POR_DEFECTO = 7L;
 
-    /** Milisegundos entre ticks cuando la simulación corre sola. */
-    public static final int MILIS_POR_TICK = 800;
-
     /** Cuántas lecturas recientes conserva cada máquina en su cola circular. */
     public static final int CAPACIDAD_LECTURAS = 12;
 

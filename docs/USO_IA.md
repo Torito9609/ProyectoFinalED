@@ -172,6 +172,17 @@ Convención de la columna **Autoría**:
 | `pom.xml` | IA | Se quita la `mainClass` explícita: queda un solo `main` |
 | `README.md` | IA | Árbol de paquetes y nota que remite a la etiqueta `entrega-1` |
 
+### Entrega 2 — Commit 4: servicio de simulación
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `servicio/ServicioSimulacion.java` | IA | Dueño único de la `Planta`; métodos `synchronized`, reloj con `@Scheduled` |
+| `servicio/package-info.java` | IA | Documentación del paquete |
+| `src/main/resources/application.properties` | IA | Semilla e intervalo del reloj |
+| `AplicacionPlanta.java` | IA | Se agrega `@EnableScheduling` |
+| `ConfiguracionPlanta.java` | IA | Se quita `MILIS_POR_TICK`: el intervalo pasa a `application.properties` |
+| `test/.../ServicioSimulacionTest.java` | IA | 5 pruebas sin HTTP; el reloj se dispara a mano |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

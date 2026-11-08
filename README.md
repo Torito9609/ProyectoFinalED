@@ -77,14 +77,15 @@ sigue siendo más reciente que las fuentes, y la verificación no comprueba nada
 ```
 src/main/java/edu/unal/planta/
 ├── AplicacionPlanta.java punto de entrada de Spring Boot
+├── servicio/             dueño único del modelo y reloj de la simulación
 ├── estructuras/          estructuras propias y genéricas (ColaCircular)
 └── modelo/               dominio y simulación; Java puro, no conoce la vista ni el framework
     └── comandos/         acciones del operador que se pueden deshacer
 ```
 
 Desde la Entrega 2 este repositorio es el **backend**: la vista es un frontend web en otro
-repositorio. Los paquetes `servicio/` (dueño único del modelo y reloj) y `api/` (controladores REST
-y DTOs) llegan en los siguientes commits. La dependencia va en un solo sentido: la API conoce el
+repositorio. El paquete `servicio/` es el dueño único del modelo y lleva el reloj; `api/` (controladores REST
+y DTOs) llega en los siguientes commits. La dependencia va en un solo sentido: la API conoce el
 servicio y el servicio conoce el modelo, pero el modelo no conoce a ninguno. Por eso la simulación
 completa se puede probar con JUnit sin levantar un servidor.
 
