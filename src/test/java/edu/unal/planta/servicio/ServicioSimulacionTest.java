@@ -78,4 +78,17 @@ class ServicioSimulacionTest {
         assertFalse(servicio.enEjecucion());
         assertEquals(7L, servicio.semilla());
     }
+
+    @Test
+    @DisplayName("la foto del estado refleja el tick, la semilla y si está en ejecución")
+    void estadoPlanta() {
+        servicio.paso();
+        servicio.iniciar();
+
+        var estado = servicio.estadoPlanta();
+
+        assertEquals(1, estado.tick());
+        assertEquals(7L, estado.semilla());
+        assertTrue(estado.enEjecucion());
+    }
 }

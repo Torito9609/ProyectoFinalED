@@ -1,5 +1,6 @@
 package edu.unal.planta.servicio;
 
+import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.modelo.Planta;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -99,6 +100,21 @@ public class ServicioSimulacion {
         if (enEjecucion) {
             planta.tick();
         }
+    }
+
+    /**
+     * Toma una foto del estado completo de la planta.
+     *
+     * <p>La foto se arma <strong>dentro</strong> de este método {@code synchronized}: mientras se
+     * copia, ni el reloj ni otra petición pueden cambiar la planta, así que nunca se entrega un tick
+     * a medias. Lo que sale de aquí es una copia; la planta no se entrega nunca.</p>
+     *
+     * <p>Complejidad: O(n) en el tamaño total del estado.</p>
+     *
+     * @return la foto del estado, inmutable
+     */
+    public synchronized EstadoPlantaDto estadoPlanta() {
+        return EstadoPlantaDto.desde(planta, enEjecucion);
     }
 
     /**

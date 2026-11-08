@@ -183,6 +183,15 @@ Convención de la columna **Autoría**:
 | `ConfiguracionPlanta.java` | IA | Se quita `MILIS_POR_TICK`: el intervalo pasa a `application.properties` |
 | `test/.../ServicioSimulacionTest.java` | IA | 5 pruebas sin HTTP; el reloj se dispara a mano |
 
+### Entrega 2 — Commit 5: DTOs del estado de la planta
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `api/dto/` (10 `record`s y `package-info`) | IA | Copias inmutables del modelo: máquina, sensor, lectura, cola circular (orden físico, `null` en celdas vacías), eventos, órdenes, técnicos, carriles, cola con prioridad y estado completo |
+| `servicio/ServicioSimulacion.java` | IA | Se agrega `estadoPlanta()`, `synchronized`, que arma la foto dentro del candado |
+| `test/.../EstadoPlantaDtoTest.java` | IA | 4 pruebas: es una copia, listas no modificables, cola circular fiel y cuatro carriles |
+| `test/.../ServicioSimulacionTest.java` | IA | Una prueba más: la foto refleja tick, semilla y ejecución |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
