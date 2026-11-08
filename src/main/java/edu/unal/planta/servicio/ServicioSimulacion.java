@@ -2,7 +2,13 @@ package edu.unal.planta.servicio;
 
 import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
+import edu.unal.planta.modelo.EstadoMaquina;
+import edu.unal.planta.modelo.Magnitud;
+import edu.unal.planta.modelo.Maquina;
 import edu.unal.planta.modelo.Planta;
+import edu.unal.planta.modelo.comandos.CambiarCargaMaquina;
+import edu.unal.planta.modelo.comandos.PararOArrancarMaquina;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -100,6 +106,126 @@ public class ServicioSimulacion {
         planta.reiniciar();
         return estadoSimulacion();
     }
+
+    // ---------------------------------------------------------------------------------
+    // Acciones del operador
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Inyecta un fallo en una máquina, para forzar un caso en la demostración.
+     *
+     * <p>Si la máquina ya tiene una anomalía o una alarma activa, la acción no se permite. En ese
+     * caso igual se llama al modelo, para que registre el rechazo en la bitácora como en la
+     * Entrega 1, y después se lanza la excepción.</p>
+     *
+     * @param indiceMaquina posición de la máquina en el inventario
+     * @param indiceSensor  posición del sensor en la máquina
+     * @param magnitud      {@code LEVE}, {@code MODERADA} o {@code SEVERA}
+     * @return el estado de la planta después de la acción
+     * @throws NoEncontradoException      si la máquina o el sensor no existen
+     * @throws IllegalArgumentException   si la magnitud no existe
+     * @throws AccionNoPermitidaException si la máquina ya tiene un fallo activo
+     */
+    public synchronized EstadoPlantaDto inyectarFallo(int indiceMaquina, int indiceSensor,
+                                                      String magnitud) {
+        Maquina maquina = buscarMaquina(indiceMaquina);
+        if (indiceSensor < 0 || indiceSensor >= maquina.sensores().size()) {
+            throw new NoEncontradoException("La máquina " + maquina.etiqueta()
+                    + " no tiene un sensor con índice " + indiceSensor);
+        }
+        Magnitud valor = convertirMagnitud(magnitud);
+        boolean rechazada = maquina.tieneAnomalia() || maquina.alarmaActiva();
+        planta.inyectarFallo(indiceMaquina, indiceSensor, valor);
+        if (rechazada) {
+            throw new AccionNoPermitidaException("No se puede inyectar un fallo en "
+                    + maquina.etiqueta() + ": ya tiene un fallo activo");
+        }
+        return estadoPlanta();
+    }
+
+    /**
+     * Para una máquina que está operando, o arranca una que está parada a mano. Se apila para
+     * poder deshacerla.
+     *
+     * @param indiceMaquina posición de la máquina en el inventario
+     * @return el estado de la planta después de la acción
+     * @throws NoEncontradoException      si la máquina no existe
+     * @throws AccionNoPermitidaException si la máquina está en otro estado, porque entonces la
+     *                                    está atendiendo la simulación
+     */
+    public synchronized EstadoPlantaDto pararOArrancar(int indiceMaquina) {
+        Maquina maquina = buscarMaquina(indiceMaquina);
+        EstadoMaquina estado = maquina.estado();
+        if (estado != EstadoMaquina.OPERANDO && estado != EstadoMaquina.PARADA_MANUAL) {
+            throw new AccionNoPermitidaException("No se puede parar ni arrancar "
+                    + maquina.etiqueta() + " porque está " + estado.descripcion().toLowerCase());
+        }
+        planta.ejecutar(new PararOArrancarMaquina(maquina));
+        return estadoPlanta();
+    }
+
+    /**
+     * Cambia la carga de una máquina. Se apila para poder deshacerla.
+     *
+     * <p>Si la carga nueva es igual a la actual no se hace nada, como en la Entrega 1: apilar una
+     * acción que no cambia nada solo ensuciaría la pila de deshacer.</p>
+     *
+     * @param indiceMaquina posición de la máquina en el inventario
+     * @param carga         porcentaje nuevo, entre 0 y 100
+     * @return el estado de la planta después de la acción
+     * @throws NoEncontradoException    si la máquina no existe
+     * @throws IllegalArgumentException si la carga está fuera de rango
+     */
+    public synchronized EstadoPlantaDto cambiarCarga(int indiceMaquina, int carga) {
+        Maquina maquina = buscarMaquina(indiceMaquina);
+        CambiarCargaMaquina comando = new CambiarCargaMaquina(maquina, carga);
+        if (maquina.carga() != carga) {
+            planta.ejecutar(comando);
+        }
+        return estadoPlanta();
+    }
+
+    /**
+     * Revierte la última acción del operador, la de la cima de la pila.
+     *
+     * <p>Si el comando ya no se puede revertir porque la simulación cambió el estado, el modelo lo
+     * descarta y lo anota en la bitácora; eso es un caso normal, no un error. Con la pila vacía
+     * el modelo también lo anota, y después se lanza la excepción.</p>
+     *
+     * @return el estado de la planta después de la acción
+     * @throws AccionNoPermitidaException si no hay acciones para deshacer
+     */
+    public synchronized EstadoPlantaDto deshacer() {
+        boolean pilaVacia = planta.accionesDeshacibles().isEmpty();
+        planta.deshacer();
+        if (pilaVacia) {
+            throw new AccionNoPermitidaException("No hay acciones para deshacer");
+        }
+        return estadoPlanta();
+    }
+
+    private Maquina buscarMaquina(int indice) {
+        if (indice < 0 || indice >= planta.inventario().size()) {
+            throw new NoEncontradoException("No existe una máquina con índice " + indice);
+        }
+        return planta.maquina(indice);
+    }
+
+    private static Magnitud convertirMagnitud(String texto) {
+        if (texto == null) {
+            throw new IllegalArgumentException("Falta la magnitud: LEVE, MODERADA o SEVERA");
+        }
+        try {
+            return Magnitud.valueOf(texto.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("La magnitud '" + texto
+                    + "' no existe: use LEVE, MODERADA o SEVERA");
+        }
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Reloj y consultas
+    // ---------------------------------------------------------------------------------
 
     /**
      * Lo llama el reloj de Spring a intervalo fijo. Avanza un tick solo si la simulación está en

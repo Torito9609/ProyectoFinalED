@@ -202,6 +202,17 @@ Convención de la columna **Autoría**:
 | `servicio/ServicioSimulacion.java` | IA | Las acciones de control devuelven su `EstadoSimulacionDto`, armado dentro del mismo método `synchronized`; nuevo `estadoSimulacion()` |
 | `test/.../ControladorSimulacionTest.java` | IA | 5 pruebas MockMvc con el servicio real |
 
+### Entrega 2 — Commit 7: endpoints de acciones del operador
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `api/ControladorOperador.java` | IA | Inyectar fallo, parar o arrancar, cambiar carga y deshacer; sin lógica |
+| `api/ManejadorErrores.java` | IA | `@RestControllerAdvice`: 400, 404 y 409 con `ErrorDto` |
+| `api/dto/InyeccionFalloDto.java`, `CargaDto.java`, `ErrorDto.java` | IA | Cuerpos de petición y de error |
+| `servicio/NoEncontradoException.java`, `AccionNoPermitidaException.java` | IA | Excepciones que el manejador traduce a 404 y 409 |
+| `servicio/ServicioSimulacion.java` | IA | Acciones del operador con sus validaciones; el rechazo se sigue registrando en la bitácora |
+| `test/.../ControladorOperadorTest.java` | IA | 7 pruebas MockMvc: camino feliz, 400, 404, 409 y deshacer |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
