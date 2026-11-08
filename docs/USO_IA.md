@@ -192,6 +192,16 @@ Convención de la columna **Autoría**:
 | `test/.../EstadoPlantaDtoTest.java` | IA | 4 pruebas: es una copia, listas no modificables, cola circular fiel y cuatro carriles |
 | `test/.../ServicioSimulacionTest.java` | IA | Una prueba más: la foto refleja tick, semilla y ejecución |
 
+### Entrega 2 — Commit 6: endpoints de control y consulta
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `api/ControladorSimulacion.java` | IA | `GET /api/planta`, `GET /api/simulacion` y `POST` iniciar, pausar, paso y reiniciar; sin lógica |
+| `api/package-info.java` | IA | Documentación del paquete |
+| `api/dto/EstadoSimulacionDto.java` | IA | Tick, semilla y ejecución |
+| `servicio/ServicioSimulacion.java` | IA | Las acciones de control devuelven su `EstadoSimulacionDto`, armado dentro del mismo método `synchronized`; nuevo `estadoSimulacion()` |
+| `test/.../ControladorSimulacionTest.java` | IA | 5 pruebas MockMvc con el servicio real |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

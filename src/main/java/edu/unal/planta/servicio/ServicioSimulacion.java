@@ -1,6 +1,7 @@
 package edu.unal.planta.servicio;
 
 import edu.unal.planta.api.dto.EstadoPlantaDto;
+import edu.unal.planta.api.dto.EstadoSimulacionDto;
 import edu.unal.planta.modelo.Planta;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -57,16 +58,22 @@ public class ServicioSimulacion {
 
     /**
      * Pone la simulación en ejecución: desde el siguiente disparo, el reloj avanza un tick cada vez.
+     *
+     * @return el estado de la simulación después de la acción
      */
-    public synchronized void iniciar() {
+    public synchronized EstadoSimulacionDto iniciar() {
         enEjecucion = true;
+        return estadoSimulacion();
     }
 
     /**
      * Pone la simulación en pausa. El estado de la planta no cambia.
+     *
+     * @return el estado de la simulación después de la acción
      */
-    public synchronized void pausar() {
+    public synchronized EstadoSimulacionDto pausar() {
         enEjecucion = false;
+        return estadoSimulacion();
     }
 
     /**
@@ -74,18 +81,24 @@ public class ServicioSimulacion {
      *
      * <p>Primero pausa, como en la Entrega 1: dar un paso sirve para observar con calma qué cambió,
      * y eso no funciona si el reloj sigue avanzando.</p>
+     *
+     * @return el estado de la simulación después de la acción
      */
-    public synchronized void paso() {
+    public synchronized EstadoSimulacionDto paso() {
         enEjecucion = false;
         planta.tick();
+        return estadoSimulacion();
     }
 
     /**
      * Pausa y devuelve la planta a su estado inicial, con la misma semilla.
+     *
+     * @return el estado de la simulación después de la acción
      */
-    public synchronized void reiniciar() {
+    public synchronized EstadoSimulacionDto reiniciar() {
         enEjecucion = false;
         planta.reiniciar();
+        return estadoSimulacion();
     }
 
     /**
@@ -115,6 +128,19 @@ public class ServicioSimulacion {
      */
     public synchronized EstadoPlantaDto estadoPlanta() {
         return EstadoPlantaDto.desde(planta, enEjecucion);
+    }
+
+    /**
+     * Devuelve el tick, la semilla y si la simulación está en ejecución.
+     *
+     * <p>Las acciones de control devuelven este mismo DTO, armado dentro de su propio método
+     * {@code synchronized}: así la respuesta refleja exactamente el efecto de la acción, sin que
+     * un tick del reloj se cuele entre la acción y la consulta.</p>
+     *
+     * @return el estado de la simulación
+     */
+    public synchronized EstadoSimulacionDto estadoSimulacion() {
+        return new EstadoSimulacionDto(planta.tickActual(), planta.semilla(), enEjecucion);
     }
 
     /**

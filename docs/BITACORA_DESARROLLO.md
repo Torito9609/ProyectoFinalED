@@ -597,7 +597,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | Etapa | Commits | Contenido | Estado |
 |---|---|---|---|
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
-| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | En curso: commits 2 (`c3b2b55`), 3 (`82464a6`), 4 (`5b4078f`) y 5 hechos; **siguiente: commit 6** |
+| B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | En curso: commits 2 (`c3b2b55`), 3 (`82464a6`), 4 (`5b4078f`), 5 (`f91017b`) y 6 hechos; **siguiente: commit 7** |
 | C | 9–10 | `ArbolNario` y `ArbolSegmentos` | Pendiente |
 | D | 11–18 | Modelo de la Entrega 2 | Pendiente |
 | E | 19–23 | API de la Entrega 2 | Pendiente |
