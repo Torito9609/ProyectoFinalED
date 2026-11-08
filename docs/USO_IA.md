@@ -213,6 +213,16 @@ Convención de la columna **Autoría**:
 | `servicio/ServicioSimulacion.java` | IA | Acciones del operador con sus validaciones; el rechazo se sigue registrando en la bitácora |
 | `test/.../ControladorOperadorTest.java` | IA | 7 pruebas MockMvc: camino feliz, 400, 404, 409 y deshacer |
 
+### Entrega 2 — Commit 8: CORS y contrato de la API
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `api/ConfiguracionCors.java` | IA | `GET`, `POST` y `PUT` en `/api/**` desde orígenes locales |
+| `src/main/resources/application.properties` | IA | Propiedad `planta.cors.origenes` |
+| `test/.../ConfiguracionCorsTest.java` | IA | 2 pruebas MockMvc: origen local permitido y origen externo rechazado |
+| `docs/API.md` | IA | Contrato para el frontend; los ejemplos de respuesta son salidas reales del servidor |
+| `README.md` | IA | Cómo ejecutar el backend, enlace a la API, estado de la Entrega 2 |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

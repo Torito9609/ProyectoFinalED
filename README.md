@@ -18,7 +18,14 @@ donde se ve su comportamiento real: el acceso por índice del arreglo, la sobres
 circular, el orden de llegada de las colas FIFO, los cuatro carriles de la cola con prioridad y la
 cima de la pila de deshacer.
 
-![La ventana del simulador](docs/img/ventana.png)
+**Desde la Entrega 2 este repositorio es el backend** (Spring Boot): expone la simulación como una
+API REST, y la interfaz es un frontend web en otro repositorio. La captura es de la Entrega 1, la
+versión de escritorio en Swing, que se conserva en la etiqueta `entrega-1`.
+
+- **Frontend:** *(pendiente: enlace al repositorio)*
+- **Contrato de la API:** [`docs/API.md`](docs/API.md)
+
+![La ventana del simulador (Entrega 1)](docs/img/ventana.png)
 
 ## Estructuras de datos utilizadas
 
@@ -42,7 +49,8 @@ ofrece ninguna que **sobrescriba** el elemento más antiguo al llenarse.
   Java 21 aunque se construya con un JDK más nuevo).
 - **Maven 3.9+**, o simplemente el wrapper incluido (`./mvnw`), que no requiere instalar Maven.
 
-Única dependencia externa: **JUnit 5**, y solo para las pruebas.
+Dependencias: **Spring Boot** (starter web MVC, que trae Tomcat y Jackson) y, para las pruebas, el
+starter de pruebas (JUnit 5 y MockMvc). El wrapper las descarga solas.
 
 ## Cómo compilar y ejecutar
 
@@ -50,15 +58,26 @@ ofrece ninguna que **sobrescriba** el elemento más antiguo al llenarse.
 # Compilar y correr las pruebas
 ./mvnw test
 
-# Construir el jar ejecutable
-./mvnw package
+# Ejecutar el backend (queda escuchando en http://localhost:8080)
+./mvnw spring-boot:run
 
-# Ejecutar la aplicación
+# O construir el jar ejecutable y correrlo
+./mvnw package
 java -jar target/simulador-planta.jar
 
-# Opcional: usar otra semilla (la misma semilla repite la misma simulación)
-java -jar target/simulador-planta.jar 42
+# Opcional: otra semilla (la misma semilla repite la misma simulación) u otro puerto
+java -jar target/simulador-planta.jar --planta.semilla=42 --server.port=9090
 ```
+
+La simulación arranca **en pausa**. Para verla avanzar sin el frontend:
+
+```bash
+curl -X POST localhost:8080/api/simulacion/iniciar
+curl localhost:8080/api/planta
+```
+
+La semilla, el intervalo del reloj y los orígenes permitidos por CORS se configuran en
+`src/main/resources/application.properties`.
 
 Desde IntelliJ IDEA: abrir la carpeta del proyecto, dejar que importe el `pom.xml` y ejecutar la
 clase `edu.unal.planta.AplicacionPlanta`.
@@ -93,13 +112,15 @@ completa se puede probar con JUnit sin levantar un servidor.
 
 ## Cómo usarlo
 
-La interfaz Swing de la Entrega 1 se retiró del código y se conserva en la etiqueta `entrega-1`
-(`git switch --detach entrega-1`). Su manual está en `docs/MANUAL_USUARIO.md`. La forma de usar la
-Entrega 2 se documenta cuando la API tenga paridad con la Entrega 1.
+- **Entrega 2:** desde el frontend web. Los endpoints, sus cuerpos y sus errores están en
+  [`docs/API.md`](docs/API.md).
+- **Entrega 1:** la interfaz Swing se retiró del código y se conserva en la etiqueta `entrega-1`
+  (`git switch --detach entrega-1`). Su manual está en [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md).
 
 ## Flujo de trabajo con Git
 
-El repositorio maneja dos ramas:
+El repositorio maneja dos ramas (en la Entrega 2 se trabaja en la rama `entrega-2`, con el mismo
+criterio que `desarrollo`):
 
 | Rama | Para qué sirve |
 |---|---|
@@ -129,7 +150,8 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 
 ## Documentación
 
-- [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo usar el simulador
+- [`docs/API.md`](docs/API.md) — contrato de la API REST para el frontend
+- [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo usar el simulador (Entrega 1)
 - [`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.md) — por qué y cómo se usó cada
   estructura
 - [`docs/BITACORA_DESARROLLO.md`](docs/BITACORA_DESARROLLO.md) — registro de avance del equipo:
@@ -154,3 +176,14 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Manual de usuario | Listo |
 | Documento explicativo | Listo |
 | Video | Pendiente |
+
+**Entrega 2** (rama `entrega-2`; el avance detallado está en `docs/BITACORA_DESARROLLO.md`):
+
+| Entregable | Estado |
+|---|---|
+| Migración a Spring Boot, con paridad de la Entrega 1 en la API | Listo |
+| Contrato de la API (`docs/API.md`) | Listo |
+| Árbol n-ario y árbol de segmentos | Pendiente |
+| Compañías, ranking de fallos, overhaul y reemplazo, modo manual, historial | Pendiente |
+| Endpoints de la Entrega 2 | Pendiente |
+| Documento explicativo de la Entrega 2 | Pendiente |
