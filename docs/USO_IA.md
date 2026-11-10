@@ -343,6 +343,17 @@ Convención de la columna **Autoría**:
 | `test/.../PlantaTest.java`, `ColaPrioridadOrdenesTest.java` | IA | 3 pruebas nuevas: el tipo sale del sensor, el automático espera a su especialidad y la penalidad |
 | `docs/API.md`, `CLAUDE.md` | IA | El contrato nuevo y la asignación de tipos de fallo |
 
+### Entrega 2 — Commit 14b: economía y partida
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Contabilidad.java` | IA | Caja, ingresos, costos, costo del tick y disponibilidad, en enteros; quiebra con caja negativa |
+| `modelo/ConfiguracionPlanta.java` | IA | Presupuesto 300.000, ingreso 1.000, mano de obra 1.500 y partida de 1000 ticks, calculados con una medición de la simulación |
+| `modelo/Planta.java` | IA | Paso 7b (contabilizar), contador de fallos, la quiebra congela la compañía y rechaza acciones |
+| `modelo/Organizacion.java`, `servicio/ServicioSimulacion.java` | IA | La partida termina en el tick 1000 y el reloj se pausa |
+| `api/ManejadorErrores.java` | IA | `IllegalStateException` del modelo → 409 |
+| `test/.../ContabilidadTest.java`, `PlantaTest.java`, `OrganizacionTest.java`, `ServicioSimulacionTest.java` | IA | 6 pruebas |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

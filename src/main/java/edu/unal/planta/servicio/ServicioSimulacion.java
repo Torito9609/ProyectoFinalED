@@ -385,7 +385,7 @@ public class ServicioSimulacion {
 
     /**
      * Lo llama el reloj de Spring a intervalo fijo. Avanza un tick solo si la simulación está en
-     * ejecución.
+     * ejecución, y la pausa al terminar la partida.
      *
      * <p>Es {@code synchronized} como los demás: un tick del reloj nunca se mezcla con una
      * petición.</p>
@@ -394,6 +394,9 @@ public class ServicioSimulacion {
     public synchronized void alDispararReloj() {
         if (enEjecucion) {
             organizacion.tick();
+            if (organizacion.partidaTerminada()) {
+                enEjecucion = false;
+            }
         }
     }
 

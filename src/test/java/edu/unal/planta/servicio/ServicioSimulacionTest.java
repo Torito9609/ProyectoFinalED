@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.unal.planta.modelo.ConfiguracionPlanta;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -93,6 +94,18 @@ class ServicioSimulacionTest {
         assertEquals(1, estado.tick());
         assertEquals(7001L, estado.semilla(), "la semilla de la compañía 1 es maestra × 1000 + 1");
         assertTrue(estado.enEjecucion());
+    }
+
+    @Test
+    @DisplayName("al terminar la partida, el reloj pausa la simulación")
+    void partidaTerminadaPausa() {
+        servicio.iniciar();
+        for (int i = 0; i < ConfiguracionPlanta.DURACION_PARTIDA; i++) {
+            servicio.alDispararReloj();
+        }
+
+        assertFalse(servicio.enEjecucion());
+        assertEquals(ConfiguracionPlanta.DURACION_PARTIDA, servicio.tickActual());
     }
 
     @Test

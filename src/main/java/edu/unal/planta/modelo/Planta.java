@@ -103,6 +103,12 @@ public final class Planta {
     /** Quién dispara los pasos 1, 4 y 6 del tick: el reloj o el jugador. */
     private ModoSimulacion modo;
 
+    /** Caja, ingresos, costos y disponibilidad de la compañía (Entrega 2). */
+    private final Contabilidad contabilidad;
+
+    /** Fallos clasificados en la partida (órdenes P1 a P3; el preventivo no es un fallo). */
+    private int numeroFallos;
+
     /**
      * Crea una planta suelta, sin organización: la planta única de la Entrega 1.
      *
@@ -157,6 +163,8 @@ public final class Planta {
         this.tick = tickInicial;
         this.siguienteIdOrden = 1;
         this.modo = ModoSimulacion.AUTOMATICO;
+        this.contabilidad = new Contabilidad(ConfiguracionPlanta.PRESUPUESTO_INICIAL);
+        this.numeroFallos = 0;
         registrar("Planta iniciada con semilla " + semilla);
     }
 
@@ -177,10 +185,18 @@ public final class Planta {
      * {@link #inyectarFallo}, {@link #clasificarSiguiente()} y
      * {@link #asignarSiguiente(TipoFallo)}.</p>
      *
+     * <p>Después de los preventivos se contabiliza el tick (paso 7b). Una compañía en quiebra no
+     * opera: solo avanza su tick, para que todas las plantas sigan teniendo el mismo.</p>
+     *
      * <p>Al final avisa a los observadores. No es segura para hilos: quien la use debe serializar
      * el acceso, como hace el servicio de simulación con sus métodos {@code synchronized}.</p>
      */
     public void tick() {
+        if (contabilidad.enQuiebra()) {
+            tick++;
+            notificar();
+            return;
+        }
         if (modo == ModoSimulacion.AUTOMATICO) {
             generarFallos();
         }
@@ -194,6 +210,7 @@ public final class Planta {
             asignarTrabajos();
         }
         revisarPreventivos();
+        contabilizar();
         tick++;
         notificar();
     }
@@ -310,6 +327,7 @@ public final class Planta {
         Sensor sensor = maquina.sensor(evento.indiceSensor());
         OrdenTrabajo orden = Clasificador.clasificar(evento, sensor, siguienteIdOrden++);
         ordenes.insertar(orden);
+        numeroFallos++;
         ranking.sumarFallo(maquina, orden.prioridad().peso());
         registrar("Clasificado: " + orden.etiquetaCorta() + " → " + orden.prioridad().etiqueta());
 
@@ -423,6 +441,36 @@ public final class Planta {
         return true;
     }
 
+    /**
+     * Paso 7b: la economía del tick.
+     *
+     * <p>Cada máquina que produce (operando o en alarma) ingresa en proporción a su carga, y cada
+     * técnico ocupado cobra su mano de obra. Una máquina detenida no tiene un costo aparte: el
+     * castigo es que no produce. Si la caja baja de 0, la compañía entra en quiebra.</p>
+     *
+     * <p>Complejidad: O(n + t), con n las máquinas y t los técnicos.</p>
+     */
+    private void contabilizar() {
+        boolean estabaEnQuiebra = contabilidad.enQuiebra();
+        contabilidad.iniciarTick();
+        for (Maquina maquina : inventario) {
+            boolean produce = maquina.estado() == EstadoMaquina.OPERANDO
+                    || maquina.estado() == EstadoMaquina.EN_ALARMA;
+            contabilidad.registrarMaquina(produce);
+            if (produce) {
+                contabilidad.ingresar(ConfiguracionPlanta.INGRESO_POR_TICK * maquina.carga() / 100);
+            }
+        }
+        for (Tecnico tecnico : tecnicos) {
+            if (!tecnico.estaLibre()) {
+                contabilidad.cobrar(ConfiguracionPlanta.MANO_DE_OBRA_POR_TICK);
+            }
+        }
+        if (!estabaEnQuiebra && contabilidad.enQuiebra()) {
+            registrar(nombre + " entra en quiebra: caja " + contabilidad.caja());
+        }
+    }
+
     /** Pone a todos los técnicos en la cola de su especialidad, en el orden de la lista. */
     private void encolarTecnicosLibres() {
         for (Tecnico tecnico : tecnicos) {
@@ -481,6 +529,8 @@ public final class Planta {
         generador = new GeneradorFallos(semilla);
         tick = 0;
         siguienteIdOrden = 1;
+        contabilidad.reiniciar();
+        numeroFallos = 0;
         // El modo no se toca: reiniciar en medio de una demostración en manual sigue en manual.
         registrar("Planta reiniciada con semilla " + semilla + " (modo " + modo.descripcion() + ")");
         notificar();
@@ -498,6 +548,7 @@ public final class Planta {
      */
     public void ejecutar(ComandoOperador comando) {
         Objects.requireNonNull(comando, "El comando no puede ser nulo");
+        exigirEnOperacion();
         comando.ejecutar();
         pilaDeshacer.push(comando);
         registrar("Operador: " + comando.descripcion());
@@ -512,6 +563,7 @@ public final class Planta {
      * Revertirlo produciría un estado inconsistente.</p>
      */
     public void deshacer() {
+        exigirEnOperacion();
         if (pilaDeshacer.isEmpty()) {
             registrar("No hay acciones para deshacer");
             notificar();
@@ -574,6 +626,7 @@ public final class Planta {
      */
     public boolean clasificarSiguiente() {
         exigirModoManual();
+        exigirEnOperacion();
         boolean clasificado = clasificarUnEvento();
         if (!clasificado) {
             registrar("No hay eventos por clasificar");
@@ -601,6 +654,7 @@ public final class Planta {
      */
     public boolean asignarSiguiente(TipoFallo especialidad) {
         exigirModoManual();
+        exigirEnOperacion();
         Objects.requireNonNull(especialidad, "Falta la especialidad");
         boolean asignada = asignarA(especialidad);
         if (!asignada) {
@@ -609,6 +663,12 @@ public final class Planta {
         }
         notificar();
         return asignada;
+    }
+
+    private void exigirEnOperacion() {
+        if (contabilidad.enQuiebra()) {
+            throw new IllegalStateException(nombre + " está en quiebra: no acepta acciones");
+        }
     }
 
     private void exigirModoManual() {
@@ -634,6 +694,7 @@ public final class Planta {
      * @param magnitud      gravedad del fallo que se quiere provocar
      */
     public void inyectarFallo(int indiceMaquina, int indiceSensor, Magnitud magnitud) {
+        exigirEnOperacion();
         Maquina maquina = inventario.get(indiceMaquina);
         if (maquina.tieneAnomalia() || maquina.alarmaActiva()) {
             registrar("Inyección rechazada: " + maquina.etiqueta() + " ya tiene un fallo activo");
@@ -681,6 +742,7 @@ public final class Planta {
      */
     public Maquina crearMaquina(TipoMaquina tipo, String etiqueta) {
         Objects.requireNonNull(tipo, "La máquina debe tener tipo");
+        exigirEnOperacion();
         String normalizada = normalizarEtiqueta(etiqueta);
         if (normalizada.isEmpty()) {
             throw new IllegalArgumentException("La etiqueta de la máquina no puede estar vacía");
@@ -877,6 +939,82 @@ public final class Planta {
             descripciones.add(comando.descripcion());
         }
         return Collections.unmodifiableList(descripciones);
+    }
+
+    /**
+     * Devuelve la contabilidad de la compañía, de solo lectura para quien está fuera del paquete:
+     * caja, ingresos, costos y disponibilidad.
+     *
+     * <p>Tiene visibilidad de paquete para que solo el modelo y sus pruebas puedan mover la caja,
+     * como {@code Maquina.sumarPuntaje}.</p>
+     *
+     * @return la contabilidad
+     */
+    Contabilidad contabilidad() {
+        return contabilidad;
+    }
+
+    /**
+     * Devuelve el dinero disponible de la compañía.
+     *
+     * @return la caja; negativa si está en quiebra
+     */
+    public long caja() {
+        return contabilidad.caja();
+    }
+
+    /**
+     * Devuelve todo lo ingresado en la partida.
+     *
+     * @return ingresos acumulados
+     */
+    public long ingresos() {
+        return contabilidad.ingresos();
+    }
+
+    /**
+     * Devuelve todo lo gastado en la partida.
+     *
+     * @return costos acumulados
+     */
+    public long costos() {
+        return contabilidad.costos();
+    }
+
+    /**
+     * Devuelve lo gastado en el último tick. Es lo que guardará el historial.
+     *
+     * @return costo del tick
+     */
+    public long costoDelTick() {
+        return contabilidad.costoDelTick();
+    }
+
+    /**
+     * Devuelve la fracción del tiempo en que las máquinas produjeron en la partida.
+     *
+     * @return disponibilidad entre 0 y 1
+     */
+    public double disponibilidad() {
+        return contabilidad.disponibilidad();
+    }
+
+    /**
+     * Indica si la compañía está en quiebra: no opera ni acepta acciones.
+     *
+     * @return {@code true} si la caja es negativa
+     */
+    public boolean enQuiebra() {
+        return contabilidad.enQuiebra();
+    }
+
+    /**
+     * Devuelve cuántos fallos se han clasificado en la partida (órdenes P1 a P3).
+     *
+     * @return número de fallos
+     */
+    public int numeroFallos() {
+        return numeroFallos;
     }
 
     /**

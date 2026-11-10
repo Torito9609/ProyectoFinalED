@@ -154,9 +154,13 @@ public final class Organizacion {
      * Avanza un tick en toda la organización: ejecuta {@link Planta#tick()} en cada compañía, en el
      * orden de sus ids, e incrementa el tick de la organización.
      *
-     * <p>Los fallos que clasifique cada planta actualizan su ranking y el global.</p>
+     * <p>Los fallos que clasifique cada planta actualizan su ranking y el global. Si la partida ya
+     * terminó, no hace nada.</p>
      */
     public void tick() {
+        if (partidaTerminada()) {
+            return;
+        }
         for (Planta compania : companias) {
             compania.tick();
         }
@@ -248,6 +252,16 @@ public final class Organizacion {
      */
     public List<Maquina> rankingGlobalConPuntajeMinimo(int umbral) {
         return rankingGlobal.conPuntajeMinimo(umbral);
+    }
+
+    /**
+     * Indica si la partida terminó: el tick llegó a {@link ConfiguracionPlanta#DURACION_PARTIDA}.
+     * Después de eso {@link #tick()} no hace nada, hasta reiniciar.
+     *
+     * @return {@code true} si la partida terminó
+     */
+    public boolean partidaTerminada() {
+        return tick >= ConfiguracionPlanta.DURACION_PARTIDA;
     }
 
     /**

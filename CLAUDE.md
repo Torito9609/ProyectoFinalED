@@ -481,7 +481,7 @@ Así la recomendación OVERHAUL / REEMPLAZO del ranking deja de ser solo informa
 - **Caja por compañía**, que arranca con un **presupuesto inicial**. El dashboard muestra las cajas de todas.
 - **Ingresos:** cada máquina que produce (OPERANDO o EN_ALARMA) suma en cada tick un ingreso proporcional a su carga.
 - **Costos:** mano de obra por cada tick de trabajo de un técnico, el overhaul (fijo, al despachar el camión) y el reemplazo (fijo). La máquina detenida no tiene un costo aparte: el castigo es que no produce.
-- La economía se calcula en un paso nuevo del tick de la planta, después de los preventivos (**paso 7b, contabilizar**), en los dos modos.
+- La economía se calcula en un paso nuevo del tick de la planta, después de los preventivos (**paso 7b, contabilizar**), en los dos modos. La lleva la clase **`Contabilidad`**, una por planta: caja, ingresos, costos, costo del tick y disponibilidad, todo en O(1).
 - **Quiebra:** si la caja de una compañía baja de 0, la compañía queda **en quiebra**: sigue el reloj (todas las plantas tienen siempre el mismo tick), pero no opera ni acepta acciones. Las demás siguen.
 - **Partida:** dura **1000 ticks**. Al llegar, la simulación se pausa y se muestra el **resumen**: caja final, número de fallos, costo total, producción y disponibilidad (porcentaje del tiempo que las máquinas produjeron). Reiniciar empieza otra partida y devuelve las cajas al presupuesto inicial.
 - La comparación entre partidas (por ejemplo, jugador contra automático con la misma semilla) se hace por ahora a mano. Guardarlas es la opción D.
@@ -503,7 +503,8 @@ Guardar el resumen de cada partida (semilla, dificultad, modo e indicadores) par
 - `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 3 (subido de 2 el 10 de noviembre). Horizonte del historial: la duración de la partida, 1000 ticks (antes 2000).
 - Técnicos internos por compañía: **1 mecánico y 1 eléctrico** (los 2 de antes, ahora con especialidad). Penalidad por especialidad equivocada: **× 2** la duración.
 - Desgaste: factor de historial acotado a **2**; **+25 %** de tasa base por cada overhaul.
-- Partida: **1000 ticks**. Economía (por calibrar en el commit 14b): presupuesto inicial, ingreso por tick a carga 100, mano de obra por tick de trabajo, costo del overhaul y costo del reemplazo.
+- Partida: **1000 ticks**. Economía (commit 14b, en `ConfiguracionPlanta`, dinero en enteros): presupuesto inicial **300.000**, ingreso por tick a carga 100 **1.000**, mano de obra por tick de trabajo **1.500**. Medición con 3 semillas, antes del desgaste: cada compañía en automático termina con unos 1,8 millones de caja (3,4 de ingresos y 1,9 de costos), unos 185 fallos y 79 % de disponibilidad. El costo del overhaul y del reemplazo se fijan en los commits 16 y 17.
+- **A revisar en el commit 16:** con partidas de 1000 ticks, las 18 máquinas superan el `umbralOverhaul` de 12 puntos (cada una acumula unos 38). Con la regla de desgaste, todas fallarían el doble desde el tick 300 y la recomendación saldría para todas a la vez. Se propone subir el umbral, midiéndolo.
 - Dificultad (por calibrar en el commit 14c): en `NORMAL`, los valores de arriba; en `FACIL` y `DIFICIL`, multiplicadores de la tasa de fallo (por ejemplo × 0,7 y × 1,5), pesos de la magnitud (por ejemplo 65/25/10 en difícil), presupuesto e ingresos.
 - Todos estos valores van en `ConfiguracionPlanta` (o en una `ConfiguracionOrganizacion` si crece demasiado; se propone antes de crearla).
 

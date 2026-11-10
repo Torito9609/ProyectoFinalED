@@ -354,6 +354,59 @@ class PlantaTest {
         assertTrue(planta.bitacora().getLast().contains("especialidad distinta"));
     }
 
+    @Test
+    @DisplayName("una máquina produce en proporción a su carga, y detenida no produce")
+    void maquinaDetenidaNoProduce() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.maquina(PRENSA).cambiarCarga(100);
+
+        planta.tick();
+        assertEquals(ConfiguracionPlanta.INGRESO_POR_TICK, planta.ingresos(),
+                "solo produce la prensa, a carga 100");
+
+        planta.ejecutar(new PararOArrancarMaquina(planta.maquina(PRENSA)));
+        planta.tick();
+        assertEquals(ConfiguracionPlanta.INGRESO_POR_TICK, planta.ingresos(),
+                "parada, la prensa ya no suma");
+        assertEquals(ConfiguracionPlanta.PRESUPUESTO_INICIAL + ConfiguracionPlanta.INGRESO_POR_TICK,
+                planta.caja());
+    }
+
+    @Test
+    @DisplayName("cada tick de trabajo de un técnico se cobra como mano de obra")
+    void manoDeObra() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
+
+        for (int i = 0; i < 3; i++) {
+            planta.tick();
+        }
+
+        assertEquals(3 * ConfiguracionPlanta.MANO_DE_OBRA_POR_TICK, planta.costos(),
+                "un técnico estuvo ocupado los 3 ticks");
+        assertEquals(ConfiguracionPlanta.MANO_DE_OBRA_POR_TICK, planta.costoDelTick());
+    }
+
+    @Test
+    @DisplayName("una compañía en quiebra no opera ni acepta acciones, pero su tick avanza")
+    void quiebraCongelaLaCompania() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.contabilidad().cobrar(ConfiguracionPlanta.PRESUPUESTO_INICIAL + 1);
+        int lecturas = planta.maquina(PRENSA).lecturas().tamano();
+
+        planta.tick();
+
+        assertTrue(planta.enQuiebra());
+        assertEquals(1, planta.tickActual(), "el tick sigue al de la organización");
+        assertEquals(lecturas, planta.maquina(PRENSA).lecturas().tamano(), "no lee sensores");
+        assertThrows(IllegalStateException.class,
+                () -> planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.LEVE));
+        assertThrows(IllegalStateException.class, planta::deshacer);
+
+        planta.reiniciar();
+        assertFalse(planta.enQuiebra(), "reiniciar empieza otra partida con el presupuesto inicial");
+    }
+
     /**
      * Crea una planta donde ninguna máquina falla por azar, poniendo su carga en cero.
      *

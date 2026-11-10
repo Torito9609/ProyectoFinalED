@@ -676,7 +676,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14 y 14a **terminados** (2026-11-10). Sigue el **14b**; faltan 14b, 14c y 15–18 |
+| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a y 14b **terminados** (2026-11-10). Sigue el **15**; faltan 14c y 15–18 |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19, 19a y 21 **terminados** (2026-11-10). Faltan 20, 22 y 23 |
 | F | 24–25 | Documentación | Pendiente |

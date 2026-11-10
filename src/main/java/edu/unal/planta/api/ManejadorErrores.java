@@ -58,6 +58,18 @@ public class ManejadorErrores {
     }
 
     /**
+     * {@code 409}: el modelo rechaza la acción en su estado actual, por ejemplo porque la compañía
+     * está en quiebra o porque un botón del modo manual se usa en automático.
+     *
+     * @param error la excepción lanzada por el modelo
+     * @return la respuesta con el mensaje
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorDto> estadoNoPermitido(IllegalStateException error) {
+        return responder(HttpStatus.CONFLICT, error.getMessage());
+    }
+
+    /**
      * {@code 400}: un valor fuera de rango o que no existe, detectado por el servicio o el modelo.
      *
      * @param error la excepción

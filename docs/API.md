@@ -289,7 +289,7 @@ Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para 
 |---|---|---|
 | `400` | Entrada inválida: carga fuera de rango, magnitud inexistente, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
 | `404` | La compañía, la máquina o el sensor no existen | `No existe una compañía con id 99` |
-| `409` | La acción no se permite en el estado actual, o el nombre o la etiqueta ya existen | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
+| `409` | La acción no se permite en el estado actual (también si la compañía está en quiebra), o el nombre o la etiqueta ya existen | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
 
 En los rechazos `409` de inyectar y deshacer, la bitácora también registra el rechazo.
 

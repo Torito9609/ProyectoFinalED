@@ -74,6 +74,24 @@ public final class ConfiguracionPlanta {
     public static final int MAXIMO_OVERHAULS = 3;
 
     // ---------------------------------------------------------------------------------
+    // Economía y partida (Entrega 2). Valores PROVISIONALES, medidos con 1000 ticks en automático:
+    // una compañía produce unos 3.400 ticks a carga completa (≈ 3,4 millones) y sus técnicos
+    // trabajan unos 1.260 ticks (≈ 1,9 millones).
+    // ---------------------------------------------------------------------------------
+
+    /** Dinero con que arranca cada compañía: unos 100 ticks de ingreso de la planta. */
+    public static final long PRESUPUESTO_INICIAL = 300_000L;
+
+    /** Lo que produce una máquina en un tick a carga 100; a otra carga, en proporción. */
+    public static final long INGRESO_POR_TICK = 1_000L;
+
+    /** Lo que cuesta un técnico por cada tick que pasa trabajando. */
+    public static final long MANO_DE_OBRA_POR_TICK = 1_500L;
+
+    /** Ticks que dura una partida. Al llegar, la simulación se pausa. */
+    public static final int DURACION_PARTIDA = 1000;
+
+    // ---------------------------------------------------------------------------------
     // Organización (Entrega 2). Valores PROVISIONALES.
     // ---------------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 package edu.unal.planta.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,6 +56,23 @@ class OrganizacionTest {
         assertTrue(organizacion.rankingGlobal().contains(nueva));
         assertTrue(organizacion.rankingGlobal().contains(otra));
         assertEquals(20, organizacion.rankingGlobal().size());
+    }
+
+    @Test
+    @DisplayName("la partida termina en su duración y después el tick no avanza")
+    void partidaTermina() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        for (int i = 0; i < ConfiguracionPlanta.DURACION_PARTIDA; i++) {
+            assertFalse(organizacion.partidaTerminada());
+            organizacion.tick();
+        }
+
+        assertTrue(organizacion.partidaTerminada());
+        organizacion.tick();
+        assertEquals(ConfiguracionPlanta.DURACION_PARTIDA, organizacion.tickActual());
+
+        organizacion.reiniciar();
+        assertFalse(organizacion.partidaTerminada());
     }
 
     @Test
