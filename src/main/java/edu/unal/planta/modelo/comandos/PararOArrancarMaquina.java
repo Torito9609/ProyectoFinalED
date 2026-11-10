@@ -69,4 +69,9 @@ public final class PararOArrancarMaquina implements ComandoOperador {
         String accion = estadoNuevo == EstadoMaquina.PARADA_MANUAL ? "Parar" : "Arrancar";
         return accion + " " + maquina.etiqueta();
     }
+
+    @Override
+    public Maquina maquina() {
+        return maquina;
+    }
 }

@@ -64,4 +64,9 @@ public final class CambiarCargaMaquina implements ComandoOperador {
     public String descripcion() {
         return "Carga " + maquina.etiqueta() + ": " + cargaAnterior + "% → " + cargaNueva + "%";
     }
+
+    @Override
+    public Maquina maquina() {
+        return maquina;
+    }
 }

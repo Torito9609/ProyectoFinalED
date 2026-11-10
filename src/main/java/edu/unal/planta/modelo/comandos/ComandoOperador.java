@@ -1,5 +1,7 @@
 package edu.unal.planta.modelo.comandos;
 
+import edu.unal.planta.modelo.Maquina;
+
 /**
  * Una acción del operador que se puede deshacer.
  *
@@ -49,4 +51,15 @@ public interface ComandoOperador {
      * @return texto como {@code "Parar PRENSA-01"}
      */
     String descripcion();
+
+    /**
+     * Devuelve la máquina sobre la que actúa el comando.
+     *
+     * <p>Sirve para descartar el comando si la máquina ya no está en el inventario porque fue
+     * reemplazada: el comando guarda el objeto viejo, y revertirlo no tendría efecto sobre la
+     * máquina nueva.</p>
+     *
+     * @return la máquina del comando
+     */
+    Maquina maquina();
 }

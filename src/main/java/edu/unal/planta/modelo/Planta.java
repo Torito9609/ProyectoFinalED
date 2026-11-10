@@ -448,7 +448,7 @@ public final class Planta {
      * extrae y se descarta sin asignarla.
      *
      * <p>Un preventivo sobra cuando la máquina recibió un overhaul mientras la orden esperaba,
-     * porque el overhaul es un servicio completo. Sacarlo del medio de la cola con prioridad
+     * porque el overhaul es un servicio completo, o cuando fue reemplazada por una nueva. Sacarlo del medio de la cola con prioridad
      * violaría el tipo abstracto de datos, así que se deja en su carril y se descarta cuando llega
      * al frente y sale por la operación normal {@code extraer}. Es la técnica habitual con colas de
      * prioridad (Dijkstra la usa con las distancias viejas).</p>
@@ -459,11 +459,14 @@ public final class Planta {
         while (ordenes.verSiguiente().filter(this::preventivoObsoleto).isPresent()) {
             OrdenTrabajo descartada = ordenes.extraer().orElseThrow();
             registrar(descartada.etiquetaCorta() + " descartada: "
-                    + descartada.etiquetaMaquina() + " ya recibió overhaul");
+                    + descartada.etiquetaMaquina() + " ya recibió overhaul o fue reemplazada");
         }
     }
 
-    /** Un preventivo sobra si la máquina ya no lo tiene pendiente o está en overhaul. */
+    /**
+     * Un preventivo sobra si la máquina ya no lo tiene pendiente o está en overhaul. Si la máquina
+     * fue reemplazada, la del índice es la nueva, que no tiene la marca: también sobra.
+     */
     private boolean preventivoObsoleto(OrdenTrabajo orden) {
         if (orden.prioridad() != Prioridad.P4) {
             return false;
@@ -642,7 +645,8 @@ public final class Planta {
      *
      * <p>Si la simulación ya cambió por su cuenta el estado que el comando había dejado, el comando
      * <strong>se descarta</strong> en vez de revertirse, y queda constancia en la bitácora.
-     * Revertirlo produciría un estado inconsistente.</p>
+     * Revertirlo produciría un estado inconsistente. También se descarta si su máquina fue
+     * reemplazada: el comando guarda el objeto viejo, que ya no está en el inventario.</p>
      */
     public void deshacer() {
         exigirEnOperacion();
@@ -652,7 +656,10 @@ public final class Planta {
             return;
         }
         ComandoOperador comando = pilaDeshacer.pop();
-        if (comando.sePuedeDeshacer()) {
+        if (inventario.get(comando.maquina().indice()) != comando.maquina()) {
+            // El comando guarda la máquina vieja; en su índice ya hay otra, la del reemplazo.
+            registrar("Descartado, la máquina fue reemplazada: " + comando.descripcion());
+        } else if (comando.sePuedeDeshacer()) {
             comando.deshacer();
             registrar("Deshecho: " + comando.descripcion());
         } else {
@@ -842,6 +849,55 @@ public final class Planta {
         registrar("Máquina creada: " + normalizada + " (" + tipo.descripcion() + ")");
         notificar();
         return maquina;
+    }
+
+    /**
+     * Reemplaza una máquina por una nueva del mismo tipo, con la misma etiqueta y la misma clave
+     * {@code (idCompania, indice)}, puntaje 0 y sin overhauls.
+     *
+     * <p>La nueva entra en el <strong>mismo índice</strong> del inventario con {@code set}, O(1):
+     * las máquinas no se eliminan, así que los índices (que son los ids de la API) no se corren. La
+     * vieja sale de los dos rankings y la nueva entra en ambos. El conjunto de etiquetas no cambia,
+     * porque la etiqueta es la misma. Es inmediato, no usa técnicos y cobra
+     * {@link ConfiguracionPlanta#COSTO_REEMPLAZO}.</p>
+     *
+     * <p>Solo se reemplaza una máquina libre ({@link Maquina#estaLibre()}): sin alarma, sin
+     * técnico trabajando en ella y fuera de overhaul. Así no queda ningún trabajo en curso sobre el
+     * objeto viejo. Lo que todavía espera en las estructuras se descarta de forma perezosa, sin
+     * sacar nada del medio: una orden P4 pendiente cuando llega al frente de la cola con prioridad,
+     * una solicitud de overhaul cuando llega a la cima del montículo, y un comando de la pila
+     * cuando se intenta deshacer.</p>
+     *
+     * <p>Complejidad: O(log N), por los dos rankings; el {@code set} es O(1).</p>
+     *
+     * @param indice índice de la máquina en el inventario
+     * @return la máquina nueva
+     * @throws IndexOutOfBoundsException si no hay máquina en ese índice
+     * @throws IllegalStateException     si la compañía está en quiebra, si la máquina no tiene
+     *                                   recomendación de reemplazo o si no está libre
+     */
+    public Maquina reemplazarMaquina(int indice) {
+        exigirEnOperacion();
+        Maquina vieja = inventario.get(indice);
+        if (vieja.recomendacion() != Recomendacion.REEMPLAZO) {
+            throw new IllegalStateException(vieja.etiqueta() + " no tiene recomendación de reemplazo");
+        }
+        if (!vieja.estaLibre()) {
+            throw new IllegalStateException(vieja.etiqueta() + " no está libre: está "
+                    + vieja.estado().descripcion());
+        }
+        Maquina nueva = ConfiguracionPlanta.crearMaquina(vieja.tipo(), idCompania, indice, vieja.etiqueta());
+        ranking.quitar(vieja);
+        inventario.set(indice, nueva);
+        ranking.agregar(nueva);
+        contabilidad.cobrar(ConfiguracionPlanta.COSTO_REEMPLAZO);
+        registrar("Reemplazo: " + nueva.etiqueta() + " es una máquina nueva (costo "
+                + ConfiguracionPlanta.COSTO_REEMPLAZO + ")");
+        if (contabilidad.enQuiebra()) {
+            registrar(nombre + " entra en quiebra: caja " + contabilidad.caja());
+        }
+        notificar();
+        return nueva;
     }
 
     /** Quita los espacios a los lados y pasa a mayúsculas. */

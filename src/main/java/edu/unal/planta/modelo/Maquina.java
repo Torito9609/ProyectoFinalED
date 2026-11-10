@@ -445,6 +445,20 @@ public final class Maquina {
     }
 
     /**
+     * Indica si la máquina está libre para un overhaul o un reemplazo: sin alarma activa (y por eso
+     * sin evento ni orden correctiva pendiente) y operando o parada a mano. Una máquina en
+     * mantenimiento, en overhaul o detenida por una alarma crítica no está libre.
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return {@code true} si está libre
+     */
+    public boolean estaLibre() {
+        return !alarmaActiva
+                && (estado == EstadoMaquina.OPERANDO || estado == EstadoMaquina.PARADA_MANUAL);
+    }
+
+    /**
      * Agrega una lectura al historial reciente.
      *
      * <p>Si la cola circular está llena, la lectura más antigua se descarta.</p>

@@ -423,7 +423,7 @@ class PlantaTest {
         planta.asignarSiguiente(TipoFallo.MECANICO);
 
         assertTrue(planta.bitacora().stream().anyMatch(linea -> linea.endsWith(
-                preventivo.etiquetaCorta() + " descartada: " + maquina.etiqueta() + " ya recibió overhaul")));
+                preventivo.etiquetaCorta() + " descartada: " + maquina.etiqueta() + " ya recibió overhaul o fue reemplazada")));
         assertTrue(planta.ordenes().ordenesDe(Prioridad.P4).stream()
                 .noneMatch(orden -> orden.id() == preventivo.id()), "salió por el frente");
         assertTrue(ordenEnCurso(planta).map(orden -> orden.id() != preventivo.id()).orElse(true),

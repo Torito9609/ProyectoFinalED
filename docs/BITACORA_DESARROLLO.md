@@ -36,6 +36,30 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 17 — 2026-11-10 — Reemplazo de máquina
+
+### Decisiones
+- **La máquina nueva entra en el mismo índice** (`ArrayList.set`, O(1)), con el mismo tipo, la misma
+  etiqueta y la misma clave `(idCompania, indice)`, puntaje 0 y sin overhauls. La vieja sale de los
+  dos rankings y la nueva entra en ambos. El conjunto de etiquetas no cambia. Cuesta **300.000** y es
+  inmediato, sin técnicos.
+- **Solo se reemplaza una máquina libre** (aprobado por el equipo): sin alarma, sin técnico trabajando
+  en ella y fuera de overhaul. Así no queda ningún trabajo en curso sobre el objeto viejo. La regla es
+  la misma del overhaul y pasó a `Maquina.estaLibre()`.
+- **Lo que espera de la máquina vieja se descarta de forma perezosa**, sin sacar nada del medio:
+  - la P4 pendiente, al llegar al frente (la nueva no tiene la marca de preventivo pendiente);
+  - la solicitud de overhaul, al llegar a la cima (la nueva no tiene la marca de overhaul pendiente);
+  - el comando de la pila, al deshacer: `ComandoOperador` ganó `maquina()` (aprobado por el equipo), y
+    si en su índice ya hay otro objeto, el comando se descarta.
+- **Caso límite conocido:** si la máquina nueva recibe su propia solicitud de overhaul mientras la
+  vieja sigue en el montículo, la vieja ya no se reconoce como obsoleta y la atiende (con su puntaje
+  congelado). La nueva sale después y se descarta por no tener la marca. El efecto es un overhaul
+  atendido antes de tiempo, sin romper ninguna estructura. Con 2 técnicos del fabricante y pocas
+  solicitudes no se espera verlo; se deja documentado en vez de complicar la solicitud.
+
+### Verificación
+`./mvnw clean test`: **142 pruebas en verde** (3 nuevas). Javadoc sin advertencias.
+
 ## Entrega 2, commit 16 — 2026-11-10 — Overhauls en el tick, y un hallazgo de calibración
 
 ### Decisiones
@@ -706,7 +730,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b, 15 y 16 **terminados** (2026-11-10). Sigue el **17**; faltan 14c, 17 y 18 |
+| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b, 15, 16 y 17 **terminados** (2026-11-10). Sigue el **18**; faltan 14c y 18 |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19, 19a y 21 **terminados** (2026-11-10). Faltan 20, 22 y 23 |
 | F | 24–25 | Documentación | Pendiente |

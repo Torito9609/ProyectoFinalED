@@ -3,9 +3,12 @@ package edu.unal.planta.modelo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.unal.planta.modelo.comandos.CambiarCargaMaquina;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -158,6 +161,88 @@ class OrganizacionTest {
         assertEquals(EstadoMaquina.OPERANDO, segunda.estado(), "no se salta a la segunda solicitud");
         assertEquals("Tick " + organizacion.tickActual() + ": El camión espera: " + cima.etiqueta()
                 + " no está libre", organizacion.compania(cima.idCompania()).bitacora().getLast());
+    }
+
+    @Test
+    @DisplayName("el reemplazo pone una máquina nueva en el mismo índice, en los rankings y cobra")
+    void reemplazoDeMaquina() {
+        Organizacion organizacion = organizacionEnManual();
+        Planta compania = organizacion.compania(0);
+        Maquina vieja = llevarAReemplazo(organizacion, compania, 0);
+        long caja = compania.caja();
+
+        Maquina nueva = compania.reemplazarMaquina(0);
+
+        assertSame(nueva, compania.maquina(0), "la nueva ocupa el mismo índice");
+        assertNotSame(vieja, nueva);
+        assertEquals(vieja.etiqueta(), nueva.etiqueta());
+        assertEquals(vieja.tipo(), nueva.tipo());
+        assertEquals(0, nueva.puntajeFallos());
+        assertEquals(0, nueva.numeroOverhauls());
+        assertEquals(Recomendacion.NINGUNA, nueva.recomendacion());
+        assertEquals(caja - ConfiguracionPlanta.COSTO_REEMPLAZO, compania.caja());
+        assertEquals(ordenarTodas(organizacion), organizacion.rankingGlobal(),
+                "la vieja salió de los rankings y la nueva entró");
+        assertEquals(compania.inventario().size(), compania.rankingFallos().size());
+    }
+
+    @Test
+    @DisplayName("el reemplazo se rechaza sin recomendación de reemplazo o si la máquina no está libre")
+    void reemplazoRechazado() {
+        Organizacion organizacion = organizacionEnManual();
+        Planta compania = organizacion.compania(0);
+        assertThrows(IllegalStateException.class, () -> compania.reemplazarMaquina(1), "sin recomendación");
+        llevarAlUmbral(organizacion, compania, 1);
+        assertEquals(Recomendacion.OVERHAUL, compania.maquina(1).recomendacion());
+        assertThrows(IllegalStateException.class, () -> compania.reemplazarMaquina(1), "pide overhaul");
+
+        Maquina maquina = llevarAReemplazo(organizacion, compania, 0);
+        compania.inyectarFallo(0, 0, Magnitud.SEVERA);
+        organizacion.tick();
+        assertTrue(maquina.alarmaActiva());
+        assertThrows(IllegalStateException.class, () -> compania.reemplazarMaquina(0), "en alarma");
+        assertSame(maquina, compania.maquina(0));
+    }
+
+    @Test
+    @DisplayName("lo que espera de la máquina vieja se descarta: el comando de la pila y la solicitud del montículo")
+    void reemplazoDescartaLoPendiente() {
+        Organizacion organizacion = organizacionEnManual();
+        Planta compania = organizacion.compania(0);
+        Maquina vieja = llevarAReemplazo(organizacion, compania, 0);
+        int cargaVieja = vieja.carga();
+        compania.ejecutar(new CambiarCargaMaquina(vieja, 50));
+        organizacion.aprobarOverhaul(0, 0);
+
+        Maquina nueva = compania.reemplazarMaquina(0);
+        int carga = nueva.carga();
+
+        compania.deshacer();
+        assertEquals(carga, nueva.carga(), "deshacer no toca la máquina nueva");
+        assertEquals("Tick " + organizacion.tickActual() + ": Descartado, la máquina fue reemplazada: "
+                + "Carga " + vieja.etiqueta() + ": " + cargaVieja + "% → 50%", compania.bitacora().getLast());
+
+        assertFalse(organizacion.asignarSiguienteOverhaul());
+        assertTrue(organizacion.siguienteOverhaul().isEmpty(), "la solicitud vieja salió por la cima");
+        assertEquals(EstadoMaquina.OPERANDO, nueva.estado());
+        assertEquals("Tick " + organizacion.tickActual() + ": Overhaul de " + vieja.etiqueta()
+                + " descartado: la máquina fue reemplazada", compania.bitacora().getLast());
+    }
+
+    /**
+     * Lleva una máquina hasta la recomendación de reemplazo: al umbral, un overhaul completo y otra
+     * vez al umbral. Al terminar, la máquina queda operando y libre.
+     */
+    private static Maquina llevarAReemplazo(Organizacion organizacion, Planta compania, int indice) {
+        Maquina maquina = llevarAlUmbral(organizacion, compania, indice);
+        organizacion.aprobarOverhaul(maquina.idCompania(), maquina.indice());
+        organizacion.asignarSiguienteOverhaul();
+        while (maquina.estado() == EstadoMaquina.EN_OVERHAUL) {
+            organizacion.tick();
+        }
+        llevarAlUmbral(organizacion, compania, indice);
+        assertEquals(Recomendacion.REEMPLAZO, maquina.recomendacion());
+        return maquina;
     }
 
     /** Una organización en modo manual: no aparecen fallos solos ni se asigna nada solo. */

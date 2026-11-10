@@ -393,19 +393,29 @@ public final class Organizacion {
      * entra en overhaul. Si la máquina de la cima no está libre, se espera: no se salta a la
      * segunda solicitud, porque eso sería sacar del montículo un elemento que no es la cima.
      *
-     * <p>Descarte perezoso: una solicitud de una compañía en quiebra se extrae y se descarta cuando
-     * llega a la cima, para que no bloquee para siempre los overhauls de las demás.</p>
+     * <p>Descarte perezoso: una solicitud se extrae y se descarta cuando llega a la cima si su
+     * compañía está en quiebra (para que no bloquee para siempre los overhauls de las demás) o si su
+     * máquina fue reemplazada. La máquina nueva ocupa el mismo índice pero no tiene la marca de
+     * overhaul pendiente, y así se reconoce la solicitud vieja sin buscarla en el montículo.</p>
      *
      * <p>Complejidad: O(log s) por la extracción.</p>
      *
      * @return {@code true} si se despachó un overhaul
      */
     private boolean asignarUnOverhaul() {
-        while (!solicitudes.isEmpty() && companias.get(solicitudes.peek().idCompania()).enQuiebra()) {
-            SolicitudOverhaul descartada = solicitudes.poll();
-            Planta compania = companias.get(descartada.idCompania());
-            compania.maquina(descartada.indiceMaquina()).marcarOverhaulPendiente(false);
-            compania.anotar("Overhaul de " + descartada.etiqueta() + " descartado: la compañía está en quiebra");
+        while (!solicitudes.isEmpty()) {
+            SolicitudOverhaul cima = solicitudes.peek();
+            Planta compania = companias.get(cima.idCompania());
+            Maquina maquina = compania.maquina(cima.indiceMaquina());
+            if (compania.enQuiebra()) {
+                maquina.marcarOverhaulPendiente(false);
+                compania.anotar("Overhaul de " + cima.etiqueta() + " descartado: la compañía está en quiebra");
+            } else if (!maquina.overhaulPendiente()) {
+                compania.anotar("Overhaul de " + cima.etiqueta() + " descartado: la máquina fue reemplazada");
+            } else {
+                break;
+            }
+            solicitudes.poll();
         }
         if (externosLibres.isEmpty() || solicitudes.isEmpty()) {
             return false;
@@ -413,7 +423,7 @@ public final class Organizacion {
         SolicitudOverhaul cima = solicitudes.peek();
         Planta compania = companias.get(cima.idCompania());
         Maquina maquina = compania.maquina(cima.indiceMaquina());
-        if (!libreParaOverhaul(maquina)) {
+        if (!maquina.estaLibre()) {
             return false;
         }
         solicitudes.poll();
@@ -422,16 +432,6 @@ public final class Organizacion {
         maquina.marcarOverhaulPendiente(false);
         compania.iniciarOverhaul(cima.indiceMaquina(), externo.nombre());
         return true;
-    }
-
-    /**
-     * Una máquina está libre para el overhaul si no tiene alarma activa (y por eso tampoco una
-     * orden correctiva pendiente) y está operando o parada a mano.
-     */
-    private static boolean libreParaOverhaul(Maquina maquina) {
-        return !maquina.alarmaActiva()
-                && (maquina.estado() == EstadoMaquina.OPERANDO
-                || maquina.estado() == EstadoMaquina.PARADA_MANUAL);
     }
 
     /**

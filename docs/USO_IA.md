@@ -377,6 +377,17 @@ Convención de la columna **Autoría**:
 | `modelo/ConfiguracionPlanta.java` | IA | Umbral 30, máximo 1, costo 120.000 y los factores de desgaste (aprobados por el equipo) |
 | `test/...` | IA | 4 pruebas nuevas (desgaste, ciclo, cima y descarte perezoso) y 3 ajustadas al umbral nuevo |
 
+### Entrega 2 — Commit 17: reemplazo de máquina
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Planta.java` | IA | `reemplazarMaquina` (`set` en el mismo índice, los dos rankings, cobra); deshacer descarta el comando de una máquina reemplazada |
+| `modelo/Organizacion.java` | IA | Descarte perezoso de la solicitud de una máquina reemplazada; usa `Maquina.estaLibre` |
+| `modelo/Maquina.java` | IA | `estaLibre`, la regla que comparten el overhaul y el reemplazo |
+| `modelo/comandos/*.java` | IA | `maquina()` en `ComandoOperador` y sus dos comandos (aprobado por el equipo) |
+| `modelo/ConfiguracionPlanta.java` | IA | `COSTO_REEMPLAZO = 300.000` |
+| `test/.../OrganizacionTest.java`, `PlantaTest.java` | IA | 3 pruebas nuevas (reemplazo, rechazos, descartes de la pila y del montículo) y 1 ajustada al mensaje nuevo |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

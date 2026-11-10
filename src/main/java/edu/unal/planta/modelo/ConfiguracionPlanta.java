@@ -96,6 +96,13 @@ public final class ConfiguracionPlanta {
      */
     public static final long COSTO_OVERHAUL = 120_000L;
 
+    /**
+     * Lo que cuesta reemplazar una máquina, cobrado de una vez: dos veces y media un overhaul. La
+     * máquina nueva arranca sin desgaste ni overhauls, así que conviene cuando el overhaul ya no
+     * rinde.
+     */
+    public static final long COSTO_REEMPLAZO = 300_000L;
+
     // ---------------------------------------------------------------------------------
     // Economía y partida (Entrega 2). Valores PROVISIONALES, medidos con 1000 ticks en automático:
     // una compañía produce unos 3.400 ticks a carga completa (≈ 3,4 millones) y sus técnicos
