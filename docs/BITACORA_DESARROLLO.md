@@ -631,8 +631,8 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 |---|---|---|---|
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
-| C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Siguiente: commit 10** |
-| D | 11–18, 13a, 13b | Modelo de la Entrega 2, con la creación de compañías y máquinas | Pendiente |
+| C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
+| D | 11–18, 13a, 13b | Modelo de la Entrega 2, con la creación de compañías y máquinas | **Siguiente: commit 11** |
 | E | 19–23, 19a | API de la Entrega 2 | Pendiente |
 | F | 24–25 | Documentación | Pendiente |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |

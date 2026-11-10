@@ -223,6 +223,14 @@ Convención de la columna **Autoría**:
 | `docs/API.md` | IA | Contrato para el frontend; los ejemplos de respuesta son salidas reales del servidor |
 | `README.md` | IA | Cómo ejecutar el backend, enlace a la API, estado de la Entrega 2 |
 
+### Entrega 2 — Commit 10: árbol de segmentos
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `estructuras/ArbolSegmentos.java` | IA | Generada contra la API que aprobó el equipo: arreglos paralelos de tamaño 2·m, actualización iterativa y consultas recursivas |
+| `estructuras/package-info.java` | IA | Menciona la nueva estructura propia |
+| `test/.../ArbolSegmentosTest.java` | IA | 4 pruebas del plan sobre un árbol de tamaño 6 (con hojas de relleno) |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
