@@ -59,11 +59,13 @@ public final class Clasificador {
                 prioridad,
                 descripcion,
                 evento.tick(),
-                ConfiguracionPlanta.duracionReparacion(prioridad));
+                ConfiguracionPlanta.duracionReparacion(prioridad),
+                evento.tipoFallo());
     }
 
     /**
-     * Crea la orden de mantenimiento preventivo de una máquina, que siempre es P4.
+     * Crea la orden de mantenimiento preventivo de una máquina, que siempre es P4 y mecánica: la
+     * revisión programada la hace el mecánico.
      *
      * @param maquina       máquina que cumplió su intervalo
      * @param indiceMaquina posición de la máquina en el inventario
@@ -82,7 +84,8 @@ public final class Clasificador {
                 "Mantenimiento preventivo: " + maquina.ticksDesdeMantenimiento()
                         + " ticks desde el último",
                 tick,
-                ConfiguracionPlanta.duracionReparacion(Prioridad.P4));
+                ConfiguracionPlanta.duracionReparacion(Prioridad.P4),
+                TipoFallo.MECANICO);
     }
 
     /**

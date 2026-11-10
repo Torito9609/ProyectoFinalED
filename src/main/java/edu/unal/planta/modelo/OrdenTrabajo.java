@@ -35,7 +35,9 @@ import java.util.Objects;
  * @param prioridad            prioridad asignada por el clasificador
  * @param descripcion          motivo de la orden, legible para el operador
  * @param tickCreacion         tick de la simulación en que se creó
- * @param duracionEstimadaTicks cuántos ticks tarda un técnico en atenderla; debe ser positiva
+ * @param duracionEstimadaTicks cuántos ticks tarda un técnico de la especialidad correcta en
+ *                             atenderla; debe ser positiva
+ * @param tipoFallo            tipo del fallo, que decide la especialidad del técnico (Entrega 2)
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -46,7 +48,8 @@ public record OrdenTrabajo(
         Prioridad prioridad,
         String descripcion,
         int tickCreacion,
-        int duracionEstimadaTicks) {
+        int duracionEstimadaTicks,
+        TipoFallo tipoFallo) {
 
     /**
      * Valida los datos de la orden al construirla.
@@ -57,7 +60,8 @@ public record OrdenTrabajo(
      * <p>Complejidad: O(1).</p>
      *
      * @throws IllegalArgumentException si algún número está fuera de rango
-     * @throws NullPointerException     si la prioridad, la etiqueta o la descripción son nulas
+     * @throws NullPointerException     si la prioridad, la etiqueta, la descripción o el tipo son
+     *                                  nulos
      */
     public OrdenTrabajo {
         if (id <= 0) {
@@ -78,6 +82,7 @@ public record OrdenTrabajo(
         Objects.requireNonNull(etiquetaMaquina, "La orden debe indicar la etiqueta de la máquina");
         Objects.requireNonNull(prioridad, "La orden debe tener una prioridad");
         Objects.requireNonNull(descripcion, "La orden debe tener una descripción");
+        Objects.requireNonNull(tipoFallo, "La orden debe tener un tipo de fallo");
     }
 
     /**

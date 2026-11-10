@@ -20,6 +20,7 @@ import java.util.Objects;
  * @param nombreSensor    nombre del sensor que se salió de rango
  * @param valorLeido      valor que disparó la detección
  * @param tick            tick en que se detectó
+ * @param tipoFallo       tipo del fallo, copiado del sensor (Entrega 2)
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -29,17 +30,19 @@ public record EventoFallo(
         int indiceSensor,
         String nombreSensor,
         double valorLeido,
-        int tick) {
+        int tick,
+        TipoFallo tipoFallo) {
 
     /**
      * Valida el evento.
      *
      * @throws IllegalArgumentException si algún índice o el tick son negativos
-     * @throws NullPointerException     si la etiqueta o el nombre del sensor son nulos
+     * @throws NullPointerException     si la etiqueta, el nombre del sensor o el tipo son nulos
      */
     public EventoFallo {
         Objects.requireNonNull(etiquetaMaquina, "El evento debe indicar la máquina");
         Objects.requireNonNull(nombreSensor, "El evento debe indicar el sensor");
+        Objects.requireNonNull(tipoFallo, "El evento debe indicar el tipo de fallo");
         if (indiceMaquina < 0 || indiceSensor < 0 || tick < 0) {
             throw new IllegalArgumentException("Índices y tick no pueden ser negativos");
         }

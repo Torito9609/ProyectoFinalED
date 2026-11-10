@@ -20,7 +20,7 @@ import java.util.Map;
  *                          orden del enumerado, incluso los que tienen 0
  * @param eventosPendientes tamaño de la cola de eventos por clasificar
  * @param ordenesPendientes tamaño de la cola con prioridad (los cuatro carriles)
- * @param tecnicosLibres    tamaño de la cola de técnicos libres
+ * @param tecnicosLibres    técnicos libres, sumando las dos colas de especialidad
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -57,6 +57,6 @@ public record ResumenCompaniaDto(
                 Collections.unmodifiableMap(porEstado),
                 planta.eventosPendientes().size(),
                 planta.ordenes().tamano(),
-                planta.tecnicosLibres().size());
+                planta.totalTecnicosLibres());
     }
 }

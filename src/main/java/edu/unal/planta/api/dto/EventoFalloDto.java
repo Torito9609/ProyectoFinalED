@@ -11,6 +11,7 @@ import edu.unal.planta.modelo.EventoFallo;
  * @param nombreSensor    nombre del sensor que se salió de rango
  * @param valorLeido      valor que disparó la detección
  * @param tick            tick en que se detectó
+ * @param tipoFallo       {@code MECANICO} o {@code ELECTRICO}
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -20,7 +21,8 @@ public record EventoFalloDto(
         int indiceSensor,
         String nombreSensor,
         double valorLeido,
-        int tick) {
+        int tick,
+        String tipoFallo) {
 
     /**
      * Copia un evento del modelo.
@@ -30,6 +32,7 @@ public record EventoFalloDto(
      */
     public static EventoFalloDto desde(EventoFallo evento) {
         return new EventoFalloDto(evento.indiceMaquina(), evento.etiquetaMaquina(),
-                evento.indiceSensor(), evento.nombreSensor(), evento.valorLeido(), evento.tick());
+                evento.indiceSensor(), evento.nombreSensor(), evento.valorLeido(), evento.tick(),
+                evento.tipoFallo().name());
     }
 }

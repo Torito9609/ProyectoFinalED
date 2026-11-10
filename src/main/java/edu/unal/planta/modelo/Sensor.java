@@ -24,6 +24,8 @@ import java.util.Objects;
  * @param umbralAdvertencia a partir de aquí la lectura es sospechosa (prioridad P3)
  * @param umbralAlto        a partir de aquí la lectura es grave (prioridad P2)
  * @param umbralCritico     a partir de aquí la máquina debe detenerse (prioridad P1)
+ * @param tipoFallo         tipo de los fallos de este sensor, que decide la especialidad del
+ *                          técnico que los repara (Entrega 2)
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -34,18 +36,20 @@ public record Sensor(
         double ruido,
         double umbralAdvertencia,
         double umbralAlto,
-        double umbralCritico) {
+        double umbralCritico,
+        TipoFallo tipoFallo) {
 
     /**
      * Valida la definición del sensor.
      *
      * @throws IllegalArgumentException si el ruido es negativo, si los umbrales no están en orden
      *                                 creciente o si no hay margen entre el ruido y la advertencia
-     * @throws NullPointerException     si el nombre o la unidad son nulos
+     * @throws NullPointerException     si el nombre, la unidad o el tipo de fallo son nulos
      */
     public Sensor {
         Objects.requireNonNull(nombre, "El sensor debe tener nombre");
         Objects.requireNonNull(unidad, "El sensor debe tener unidad");
+        Objects.requireNonNull(tipoFallo, "El sensor debe declarar su tipo de fallo");
         if (ruido < 0) {
             throw new IllegalArgumentException("El ruido no puede ser negativo: " + ruido);
         }

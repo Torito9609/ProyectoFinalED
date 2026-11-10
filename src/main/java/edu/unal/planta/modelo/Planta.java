@@ -5,7 +5,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -21,8 +23,9 @@ import java.util.TreeSet;
  *   <tr><td>{@code inventario}</td><td>{@code ArrayList}</td><td>Las máquinas de la planta</td></tr>
  *   <tr><td>{@code eventos}</td><td>{@code ArrayDeque} como {@code Queue}</td>
  *       <td>Eventos por clasificar, en orden de llegada</td></tr>
- *   <tr><td>{@code tecnicosLibres}</td><td>{@code ArrayDeque} como {@code Queue}</td>
- *       <td>Técnicos disponibles, en orden de llegada</td></tr>
+ *   <tr><td>{@code tecnicosLibres}</td><td>{@code EnumMap} de dos {@code ArrayDeque} como
+ *       {@code Queue}</td>
+ *       <td>Técnicos disponibles, una cola FIFO por especialidad (Entrega 2)</td></tr>
  *   <tr><td>{@code ordenes}</td><td>{@link ColaPrioridadOrdenes}</td>
  *       <td>Órdenes de trabajo P1 a P4</td></tr>
  *   <tr><td>{@code pilaDeshacer}</td><td>{@code ArrayDeque} como pila</td>
@@ -62,8 +65,13 @@ public final class Planta {
     /** Cola FIFO: eventos detectados que esperan clasificación. */
     private final Queue<EventoFallo> eventos;
 
-    /** Cola FIFO: técnicos disponibles, el primero en esperar es el primero en recibir trabajo. */
-    private final Queue<Tecnico> tecnicosLibres;
+    /**
+     * Dos colas FIFO de técnicos disponibles, una por especialidad: en cada una, el primero en
+     * esperar es el primero en recibir trabajo. Es un arreglo de colas indexado por una clave fija,
+     * como la cola con prioridad: un {@code EnumMap} es por dentro un arreglo indexado por el
+     * ordinal del enumerado, así que elegir la cola cuesta O(1).
+     */
+    private final Map<TipoFallo, Queue<Tecnico>> tecnicosLibres;
 
     /** Todos los técnicos, libres u ocupados, para que la vista los muestre. */
     private final List<Tecnico> tecnicos;
@@ -131,7 +139,11 @@ public final class Planta {
         this.inventario = ConfiguracionPlanta.crearMaquinas(idCompania);
         this.tecnicos = ConfiguracionPlanta.crearTecnicos();
         this.eventos = new ArrayDeque<>();
-        this.tecnicosLibres = new ArrayDeque<>(tecnicos);
+        this.tecnicosLibres = new EnumMap<>(TipoFallo.class);
+        for (TipoFallo especialidad : TipoFallo.values()) {
+            tecnicosLibres.put(especialidad, new ArrayDeque<>());
+        }
+        encolarTecnicosLibres();
         this.ordenes = new ColaPrioridadOrdenes();
         this.ranking = new RankingFallos(inventario, rankingGlobal);
         this.etiquetas = new TreeSet<>();
@@ -162,7 +174,8 @@ public final class Planta {
      *
      * <p>En {@linkplain ModoSimulacion#MANUAL modo manual} se saltan los pasos 1 (fallos
      * aleatorios), 4 (clasificar) y 6 (asignar): el jugador los dispara con
-     * {@link #inyectarFallo}, {@link #clasificarSiguiente()} y {@link #asignarSiguiente()}.</p>
+     * {@link #inyectarFallo}, {@link #clasificarSiguiente()} y
+     * {@link #asignarSiguiente(TipoFallo)}.</p>
      *
      * <p>Al final avisa a los observadores. No es segura para hilos: quien la use debe serializar
      * el acceso, como hace el servicio de simulación con sus métodos {@code synchronized}.</p>
@@ -260,7 +273,8 @@ public final class Planta {
                     continue;
                 }
                 eventos.add(new EventoFallo(
-                        indice, maquina.etiqueta(), s, sensor.nombre(), valor, tick));
+                        indice, maquina.etiqueta(), s, sensor.nombre(), valor, tick,
+                        sensor.tipoFallo()));
                 maquina.activarAlarma();
                 maquina.cambiarEstado(EstadoMaquina.EN_ALARMA);
                 registrar(maquina.etiqueta() + ": " + sensor.nombre() + " en "
@@ -337,17 +351,24 @@ public final class Planta {
                 maquina.reiniciarMantenimiento();
                 maquina.quitarPreventivaPendiente();
             }
-            tecnicosLibres.add(tecnico);
+            tecnicosLibres.get(tecnico.especialidad()).add(tecnico);
             registrar(tecnico.nombre() + " terminó " + terminada.etiquetaCorta()
                     + "; " + maquina.etiqueta() + " vuelve a operar");
         }
     }
 
     /**
-     * Paso 6: mientras haya técnicos libres y órdenes pendientes, se asigna trabajo.
+     * Paso 6: mientras haya trabajo que asignar, se asigna.
      *
-     * <p>Sale siempre la orden más prioritaria y entra siempre el técnico que llevaba más tiempo
-     * esperando. Aquí se ven trabajando juntas la cola con prioridad y la cola FIFO.</p>
+     * <p>Sale siempre la orden más prioritaria y entra siempre el técnico de su especialidad que
+     * llevaba más tiempo esperando. Aquí se ven trabajando juntas la cola con prioridad y las
+     * colas FIFO de técnicos.</p>
+     *
+     * <p>Si no hay técnico libre de la especialidad que pide la orden siguiente, el paso se detiene
+     * aunque haya técnicos libres de la otra: no se salta a la orden de atrás, porque eso sería
+     * sacar de la cola con prioridad un elemento que no es el siguiente. Es la política ingenua
+     * del modo automático; en modo manual el jugador puede mandar a un técnico de la otra
+     * especialidad, pagando la penalidad.</p>
      */
     private void asignarTrabajos() {
         while (asignarUna()) {
@@ -356,29 +377,57 @@ public final class Planta {
     }
 
     /**
-     * Asigna una sola orden: extrae la más prioritaria y desencola el primer técnico libre.
+     * Política automática: asigna la orden siguiente a un técnico de su especialidad.
      *
-     * <p>Es la misma operación en los dos modos: el paso 6 la repite mientras pueda, y en modo
-     * manual la dispara {@link #asignarSiguiente()} una vez. Las estructuras deciden qué sale; el
-     * modo solo decide cuándo.</p>
+     * <p>Mira la orden siguiente sin extraerla. Si su especialidad no tiene técnicos libres, no
+     * asigna nada.</p>
      *
-     * <p>Complejidad: O(1). Extraer recorre los 4 niveles fijos de la cola con prioridad y
-     * desencolar es O(1).</p>
-     *
-     * @return {@code true} si se asignó; {@code false} si no había técnico libre u orden pendiente
+     * @return {@code true} si se asignó; {@code false} si no había orden o técnico de la especialidad
      */
     private boolean asignarUna() {
-        if (tecnicosLibres.isEmpty() || ordenes.estaVacia()) {
+        return ordenes.verSiguiente()
+                .map(orden -> asignarA(orden.tipoFallo()))
+                .orElse(false);
+    }
+
+    /**
+     * Asigna una sola orden: extrae la más prioritaria y desencola el primer técnico libre de la
+     * especialidad indicada.
+     *
+     * <p>Es la misma operación en los dos modos: el paso 6 la repite con la especialidad que pide
+     * cada orden, y en modo manual la dispara {@link #asignarSiguiente(TipoFallo)} con la que elige
+     * el jugador. Las estructuras deciden qué sale; el modo solo decide cuándo y a qué cola. Si la
+     * especialidad no coincide con el fallo, el técnico tarda más.</p>
+     *
+     * <p>Complejidad: O(1). Elegir la cola es O(1), extraer recorre los 4 niveles fijos de la cola
+     * con prioridad y desencolar es O(1).</p>
+     *
+     * @param especialidad cola de técnicos de la que sale el técnico
+     * @return {@code true} si se asignó; {@code false} si no había orden o técnico libre en esa cola
+     */
+    private boolean asignarA(TipoFallo especialidad) {
+        Queue<Tecnico> cola = tecnicosLibres.get(especialidad);
+        if (cola.isEmpty() || ordenes.estaVacia()) {
             return false;
         }
         OrdenTrabajo orden = ordenes.extraer().orElseThrow();
-        Tecnico tecnico = tecnicosLibres.poll();
+        Tecnico tecnico = cola.poll();
         tecnico.asignar(orden);
         Maquina maquina = inventario.get(orden.indiceMaquina());
         maquina.cambiarEstado(EstadoMaquina.EN_MANTENIMIENTO);
+        String detalle = tecnico.esDeLaEspecialidad(orden)
+                ? tecnico.ticksRestantes() + " ticks"
+                : "especialidad distinta: " + tecnico.ticksRestantes() + " ticks";
         registrar(tecnico.nombre() + " atiende " + orden.etiquetaCorta()
-                + " (" + orden.prioridad().name() + ", " + orden.duracionEstimadaTicks() + " ticks)");
+                + " (" + orden.prioridad().name() + ", " + detalle + ")");
         return true;
+    }
+
+    /** Pone a todos los técnicos en la cola de su especialidad, en el orden de la lista. */
+    private void encolarTecnicosLibres() {
+        for (Tecnico tecnico : tecnicos) {
+            tecnicosLibres.get(tecnico.especialidad()).add(tecnico);
+        }
     }
 
     /**
@@ -425,8 +474,10 @@ public final class Planta {
         ordenes.vaciar();
         pilaDeshacer.clear();
         bitacora.clear();
-        tecnicosLibres.clear();
-        tecnicosLibres.addAll(tecnicos);
+        for (Queue<Tecnico> cola : tecnicosLibres.values()) {
+            cola.clear();
+        }
+        encolarTecnicosLibres();
         generador = new GeneradorFallos(semilla);
         tick = 0;
         siguienteIdOrden = 1;
@@ -532,22 +583,29 @@ public final class Planta {
     }
 
     /**
-     * Botón del modo manual: asigna la orden más prioritaria al primer técnico libre.
+     * Botón del modo manual: asigna la orden más prioritaria al primer técnico libre de la
+     * especialidad que elige el jugador.
      *
-     * <p>Ejecuta una vuelta del mismo paso 6 del tick automático. El jugador no elige la orden ni
-     * el técnico: la cola con prioridad y la cola FIFO entregan su siguiente elemento.</p>
+     * <p>Ejecuta la misma operación del paso 6 del tick automático. El jugador elige la
+     * <strong>cola</strong>, no el técnico ni la orden: la cola con prioridad y la cola FIFO de esa
+     * especialidad entregan su siguiente elemento. Si la especialidad no es la del fallo, la
+     * reparación tarda {@link ConfiguracionPlanta#PENALIDAD_ESPECIALIDAD} veces más.</p>
      *
      * <p>Complejidad: O(1).</p>
      *
-     * @return {@code true} si se asignó; {@code false} si no había técnico libre u orden pendiente,
-     *         y entonces queda la razón en la bitácora
+     * @param especialidad cola de técnicos de la que sale el técnico
+     * @return {@code true} si se asignó; {@code false} si no había orden pendiente o técnico libre
+     *         de esa especialidad, y entonces queda la razón en la bitácora
      * @throws IllegalStateException si la simulación está en modo automático
+     * @throws NullPointerException  si la especialidad es nula
      */
-    public boolean asignarSiguiente() {
+    public boolean asignarSiguiente(TipoFallo especialidad) {
         exigirModoManual();
-        boolean asignada = asignarUna();
+        Objects.requireNonNull(especialidad, "Falta la especialidad");
+        boolean asignada = asignarA(especialidad);
         if (!asignada) {
-            registrar(ordenes.estaVacia() ? "No hay órdenes por asignar" : "No hay técnicos libres");
+            registrar(ordenes.estaVacia() ? "No hay órdenes por asignar"
+                    : "No hay técnicos " + especialidad.descripcion() + "s libres");
         }
         notificar();
         return asignada;
@@ -771,12 +829,29 @@ public final class Planta {
     }
 
     /**
-     * Devuelve los técnicos disponibles, del primero al último en recibir trabajo.
+     * Devuelve los técnicos disponibles de una especialidad, del primero al último en recibir
+     * trabajo.
      *
-     * @return copia inmutable de la cola de técnicos libres
+     * @param especialidad especialidad de la cola
+     * @return copia inmutable de la cola de técnicos libres de esa especialidad
      */
-    public List<Tecnico> tecnicosLibres() {
-        return List.copyOf(tecnicosLibres);
+    public List<Tecnico> tecnicosLibres(TipoFallo especialidad) {
+        return List.copyOf(tecnicosLibres.get(especialidad));
+    }
+
+    /**
+     * Devuelve cuántos técnicos están libres, sumando las dos especialidades.
+     *
+     * <p>Complejidad: O(1): una suma por especialidad.</p>
+     *
+     * @return número de técnicos libres
+     */
+    public int totalTecnicosLibres() {
+        int total = 0;
+        for (Queue<Tecnico> cola : tecnicosLibres.values()) {
+            total += cola.size();
+        }
+        return total;
     }
 
     /**

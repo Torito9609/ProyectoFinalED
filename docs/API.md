@@ -80,7 +80,7 @@ con las 6 máquinas y 2 técnicos.
 
 `maquinasPorEstado` trae siempre todos los estados, incluso los que tienen 0. `eventosPendientes`,
 `ordenesPendientes` y `tecnicosLibres` son los tamaños de la cola de eventos, de la cola con
-prioridad (los 4 carriles) y de la cola de técnicos libres.
+prioridad (los 4 carriles) y de las dos colas de técnicos libres, sumadas.
 
 **`EstadoPlanta`** (ejemplo del tick 14, recortado con `"..."`):
 
@@ -108,7 +108,8 @@ prioridad (los 4 carriles) y de la cola de técnicos libres.
       "recomendacion": "NINGUNA",
       "sensores": [
         { "nombre": "Temperatura aceite", "unidad": "°C", "nominal": 55.0,
-          "umbralAdvertencia": 70.0, "umbralAlto": 80.0, "umbralCritico": 90.0 },
+          "umbralAdvertencia": 70.0, "umbralAlto": 80.0, "umbralCritico": 90.0,
+          "tipoFallo": "MECANICO" },
         "..."
       ],
       "lecturas": {
@@ -129,13 +130,14 @@ prioridad (los 4 carriles) y de la cola de técnicos libres.
   ],
   "eventos": [],
   "tecnicos": [
-    { "nombre": "Ana", "libre": true, "ordenActual": null, "ticksRestantes": 0 },
-    { "nombre": "Luis", "libre": false, "ticksRestantes": 3,
+    { "nombre": "Ana", "especialidad": "MECANICO", "libre": true, "ordenActual": null,
+      "ticksRestantes": 0 },
+    { "nombre": "Luis", "especialidad": "ELECTRICO", "libre": false, "ticksRestantes": 3,
       "ordenActual": { "id": 2, "indiceMaquina": 5, "etiquetaMaquina": "BOMBA-01",
         "prioridad": "P3", "descripcion": "Vibración en 6,1 mm/s (Ir a revisar)",
-        "tickCreacion": 10, "duracionEstimadaTicks": 6 } }
+        "tickCreacion": 10, "duracionEstimadaTicks": 6, "tipoFallo": "MECANICO" } }
   ],
-  "tecnicosLibres": ["Ana"],
+  "tecnicosLibres": { "MECANICO": ["Ana"], "ELECTRICO": [] },
   "colaPrioridad": {
     "carriles": [
       { "prioridad": "P1", "descripcion": "CRÍTICA", "ordenes": [] },
@@ -162,10 +164,11 @@ prioridad (los 4 carriles) y de la cola de técnicos libres.
 | `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO` o `PARADA_MANUAL`. `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
 | `maquinas[i].puntajeFallos` | Clave del ranking (árbol rojo-negro) | Suma de los pesos de sus fallos desde el último overhaul: P1 = 3, P2 = 2, P3 = 1 (un preventivo P4 no suma). `recomendacion` es `NINGUNA`, `OVERHAUL` o `REEMPLAZO` (sección 4b) |
 | `maquinas[i].lecturas` | Cola circular propia | `celdas` va en **orden físico** (índice 0 a 11), no en orden de llegada. Una celda vacía es `null`. `indiceFrente` es la lectura más antigua; `indiceFinal`, donde se escribirá la próxima. Cuando la cola está llena los dos coinciden, y la próxima lectura sobrescribe el frente. `valores[k]` corresponde a `sensores[k]` |
-| `maquinas[i].sensores` | — | Umbrales para colorear cada valor: < advertencia normal; ≥ advertencia P3; ≥ alto P2; ≥ crítico P1 |
-| `eventos` | Cola FIFO (`ArrayDeque`) | El primero de la lista es el siguiente en clasificarse |
-| `tecnicosLibres` | Cola FIFO (`ArrayDeque`) | El primero de la lista recibe la siguiente orden |
-| `tecnicos` | — | Todos los técnicos; los ocupados traen `ordenActual` y `ticksRestantes` |
+| `maquinas[i].sensores` | — | Umbrales para colorear cada valor: < advertencia normal; ≥ advertencia P3; ≥ alto P2; ≥ crítico P1. `tipoFallo` (`MECANICO` o `ELECTRICO`) es el tipo de los fallos de ese sensor |
+| `eventos` | Cola FIFO (`ArrayDeque`) | El primero de la lista es el siguiente en clasificarse. Cada evento trae su `tipoFallo` |
+| `tecnicosLibres` | Dos colas FIFO (`ArrayDeque`), una por especialidad | Objeto con las claves `MECANICO` y `ELECTRICO`. En cada cola, el primero de la lista recibe la siguiente orden de esa especialidad |
+| `tecnicos` | — | Todos los técnicos, con su `especialidad`; los ocupados traen `ordenActual` y `ticksRestantes` |
+| `ordenActual`, `colaPrioridad...ordenes[j]` | — | Cada orden trae su `tipoFallo`: la especialidad que pide. Si la atiende un técnico de la otra especialidad, tarda el doble, y `ticksRestantes` ya lo incluye |
 | `colaPrioridad` | Cola con prioridad (arreglo de 4 colas) | Siempre 4 carriles, de P1 a P4. Cada carril es FIFO: el primero de `ordenes` sale primero. `siguiente` es el carril del que sale la próxima orden (`null` si no hay órdenes): es el que se resalta |
 | `pilaDeshacer` | Pila (`ArrayDeque`) | El **primero** de la lista es la **cima**: lo que se deshace primero |
 | `bitacora` | — | De la línea más antigua a la más reciente (máximo 200) |

@@ -6,9 +6,13 @@ import java.util.Optional;
 /**
  * Técnico de mantenimiento: puede estar libre o atendiendo una orden de trabajo.
  *
- * <p>Los técnicos libres esperan en una cola FIFO, así que el que lleva más tiempo esperando es el
- * próximo en recibir trabajo. Al terminar una orden, el técnico vuelve <strong>al final</strong> de
- * esa cola, con lo que el trabajo se reparte de forma pareja.</p>
+ * <p>Cada técnico tiene una especialidad ({@link TipoFallo}). Los técnicos libres esperan en una
+ * cola FIFO por especialidad, así que el que lleva más tiempo esperando es el próximo en recibir
+ * trabajo. Al terminar una orden, el técnico vuelve <strong>al final</strong> de la cola de su
+ * especialidad, con lo que el trabajo se reparte de forma pareja.</p>
+ *
+ * <p>Si atiende un fallo de la otra especialidad, tarda
+ * {@link ConfiguracionPlanta#PENALIDAD_ESPECIALIDAD} veces más.</p>
  *
  * <p>Hay menos técnicos que máquinas a propósito, para que en la demostración se vean filas de
  * órdenes esperando.</p>
@@ -19,17 +23,20 @@ import java.util.Optional;
 public final class Tecnico {
 
     private final String nombre;
+    private final TipoFallo especialidad;
     private OrdenTrabajo ordenActual;
     private int ticksRestantes;
 
     /**
      * Crea un técnico libre.
      *
-     * @param nombre nombre del técnico
-     * @throws NullPointerException si el nombre es nulo
+     * @param nombre       nombre del técnico
+     * @param especialidad tipo de fallo que sabe reparar
+     * @throws NullPointerException si el nombre o la especialidad son nulos
      */
-    public Tecnico(String nombre) {
+    public Tecnico(String nombre, TipoFallo especialidad) {
         this.nombre = Objects.requireNonNull(nombre, "El técnico debe tener nombre");
+        this.especialidad = Objects.requireNonNull(especialidad, "El técnico debe tener especialidad");
         this.ordenActual = null;
         this.ticksRestantes = 0;
     }
@@ -41,6 +48,25 @@ public final class Tecnico {
      */
     public String nombre() {
         return nombre;
+    }
+
+    /**
+     * Devuelve la especialidad del técnico.
+     *
+     * @return el tipo de fallo que sabe reparar
+     */
+    public TipoFallo especialidad() {
+        return especialidad;
+    }
+
+    /**
+     * Indica si el técnico es de la especialidad que pide la orden.
+     *
+     * @param orden orden a revisar
+     * @return {@code true} si la especialidad coincide con el tipo de fallo de la orden
+     */
+    public boolean esDeLaEspecialidad(OrdenTrabajo orden) {
+        return orden.tipoFallo() == especialidad;
     }
 
     /**
@@ -71,7 +97,8 @@ public final class Tecnico {
     }
 
     /**
-     * Asigna una orden al técnico. La duración del trabajo la trae la orden.
+     * Asigna una orden al técnico. La duración del trabajo la trae la orden; si el técnico no es de
+     * la especialidad del fallo, se multiplica por {@link ConfiguracionPlanta#PENALIDAD_ESPECIALIDAD}.
      *
      * @param orden orden a atender
      * @throws IllegalStateException si el técnico ya estaba ocupado
@@ -84,7 +111,8 @@ public final class Tecnico {
                     "El técnico " + nombre + " ya está atendiendo la orden " + ordenActual.id());
         }
         this.ordenActual = orden;
-        this.ticksRestantes = orden.duracionEstimadaTicks();
+        int penalidad = esDeLaEspecialidad(orden) ? 1 : ConfiguracionPlanta.PENALIDAD_ESPECIALIDAD;
+        this.ticksRestantes = orden.duracionEstimadaTicks() * penalidad;
     }
 
     /**

@@ -11,7 +11,8 @@ import edu.unal.planta.modelo.OrdenTrabajo;
  * @param prioridad             nombre de la prioridad, de {@code P1} a {@code P4}
  * @param descripcion           qué hay que hacer
  * @param tickCreacion          tick en que se creó
- * @param duracionEstimadaTicks cuántos ticks tarda un técnico en atenderla
+ * @param duracionEstimadaTicks cuántos ticks tarda un técnico de la especialidad correcta
+ * @param tipoFallo             {@code MECANICO} o {@code ELECTRICO}: la especialidad que pide
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -22,7 +23,8 @@ public record OrdenTrabajoDto(
         String prioridad,
         String descripcion,
         int tickCreacion,
-        int duracionEstimadaTicks) {
+        int duracionEstimadaTicks,
+        String tipoFallo) {
 
     /**
      * Copia una orden del modelo.
@@ -33,6 +35,6 @@ public record OrdenTrabajoDto(
     public static OrdenTrabajoDto desde(OrdenTrabajo orden) {
         return new OrdenTrabajoDto(orden.id(), orden.indiceMaquina(), orden.etiquetaMaquina(),
                 orden.prioridad().name(), orden.descripcion(), orden.tickCreacion(),
-                orden.duracionEstimadaTicks());
+                orden.duracionEstimadaTicks(), orden.tipoFallo().name());
     }
 }

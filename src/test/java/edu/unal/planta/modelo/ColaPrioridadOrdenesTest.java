@@ -274,6 +274,6 @@ class ColaPrioridadOrdenesTest {
      * @return la orden construida
      */
     private static OrdenTrabajo orden(int id, Prioridad prioridad) {
-        return new OrdenTrabajo(id, 0, "PRENSA-01", prioridad, "orden de prueba", 0, 4);
+        return new OrdenTrabajo(id, 0, "PRENSA-01", prioridad, "orden de prueba", 0, 4, TipoFallo.MECANICO);
     }
 }

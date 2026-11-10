@@ -330,6 +330,19 @@ Convención de la columna **Autoría**:
 | `modelo/Organizacion.java` | IA | `cambiarModo` aplica el modo a todas las compañías; una compañía creada después lo hereda |
 | `test/.../PlantaTest.java`, `OrganizacionTest.java` | IA | 5 pruebas: nada pasa solo en manual, el ciclo clasificar → asignar, los botones rechazados en automático, reiniciar conserva el modo y el modo llega a todas |
 
+### Entrega 2 — Commit 14a: tipo de fallo y técnicos con especialidad
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/TipoFallo.java` | IA | `MECANICO` y `ELECTRICO`; también es la especialidad del técnico |
+| `modelo/Sensor.java`, `ConfiguracionPlanta.java` | IA | Cada sensor declara su tipo (5 de 18 eléctricos, aprobado por el equipo); `PENALIDAD_ESPECIALIDAD = 2`; Ana mecánica y Luis eléctrico |
+| `modelo/EventoFallo.java`, `OrdenTrabajo.java`, `Clasificador.java` | IA | El tipo se copia del sensor; el preventivo es mecánico |
+| `modelo/Tecnico.java` | IA | Especialidad y penalidad al asignar |
+| `modelo/Planta.java` | IA | `EnumMap` de dos colas FIFO; la asignación automática espera a la especialidad; `asignarSiguiente(especialidad)` en manual |
+| `api/dto/*` | IA | `tipoFallo`, `especialidad` y `tecnicosLibres` como dos colas |
+| `test/.../PlantaTest.java`, `ColaPrioridadOrdenesTest.java` | IA | 3 pruebas nuevas: el tipo sale del sensor, el automático espera a su especialidad y la penalidad |
+| `docs/API.md`, `CLAUDE.md` | IA | El contrato nuevo y la asignación de tipos de fallo |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

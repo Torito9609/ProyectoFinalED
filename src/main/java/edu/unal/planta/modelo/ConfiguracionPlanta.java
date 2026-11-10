@@ -81,8 +81,11 @@ public final class ConfiguracionPlanta {
     public static final List<String> NOMBRES_COMPANIAS =
             List.of("Planta Norte", "Planta Centro", "Planta Sur");
 
-    /** Nombres de los técnicos. Son menos que las máquinas, para que se formen filas. */
-    private static final List<String> NOMBRES_TECNICOS = List.of("Ana", "Luis");
+    /**
+     * Cuántas veces más tarda una reparación si el técnico no es de la especialidad del fallo.
+     * Es lo que cuesta, en el modo manual, mandar a un técnico de la otra especialidad.
+     */
+    public static final int PENALIDAD_ESPECIALIDAD = 2;
 
     /** Clase de utilidades: no se instancia. */
     private ConfiguracionPlanta() {
@@ -167,54 +170,54 @@ public final class ConfiguracionPlanta {
         return switch (tipo) {
             case PRENSA -> new Maquina(idCompania, indice, etiqueta, tipo,
                     List.of(
-                            new Sensor("Temperatura aceite", "°C", 55.0, 2.0, 70.0, 80.0, 90.0),
-                            new Sensor("Presión", "bar", 180.0, 4.0, 210.0, 230.0, 250.0),
-                            new Sensor("Vibración", "mm/s", 2.5, 0.4, 4.5, 7.1, 11.0)),
+                            new Sensor("Temperatura aceite", "°C", 55.0, 2.0, 70.0, 80.0, 90.0, TipoFallo.MECANICO),
+                            new Sensor("Presión", "bar", 180.0, 4.0, 210.0, 230.0, 250.0, TipoFallo.MECANICO),
+                            new Sensor("Vibración", "mm/s", 2.5, 0.4, 4.5, 7.1, 11.0, TipoFallo.MECANICO)),
                     60,     // intervalo preventivo en ticks
                     0.06,   // tasa base de fallo: es la máquina más crítica, falla más
                     80,     // carga inicial
                     CAPACIDAD_LECTURAS);
             case TORNO -> new Maquina(idCompania, indice, etiqueta, tipo,
                     List.of(
-                            new Sensor("Temperatura husillo", "°C", 45.0, 2.0, 60.0, 70.0, 85.0),
-                            new Sensor("Corriente motor", "A", 12.0, 0.8, 16.0, 19.0, 22.0),
-                            new Sensor("Vibración", "mm/s", 1.8, 0.3, 2.8, 4.5, 7.1)),
+                            new Sensor("Temperatura husillo", "°C", 45.0, 2.0, 60.0, 70.0, 85.0, TipoFallo.MECANICO),
+                            new Sensor("Corriente motor", "A", 12.0, 0.8, 16.0, 19.0, 22.0, TipoFallo.ELECTRICO),
+                            new Sensor("Vibración", "mm/s", 1.8, 0.3, 2.8, 4.5, 7.1, TipoFallo.MECANICO)),
                     80,
                     0.04,
                     70,
                     CAPACIDAD_LECTURAS);
             case ROBOT -> new Maquina(idCompania, indice, etiqueta, tipo,
                     List.of(
-                            new Sensor("Temperatura motor", "°C", 40.0, 2.0, 55.0, 65.0, 80.0),
-                            new Sensor("Corriente", "A", 8.0, 0.6, 11.0, 13.0, 16.0),
-                            new Sensor("Vibración", "mm/s", 1.4, 0.25, 2.8, 4.5, 7.1)),
+                            new Sensor("Temperatura motor", "°C", 40.0, 2.0, 55.0, 65.0, 80.0, TipoFallo.ELECTRICO),
+                            new Sensor("Corriente", "A", 8.0, 0.6, 11.0, 13.0, 16.0, TipoFallo.ELECTRICO),
+                            new Sensor("Vibración", "mm/s", 1.4, 0.25, 2.8, 4.5, 7.1, TipoFallo.MECANICO)),
                     100,
                     0.03,
                     60,
                     CAPACIDAD_LECTURAS);
             case COMPRESOR -> new Maquina(idCompania, indice, etiqueta, tipo,
                     List.of(
-                            new Sensor("Temperatura descarga", "°C", 85.0, 3.0, 100.0, 110.0, 125.0),
-                            new Sensor("Presión", "bar", 7.5, 0.2, 9.0, 9.8, 11.0),
-                            new Sensor("Vibración", "mm/s", 2.0, 0.3, 4.5, 7.1, 11.0)),
+                            new Sensor("Temperatura descarga", "°C", 85.0, 3.0, 100.0, 110.0, 125.0, TipoFallo.MECANICO),
+                            new Sensor("Presión", "bar", 7.5, 0.2, 9.0, 9.8, 11.0, TipoFallo.MECANICO),
+                            new Sensor("Vibración", "mm/s", 2.0, 0.3, 4.5, 7.1, 11.0, TipoFallo.MECANICO)),
                     70,
                     0.05,
                     75,
                     CAPACIDAD_LECTURAS);
             case HORNO -> new Maquina(idCompania, indice, etiqueta, tipo,
                     List.of(
-                            new Sensor("Temperatura cámara", "°C", 850.0, 10.0, 900.0, 940.0, 980.0),
-                            new Sensor("Temperatura carcasa", "°C", 60.0, 3.0, 80.0, 95.0, 110.0),
-                            new Sensor("Consumo de gas", "m³/h", 42.0, 2.0, 52.0, 58.0, 68.0)),
+                            new Sensor("Temperatura cámara", "°C", 850.0, 10.0, 900.0, 940.0, 980.0, TipoFallo.ELECTRICO),
+                            new Sensor("Temperatura carcasa", "°C", 60.0, 3.0, 80.0, 95.0, 110.0, TipoFallo.MECANICO),
+                            new Sensor("Consumo de gas", "m³/h", 42.0, 2.0, 52.0, 58.0, 68.0, TipoFallo.ELECTRICO)),
                     90,
                     0.035,
                     65,
                     CAPACIDAD_LECTURAS);
             case BOMBA -> new Maquina(idCompania, indice, etiqueta, tipo,
                     List.of(
-                            new Sensor("Temperatura rodamiento", "°C", 50.0, 2.0, 65.0, 75.0, 90.0),
-                            new Sensor("Presión descarga", "bar", 6.0, 0.25, 8.0, 9.0, 10.5),
-                            new Sensor("Vibración", "mm/s", 2.2, 0.35, 4.5, 7.1, 11.0)),
+                            new Sensor("Temperatura rodamiento", "°C", 50.0, 2.0, 65.0, 75.0, 90.0, TipoFallo.MECANICO),
+                            new Sensor("Presión descarga", "bar", 6.0, 0.25, 8.0, 9.0, 10.5, TipoFallo.MECANICO),
+                            new Sensor("Vibración", "mm/s", 2.2, 0.35, 4.5, 7.1, 11.0, TipoFallo.MECANICO)),
                     55,
                     0.055,
                     85,
@@ -232,15 +235,15 @@ public final class ConfiguracionPlanta {
     }
 
     /**
-     * Crea los técnicos de mantenimiento, todos libres.
+     * Crea los técnicos de mantenimiento, todos libres: un mecánico y un eléctrico. Son menos que
+     * las máquinas, para que se formen filas.
      *
      * @return lista de técnicos recién creados
      */
     public static List<Tecnico> crearTecnicos() {
         List<Tecnico> tecnicos = new ArrayList<>();
-        for (String nombre : NOMBRES_TECNICOS) {
-            tecnicos.add(new Tecnico(nombre));
-        }
+        tecnicos.add(new Tecnico("Ana", TipoFallo.MECANICO));
+        tecnicos.add(new Tecnico("Luis", TipoFallo.ELECTRICO));
         return tecnicos;
     }
 }

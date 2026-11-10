@@ -11,6 +11,8 @@ import edu.unal.planta.modelo.Sensor;
  * @param umbralAdvertencia desde aquí la zona es de advertencia (P3)
  * @param umbralAlto        desde aquí la zona es alta (P2)
  * @param umbralCritico     desde aquí la zona es crítica (P1)
+ * @param tipoFallo         {@code MECANICO} o {@code ELECTRICO}: la especialidad que repara sus
+ *                          fallos
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -20,7 +22,8 @@ public record SensorDto(
         double nominal,
         double umbralAdvertencia,
         double umbralAlto,
-        double umbralCritico) {
+        double umbralCritico,
+        String tipoFallo) {
 
     /**
      * Copia la definición de un sensor del modelo.
@@ -30,6 +33,7 @@ public record SensorDto(
      */
     public static SensorDto desde(Sensor sensor) {
         return new SensorDto(sensor.nombre(), sensor.unidad(), sensor.nominal(),
-                sensor.umbralAdvertencia(), sensor.umbralAlto(), sensor.umbralCritico());
+                sensor.umbralAdvertencia(), sensor.umbralAlto(), sensor.umbralCritico(),
+                sensor.tipoFallo().name());
     }
 }

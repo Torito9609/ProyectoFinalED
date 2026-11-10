@@ -29,7 +29,9 @@ class PlantaTest {
     private static final long SEMILLA = 7L;
     private static final int PRENSA = 0;
     private static final int TORNO = 1;
+    private static final int ROBOT = 2;
     private static final int PRESION = 1;
+    private static final int CORRIENTE = 1;
     private static final int VIBRACION = 2;
 
     @Test
@@ -238,7 +240,7 @@ class PlantaTest {
         assertTrue(planta.inventario().stream().noneMatch(Maquina::tieneAnomalia),
                 "en manual los fallos solo se inyectan");
         assertTrue(planta.ordenes().tamano() > 0, "los preventivos siguen generándose solos");
-        assertEquals(planta.tecnicos().size(), planta.tecnicosLibres().size(),
+        assertEquals(planta.tecnicos().size(), planta.totalTecnicosLibres(),
                 "pero nadie los asigna: todos los técnicos siguen libres");
 
         planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
@@ -260,7 +262,7 @@ class PlantaTest {
         assertEquals(1, planta.ordenes().tamanoNivel(Prioridad.P1));
         assertEquals(EstadoMaquina.DETENIDA, planta.maquina(PRENSA).estado());
 
-        assertTrue(planta.asignarSiguiente());
+        assertTrue(planta.asignarSiguiente(TipoFallo.MECANICO));
         assertEquals(EstadoMaquina.EN_MANTENIMIENTO, planta.maquina(PRENSA).estado());
         assertEquals(PRENSA, ordenEnCurso(planta).orElseThrow().indiceMaquina());
 
@@ -274,7 +276,7 @@ class PlantaTest {
         Planta planta = new Planta(SEMILLA);
 
         assertThrows(IllegalStateException.class, planta::clasificarSiguiente);
-        assertThrows(IllegalStateException.class, planta::asignarSiguiente);
+        assertThrows(IllegalStateException.class, () -> planta.asignarSiguiente(TipoFallo.MECANICO));
     }
 
     @Test
@@ -287,6 +289,69 @@ class PlantaTest {
         planta.reiniciar();
 
         assertEquals(ModoSimulacion.MANUAL, planta.modo());
+    }
+
+    @Test
+    @DisplayName("cada fallo pide la especialidad de su sensor, y el preventivo es mecánico")
+    void tipoDeFalloSaleDelSensor() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
+        planta.inyectarFallo(TORNO, CORRIENTE, Magnitud.SEVERA);
+
+        planta.tick();
+
+        List<EventoFallo> eventos = planta.eventosPendientes();
+        assertEquals(TipoFallo.MECANICO, eventos.get(0).tipoFallo(), "la vibración es mecánica");
+        assertEquals(TipoFallo.ELECTRICO, eventos.get(1).tipoFallo(), "la corriente es eléctrica");
+        planta.clasificarSiguiente();
+        assertEquals(TipoFallo.MECANICO, planta.ordenes().verSiguiente().orElseThrow().tipoFallo(),
+                "la orden conserva el tipo del evento");
+        assertEquals(TipoFallo.MECANICO,
+                Clasificador.ordenPreventiva(planta.maquina(PRENSA), PRENSA, 99, 0).tipoFallo());
+    }
+
+    @Test
+    @DisplayName("en automático la orden espera a un técnico de su especialidad, aunque haya otro libre")
+    void automaticoEsperaASuEspecialidad() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.inyectarFallo(TORNO, CORRIENTE, Magnitud.SEVERA);
+        planta.inyectarFallo(ROBOT, CORRIENTE, Magnitud.SEVERA);
+
+        planta.tick();
+        planta.tick();
+
+        assertEquals(TORNO, ordenEnCurso(planta).orElseThrow().indiceMaquina(),
+                "la primera orden eléctrica la toma el eléctrico");
+        assertEquals(1, planta.ordenes().tamano(), "la segunda espera en la cola con prioridad");
+        assertEquals("Ana", planta.tecnicosLibres(TipoFallo.MECANICO).get(0).nombre(),
+                "aunque la mecánica está libre");
+
+        for (int i = 0; i < 20 && !planta.ordenes().estaVacia(); i++) {
+            planta.tick();
+        }
+        Tecnico luis = planta.tecnicos().get(1);
+        assertEquals(ROBOT, luis.ordenActual().orElseThrow().indiceMaquina(),
+                "al terminar, el eléctrico vuelve a su cola y toma la orden que esperaba");
+    }
+
+    @Test
+    @DisplayName("en manual, un técnico de la otra especialidad tarda el doble")
+    void penalidadPorEspecialidad() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
+        planta.tick();
+        planta.clasificarSiguiente();
+
+        assertTrue(planta.asignarSiguiente(TipoFallo.ELECTRICO));
+
+        Tecnico luis = planta.tecnicos().get(1);
+        assertEquals(TipoFallo.ELECTRICO, luis.especialidad());
+        assertEquals(ConfiguracionPlanta.PENALIDAD_ESPECIALIDAD
+                        * ConfiguracionPlanta.duracionReparacion(Prioridad.P1),
+                luis.ticksRestantes());
+        assertTrue(planta.bitacora().getLast().contains("especialidad distinta"));
     }
 
     /**
