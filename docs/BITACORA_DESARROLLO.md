@@ -36,6 +36,47 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, decisión — 2026-11-10 — El modo manual es un juego de gestión
+
+Al proponer el commit 14 apareció que el equipo tenía dos ideas distintas del modo manual. La de
+`CLAUDE.md` era apagar tres pasos del tick y poner un botón para cada uno: el usuario hacía a mano lo
+mismo que la simulación, sin decisiones reales. La de Kevin es un juego de gestión: asignar técnicos,
+llamar a la fábrica, más adelante comprar recursos, y analizar costos. Se adoptó la segunda, que le
+da sentido a la vista de juego.
+
+### Decisiones
+- **Regla central: el jugador decide qué, cuándo y con qué recurso, y paga; la estructura decide
+  cuál elemento sale.** Escoger libremente el técnico o la orden convertiría las colas en adorno, y
+  es lo que el profesor evalúa. Elegir la **cola** (la especialidad) sí es válido: se desencola su
+  frente.
+- **No hace falta un motor de juego.** Un juego de gestión es simulación + palancas con efectos que
+  se contraponen + una medida del resultado. Al revisar las palancas apareció que el **overhaul y el
+  reemplazo no rendían**: el puntaje no afectaba la probabilidad de fallo, así que solo costaban.
+  Se agregan dos reglas de desgaste acotadas (historial de fallos, hasta × 2, y +25 % de tasa por
+  cada overhaul).
+- **Tipo de fallo en el sensor** (`MECANICO` / `ELECTRICO`), no al azar: es realista, el generador
+  no cambia y el clasificador tampoco (el tipo decide quién repara, no la prioridad).
+- **Dos colas FIFO de técnicos**, una por especialidad. La alternativa, una sola cola buscando al de
+  la especialidad, cuesta O(n) y saca un elemento que no es el frente. En automático la orden espera
+  a su especialidad (regla de la cima); en manual el jugador puede usar la otra con penalidad × 2.
+- **Economía por compañía con quiebra**, con ingresos por producción (sin ingresos el presupuesto
+  solo bajaría y siempre habría quiebra). **Partidas de 1000 ticks** con un resumen final.
+- **El automático es la referencia**, con una política ingenua a propósito. La comparación entre
+  partidas se hace a mano por ahora; guardarlas (por ejemplo con SQLite) queda como opción D, que hoy
+  contradice las secciones 3 y 10.
+- **El historial guarda dos series**: puntaje de fallos y costo. Son dos instancias del mismo
+  `ArbolSegmentos`; el pico de gasto refuerza la justificación frente a las sumas prefijas.
+- **Dificultad** elegida al reiniciar, como multiplicadores. Va al final (14c) y se pospone si al
+  calibrar no se nota.
+- Recursos como aceite y repuestos quedan como opción C para la entrega final.
+
+### Hecho
+- `CLAUDE.md`: secciones 1, 7, 10, 16 y 17. Commits nuevos 14a, 14b y 14c; cambian 14, 16, 17, 18,
+  20 y 23.
+
+### Pendiente
+- Cristian: revisar el tipo de fallo de cada sensor y calibrar la economía y la dificultad.
+
 ## Entrega 2, decisión — 2026-11-10 — Se pospone el árbol n-ario y se pueden crear compañías y máquinas
 **Responsable:** Kevin (decisión del equipo), redacción con Claude Code
 

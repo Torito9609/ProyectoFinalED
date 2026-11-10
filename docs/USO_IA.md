@@ -315,6 +315,12 @@ Convención de la columna **Autoría**:
 | `test/.../ControladorSuperusuarioTest.java`, `OrganizacionTest.java` | IA | 5 pruebas MockMvc tras 300 ticks y 1 del modelo para la consulta por rango |
 | `docs/API.md` | IA | Sección "Ranking de fallos y recomendaciones" |
 
+### Entrega 2 — Decisión: el modo manual es un juego de gestión
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `CLAUDE.md`, `docs/BITACORA_DESARROLLO.md` | Mixto | Las ideas (juego de gestión, presupuesto, especialidades, tipo de fallo, dificultad, conservar el historial de fallos) son del equipo; la IA propuso la regla central, las reglas de desgaste y la redacción |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

@@ -34,6 +34,7 @@ El proyecto es incremental: las entregas 2 y 3 añadirán estructuras sobre esta
 - Temas vistos en el curso que se pueden usar: árboles (n-arios, de búsqueda, balanceados, B), montículos, conjuntos y árboles de segmentos. Se siguen permitiendo las estructuras de la librería de Java.
 - Lo que evalúa el profesor: que **las estructuras de datos queden muy claras**, es decir por qué se eligió cada una, cómo se usa y cómo está implementada. El framework no suma ni resta. Que el proyecto se vea atractivo **sí suma**.
 - Decisión del 5 de noviembre de 2026: **migrar a Spring Boot** y separar el frontend en otro repositorio. Así la interfaz puede ser web, más visual e interactiva, y el modelo y las estructuras no cambian. Ver la sección 16 y `docs/BITACORA_DESARROLLO.md`.
+- Decisión del 10 de noviembre de 2026: **el modo manual es un juego de gestión.** El jugador decide qué hacer, cuándo y con qué recurso, y paga por ello; la estructura decide qué elemento sale. Se agregan el tipo de fallo, técnicos con especialidad (dos colas), una economía por compañía con quiebra, partidas de 1000 ticks, el desgaste que hace valer el overhaul y niveles de dificultad. Ver la sección 16, "Modo manual: juego de gestión".
 - Decisión del 10 de noviembre de 2026: **el árbol n-ario se pospone** (opción A). Con una jerarquía de profundidad fija (organización → compañías → máquinas), una lista de compañías hace lo mismo. A cambio, se pueden **crear compañías y máquinas**, con nombres únicos garantizados por un conjunto (`TreeSet`). El árbol n-ario vuelve como **opción B** para la entrega final, con una jerarquía de niveles variables (sedes y líneas). Ver la sección 16, "Crear compañías y máquinas" y "Opción B".
 
 ---
@@ -179,6 +180,7 @@ Otros valores provisionales:
    `p = tasaBase × (carga / 100) × min(2, 1 + ticksDesdeMantenimiento / intervaloPreventivo)`.
    El factor de desgaste está **acotado a 2**: sin ese techo la fórmula se vuelve un lazo de realimentación, porque el preventivo es la prioridad más baja y puede quedar esperando, lo que hace fallar más la máquina y aleja todavía más el preventivo.
    Se elige un sensor al azar, y la magnitud con pesos **80 % leve / 15 % moderada / 5 % severa** (distribución recomendada por ISA-18.2 para tres prioridades).
+   **Desde la Entrega 2** la probabilidad tiene dos factores más (historial de fallos y número de overhauls) y la dificultad escala la tasa y los pesos: ver la sección 16, "Desgaste" y "Niveles de dificultad".
 2. **Leer sensores.** Cada máquina OPERANDO o EN_ALARMA genera una `Lectura` (nominal + ruido + desplazamiento de la anomalía) y la encola en su `ColaCircular`.
 3. **Detectar.** Si la última lectura supera el umbral de advertencia en algún sensor **y la máquina no tiene alarma activa**, se crea un `EventoFallo`, se encola en la **cola de eventos** y la máquina pasa a EN_ALARMA. La regla de una sola alarma por máquina evita la inundación de alarmas.
 4. **Clasificar.** Se desencola **un solo** evento por tick (así la cola puede acumularse y verse), se clasifica y se inserta en la **cola con prioridad**. Si es P1, la máquina pasa a DETENIDA de inmediato.
@@ -280,12 +282,13 @@ Qué muestra cada panel:
 - Ranking de máquinas por puntaje de fallos, por compañía y global, con su recomendación (overhaul o reemplazo).
 - Solicitudes de overhaul atendidas por técnicos del fabricante, y reemplazo de máquinas.
 - Historial de fallos consultable por ventana de ticks (árbol de segmentos).
-- Modo manual que se puede activar y desactivar con la simulación en marcha.
+- Modo manual como juego de gestión, que se puede activar y desactivar con la simulación en marcha: tipo de fallo, técnicos con especialidad, economía con quiebra, partidas de 1000 ticks, desgaste y niveles de dificultad.
+- Historial de fallos y de costos consultable por ventana de ticks.
 - Pruebas JUnit de cada estructura nueva y del modelo; pruebas MockMvc de los endpoints.
 
-**Fuera de alcance (Entrega 2):** autenticación de usuarios (el "superusuario" es una vista, no un login), persistencia, WebSockets, despliegue en la nube, **eliminar compañías o máquinas** (ver la sección 16).
+**Fuera de alcance (Entrega 2):** autenticación de usuarios (el "superusuario" es una vista, no un login), persistencia, WebSockets, despliegue en la nube, **eliminar compañías o máquinas** (ver la sección 16), recursos como aceite y repuestos, y comparar partidas guardadas.
 
-**Opcional para la entrega final:** la opción B, una jerarquía con niveles variables en un árbol n-ario (sección 16).
+**Opcional para la entrega final:** la opción B (jerarquía con niveles variables en un árbol n-ario), la opción C (recursos con pedidos) y la opción D (guardar partidas y compararlas), en la sección 16.
 
 ---
 
@@ -377,7 +380,8 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 | Árbol de búsqueda balanceado | `TreeSet<Maquina>` (árbol rojo-negro) envuelto en `RankingFallos` | Ranking por puntaje de fallos: uno por compañía y uno global | El orden siempre está listo. Insertar y eliminar cuestan O(log n), y el recorrido en orden da el ranking en O(n). `tailSet`/`headSet` dan la consulta por rango "puntaje ≥ umbral", que son las candidatas a overhaul. La altura queda acotada a 2·log2(n+1) aunque las máquinas lleguen ordenadas. |
 | Montículo | `PriorityQueue<SolicitudOverhaul>` (montículo binario) | Solicitudes de overhaul aprobadas, de todas las compañías | Los técnicos del fabricante son pocos y compartidos, así que cuando se acumulan solicitudes debe salir la máquina en peor estado. Insertar y extraer cuestan O(log n). El comparador desempata por **número de secuencia**, y eso garantiza el orden de llegada entre empates, que era la razón para descartarlo en la Entrega 1. |
 | Cola FIFO | `ArrayDeque<TecnicoExterno>` | Técnicos del fabricante libres | Mismo patrón que los técnicos internos: al terminar, el técnico se encola al final. |
-| Árbol de segmentos | **`ArbolSegmentos` propio** (arreglo de tamaño 2·potencia de 2; cada nodo guarda la suma y el máximo) | Historial de puntaje de fallos por tick: uno por compañía y uno global | Responde "total y **pico** de fallos entre el tick a y el b" en O(log n), con una ventana que elige el usuario. Actualizar una posición cuesta O(log n). El horizonte de ticks es fijo y se configura. |
+| Cola FIFO (dos) | `ArrayDeque<Tecnico>`, una por especialidad (`MECANICO`, `ELECTRICO`) | Técnicos internos libres de cada compañía | Reemplaza la cola única de la Entrega 1. La orden pide una especialidad y se desencola el primero de **esa** cola, O(1). El jugador elige la cola, nunca el técnico. |
+| Árbol de segmentos | **`ArbolSegmentos` propio** (arreglo de tamaño 2·potencia de 2; cada nodo guarda la suma y el máximo) | Historial por tick de dos series: **puntaje de fallos** y **costo**. Dos instancias de la misma clase por compañía, y dos globales | Responde "total y **pico** de fallos, o de gasto, entre el tick a y el b" en O(log n), con una ventana que elige el usuario. Actualizar una posición cuesta O(log n). El horizonte es la duración de la partida (1000 ticks). |
 
 ### Alternativas descartadas (para responder preguntas)
 - **Ordenar el inventario cada vez que se pide el ranking:** cuesta O(n log n) por consulta, y el frontend consulta en cada sondeo. El `TreeSet` lo cambia por O(log n) por fallo. El argumento es de **lecturas contra escrituras**: hay muchas más consultas que fallos.
@@ -388,6 +392,7 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 - **Árbol n-ario para la jerarquía actual** (pospuesto el 10 de noviembre): la jerarquía tiene profundidad fija de 2 (organización → compañías → máquinas), y un `ArrayList` de plantas, cada una con su inventario, ya es ese árbol de forma implícita. Crear compañías o máquinas agrega hermanos, no niveles. El árbol n-ario se justifica cuando la profundidad es variable: ver "Opción B".
 - **Recorrer la lista para validar nombres únicos:** O(n) en cada creación, contra O(log n) del conjunto.
 - **`HashSet` para los nombres:** también sirve (O(1) esperado), pero las tablas hash no están en los temas del curso, y el `TreeSet` da O(log n) garantizado y los nombres en orden alfabético. Con 6 a 20 etiquetas por compañía, la diferencia de rendimiento no se nota: el argumento no es la velocidad. El campo se declara como `Set<String>`, así que si más adelante se ve hashing en el curso, cambiar a `HashSet` es una sola palabra.
+- **Una sola cola de técnicos, buscando uno de la especialidad pedida:** habría que recorrerla, O(n), y sacar un elemento que no es el frente, lo que viola el tipo abstracto de datos. Con una cola por especialidad, la búsqueda desaparece: se elige la cola y se desencola su frente.
 - **Técnicos del fabricante creados bajo demanda:** si siempre hay un técnico disponible, la cola nunca se forma y el montículo no tiene nada que decidir. Un número fijo de técnicos, compartidos entre compañías, es lo realista.
 
 ### Puntaje de fallos y recomendación
@@ -438,30 +443,76 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
 1. Recorrer las compañías en el orden del `ArrayList` y ejecutar `Planta.tick()` en cada una (pasos 1–7 de la sección 7; el paso 4 actualiza los rankings).
 2. **Avanzar overhauls:** a cada técnico del fabricante ocupado se le resta un tick, y se cierran los que terminan.
 3. **Asignar overhauls** con la regla de la cima (solo en modo automático).
-4. Registrar en los árboles de segmentos (el de la compañía y el global) el puntaje sumado en este tick.
-5. Incrementar el tick de la organización.
+4. Registrar en los árboles de segmentos (los de la compañía y los globales) el puntaje de fallos y el costo de este tick.
+5. Incrementar el tick de la organización. Si llega a la duración de la partida, la partida termina (ver "Economía y partida").
 
-### Modo manual
-- Se puede **activar y desactivar con la simulación en marcha** (`AUTOMATICO` ↔ `MANUAL`). El tiempo sigue corriendo: las lecturas, la detección y el avance de los trabajos siguen siendo automáticos.
-- En modo manual se apagan los pasos automáticos que el usuario quiere hacer a mano:
-  - el **paso 1** (fallos aleatorios): los fallos se inyectan;
-  - el **paso 4** (clasificar): un botón para *clasificar el siguiente evento*;
-  - el **paso 6** (asignar): un botón para *asignar la siguiente orden*;
-  - la **asignación de overhauls**: un botón para *asignar el siguiente overhaul*.
-- **El usuario dispara operaciones; no elige elementos.** "Asignar a mano" no significa escoger cualquier orden o cualquier técnico. Eso sería sacar un elemento que no es el siguiente de la cola con prioridad, o saltarse la FIFO de técnicos, y viola el tipo abstracto de datos. Es el mismo argumento de la sección 8. El botón ejecuta la operación del tipo de dato (`extraer`, `desencolar`), y la estructura decide qué sale.
+### Modo manual: juego de gestión (decisión del 10 de noviembre)
+No hay motor de juego: es la misma simulación, con **palancas** que tienen efectos que se contraponen y una **medida del resultado** (la partida y su resumen). Eso basta para que haya mejores y peores decisiones.
+
+- **Regla central: el jugador decide _qué_ hacer, _cuándo_ y _con qué recurso_, y paga por ello; la estructura decide _cuál_ elemento sale.** Escoger cualquier orden o cualquier técnico sería sacar un elemento que no es el siguiente de la cola con prioridad o saltarse la FIFO de técnicos, y viola el tipo abstracto de datos (el mismo argumento de la sección 8). Cada botón ejecuta la operación del tipo de dato (`extraer`, `desencolar`).
+- Se puede **activar y desactivar con la simulación en marcha** (`AUTOMATICO` ↔ `MANUAL`). El tiempo **sigue corriendo**, con pausa, como en un juego de gestión. Las lecturas, la detección, el avance de los trabajos, los preventivos y la economía son automáticos en los dos modos.
+- En modo manual se apagan el **paso 1** (fallos aleatorios: los fallos se inyectan), el **paso 4** (clasificar) y el **paso 6** (asignar), y la asignación de overhauls. Los botones solo funcionan en modo manual (en automático responden `409`). Reiniciar conserva el modo. Cambiar de modo no se deshace con la pila: es un interruptor de la simulación, no una acción sobre una máquina.
+
+| Palanca (botón) | La estructura decide | Lo que gana | Lo que pierde |
+|---|---|---|---|
+| Clasificar el siguiente evento | La cola FIFO de eventos | — | — |
+| Asignar a **mecánico** o a **eléctrico** | La cola con prioridad entrega la orden; la cola de esa especialidad, el técnico | La máquina vuelve a producir | Mano de obra. Con la especialidad equivocada, el trabajo **tarda el doble** |
+| No hacer nada (dejar esperando) | — | No paga mano de obra | La máquina parada **no produce** |
+| Cambiar la carga (ya existe) | — | Menos carga, menos fallos (la probabilidad es proporcional a la carga) | Produce menos |
+| Aprobar overhaul y despachar el camión del fabricante | El montículo de solicitudes | Puntaje a 0: deja de fallar de más (ver "Desgaste") | Costo fijo alto |
+| Reemplazar la máquina | El mismo índice del inventario | Máquina nueva, sin desgaste ni overhauls | Costo fijo muy alto |
+
+- **La política del modo automático es ingenua a propósito:** nunca baja la carga, nunca pide overhauls ni reemplazos, y asigna siempre a la especialidad correcta aunque tenga que esperar. Es la referencia: con la misma semilla y la misma dificultad, un buen jugador debe superarla.
+
+### Tipo de fallo y técnicos con especialidad
+- Enum **`TipoFallo`**: `MECANICO` y `ELECTRICO`. **Cada sensor declara su tipo de fallo** en el catálogo de `ConfiguracionPlanta`, junto a sus umbrales: corriente y consumo → eléctrico; temperatura, presión y vibración → mecánico (lo revisa Cristian). Una anomalía en un sensor es un fallo de ese tipo, y el tipo viaja `Anomalia` → `EventoFallo` → `OrdenTrabajo`. El preventivo P4 es mecánico.
+- **El clasificador no cambia:** la prioridad sigue dependiendo solo del valor contra los umbrales. El tipo de fallo decide **quién** repara, no **qué tan urgente** es. Como el tipo sale del sensor y no del azar, el generador no cambia y la simulación sigue siendo reproducible.
+- `Tecnico` gana su **especialidad**. Cada compañía tiene una cola FIFO de técnicos libres por especialidad (ver la tabla de estructuras); al terminar un trabajo, el técnico vuelve al final de la cola de **su** especialidad.
+- **Asignación automática:** se mira la orden más prioritaria (`verSiguiente`). Si hay un técnico libre de su especialidad, se extrae la orden y se desencola el técnico. Si no, **espera**, aunque haya técnicos libres de la otra especialidad: no se salta a la orden siguiente, igual que la regla de la cima del overhaul.
+- **Asignación manual:** el jugador elige la cola. Si el técnico no es de la especialidad del fallo, la reparación tarda **el doble**.
+
+### Desgaste: por qué vale la pena el overhaul
+Sin estas dos reglas el overhaul y el reemplazo solo costarían dinero y nunca convendrían. Las dos van en la probabilidad de fallo del paso 1 y están acotadas, como el factor de desgaste del preventivo:
+- **Historial de fallos:** se multiplica por `min(2, 1 + puntajeFallos / umbralOverhaul)`. En el umbral, la máquina falla el doble. El overhaul deja el puntaje en 0 y quita ese castigo.
+- **Cada overhaul rinde menos:** la tasa base sube un 25 % por cada overhaul recibido. Después de varios, la máquina falla aunque esté recién reparada, y conviene **reemplazarla**.
+Así la recomendación OVERHAUL / REEMPLAZO del ranking deja de ser solo informativa.
+
+### Economía y partida
+- **Caja por compañía**, que arranca con un **presupuesto inicial**. El dashboard muestra las cajas de todas.
+- **Ingresos:** cada máquina que produce (OPERANDO o EN_ALARMA) suma en cada tick un ingreso proporcional a su carga.
+- **Costos:** mano de obra por cada tick de trabajo de un técnico, el overhaul (fijo, al despachar el camión) y el reemplazo (fijo). La máquina detenida no tiene un costo aparte: el castigo es que no produce.
+- La economía se calcula en un paso nuevo del tick de la planta, después de los preventivos (**paso 7b, contabilizar**), en los dos modos.
+- **Quiebra:** si la caja de una compañía baja de 0, la compañía queda **en quiebra**: sigue el reloj (todas las plantas tienen siempre el mismo tick), pero no opera ni acepta acciones. Las demás siguen.
+- **Partida:** dura **1000 ticks**. Al llegar, la simulación se pausa y se muestra el **resumen**: caja final, número de fallos, costo total, producción y disponibilidad (porcentaje del tiempo que las máquinas produjeron). Reiniciar empieza otra partida y devuelve las cajas al presupuesto inicial.
+- La comparación entre partidas (por ejemplo, jugador contra automático con la misma semilla) se hace por ahora a mano. Guardarlas es la opción D.
+
+### Niveles de dificultad
+- `FACIL`, `NORMAL` y `DIFICIL`: un conjunto de multiplicadores en la configuración, de la **partida** y para toda la organización. Se elige **al reiniciar**; no cambia a mitad de partida porque arruinaría la comparación.
+- Escala la tasa de fallo, los pesos de la magnitud (más severos al subir), el presupuesto inicial y el ingreso por producción. La misma semilla, la misma dificultad y las mismas acciones dan el mismo resultado.
+- El modo automático corre con la misma dificultad. La idea es que en fácil el automático termine con ganancias y en difícil quiebre, y que solo un jugador que maneje la carga y los overhauls sobreviva. **Si al calibrar no se nota la diferencia, la dificultad (commit 14c) se pospone sin afectar lo demás.**
+
+### Opción C: recursos con pedidos (para la entrega final, si hay tiempo)
+Aceite, repuestos y otros insumos con stock por compañía. Algunas reparaciones los consumen; sin stock, la orden espera. Los pedidos tienen tiempos de entrega distintos según la urgencia y el precio, y llegan en un **montículo ordenado por tick de llegada**. Se diseña aquí antes de implementarlo.
+
+### Opción D: guardar y comparar partidas (para la entrega final, si hay tiempo)
+Guardar el resumen de cada partida (semilla, dificultad, modo e indicadores) para compararlas, por ejemplo con SQLite. **Contradice hoy las secciones 3 y 10** (sin bases de datos ni persistencia): si se retoma, primero se cambian esas secciones con el equipo.
 
 ### Valores iniciales (PROVISIONALES — los define Cristian)
 - **3 compañías** ("Planta Norte", "Planta Centro", "Planta Sur"), cada una con las 6 máquinas de la sección 6 y 2 técnicos internos. La semilla de la compañía `i` es `maestra × 1000 + i`.
 - **2 técnicos del fabricante**, compartidos. El overhaul dura **30 ticks**.
-- `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 3 (subido de 2 el 10 de noviembre). Horizonte del historial: 2000 ticks.
+- `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 3 (subido de 2 el 10 de noviembre). Horizonte del historial: la duración de la partida, 1000 ticks (antes 2000).
+- Técnicos internos por compañía: **1 mecánico y 1 eléctrico** (los 2 de antes, ahora con especialidad). Penalidad por especialidad equivocada: **× 2** la duración.
+- Desgaste: factor de historial acotado a **2**; **+25 %** de tasa base por cada overhaul.
+- Partida: **1000 ticks**. Economía (por calibrar en el commit 14b): presupuesto inicial, ingreso por tick a carga 100, mano de obra por tick de trabajo, costo del overhaul y costo del reemplazo.
+- Dificultad (por calibrar en el commit 14c): en `NORMAL`, los valores de arriba; en `FACIL` y `DIFICIL`, multiplicadores de la tasa de fallo (por ejemplo × 0,7 y × 1,5), pesos de la magnitud (por ejemplo 65/25/10 en difícil), presupuesto e ingresos.
 - Todos estos valores van en `ConfiguracionPlanta` (o en una `ConfiguracionOrganizacion` si crece demasiado; se propone antes de crearla).
 
 ### Superficie de la API (borrador; el contrato final está en `docs/API.md`)
-- **Simulación:** `GET /api/simulacion`; `POST /api/simulacion/iniciar | pausar | paso | reiniciar`; `PUT /api/simulacion/modo`.
+- **Simulación:** `GET /api/simulacion` (con el tick de la partida y si terminó); `POST /api/simulacion/iniciar | pausar | paso | reiniciar` (reiniciar recibe la dificultad); `PUT /api/simulacion/modo`; `GET /api/partida/resumen`.
 - **Organización:** `GET /api/companias` (lista con totales por compañía); `GET /api/companias/{id}`, con el estado completo de una planta: inventario, cola circular, eventos, técnicos, cola con prioridad, pila y bitácora. El tipo de cada máquina viaja como código del catálogo (`tipo`, el que se usa para crear máquinas y elegir su modelo 3D) y como texto (`tipoDescripcion`). Hecho en el commit 19.
 - **Creación:** `POST /api/companias` (nombre) y `POST /api/companias/{id}/maquinas` (tipo y etiqueta).
-- **Operador (por compañía):** inyectar un fallo, parar o arrancar, cambiar la carga, deshacer, clasificar el siguiente evento y asignar la siguiente orden.
-- **Superusuario:** `GET /api/ranking` (global o por compañía); `POST /api/overhauls` (aprobar), `GET /api/overhauls` (montículo y técnicos del fabricante), `POST /api/overhauls/asignar-siguiente`; `POST .../reemplazo`; `GET /api/historial?desde=&hasta=&compania=`.
+- **Operador (por compañía):** inyectar un fallo, parar o arrancar, cambiar la carga, deshacer, clasificar el siguiente evento y asignar la siguiente orden **a una especialidad** (`MECANICO` o `ELECTRICO`). El estado de la compañía trae su caja y si está en quiebra; cada orden trae su `tipoFallo` y cada técnico su especialidad.
+- **Superusuario:** `GET /api/ranking` (global o por compañía); `POST /api/overhauls` (aprobar), `GET /api/overhauls` (montículo y técnicos del fabricante), `POST /api/overhauls/asignar-siguiente`; `POST .../reemplazo`; `GET /api/historial?desde=&hasta=&compania=` (total y pico de fallos y de costo).
 - **Errores:** `400` si la entrada es inválida, `404` si la compañía o la máquina no existe, y `409` si la acción no se permite en el estado actual (por ejemplo, inyectar un fallo en una máquina con alarma). El cuerpo lleva el mensaje en español.
 
 ### Vistas que el frontend debe ofrecer (requisito para el otro repositorio)
@@ -471,7 +522,8 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
   - el ranking global con sus recomendaciones;
   - el montículo de solicitudes y los técnicos del fabricante;
   - una gráfica del historial con una ventana [a, b] seleccionable, que muestre el total y el pico;
-  - el interruptor de modo.
+  - el interruptor de modo, la dificultad al reiniciar y el resumen al terminar la partida.
+- **En la vista de compañía, para el juego:** la caja, el tipo de fallo de cada orden (para saber a qué especialidad mandarla), los botones de asignar por especialidad y el aviso de quiebra.
 - Como en la Entrega 1, cada estructura se dibuja con su comportamiento real, sin inventar estado interno que la librería no expone.
 - **Estilo (decisión del 10 de noviembre):** la vista pesa mucho en la nota, así que el frontend es un **juego con cámara fija** (un diorama isométrico low-poly, con toda la planta a la vista), hecho con React + Vite + TypeScript + React Three Fiber, en el repositorio `ProyectoFinalED-frontend`. **Cada estructura es un objeto del mundo que se comporta como su tipo abstracto**: la cola circular es un tablero en anillo junto a cada máquina, la cola de eventos una banda transportadora, la cola P1–P4 un tablero de 4 carriles, la cola de técnicos una banca donde hacen fila y caminan a la máquina, y la pila un montón de carpetas. Un HUD encima muestra las cifras exactas (índices, `frente` y `final`, ticks restantes) y los controles. Se descartó Unity porque su parte visual se arma en el editor, que Claude Code no puede operar.
 
@@ -499,7 +551,7 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 
 **Numeración:** el 10 de noviembre se pospuso el árbol n-ario y se agregó crear compañías y máquinas. Para no romper las referencias de la bitácora, los números no se corren: el 9 queda pospuesto y los commits nuevos llevan letra (13a, 13b, 19a).
 
-**Orden de ejecución (decisión del 10 de noviembre):** los números identifican cada commit, pero no fijan el orden. Después del 13b se hace una **pausa de QA con el frontend** (el repositorio hermano `ProyectoFinalED-frontend`, que arranca contra la API de la Entrega 1), y luego se adelantan los commits de API que no dependen del resto del modelo: **19 → 19a → 21**, para que el frontend pueda correr en automático varias compañías, crear compañías y máquinas y ver el ranking. Después siguen **14 → 15 → 16 → 17 → 18 → 20 → 22 → 23** y la etapa F.
+**Orden de ejecución (decisión del 10 de noviembre):** los números identifican cada commit, pero no fijan el orden. Después del 13b se hace una **pausa de QA con el frontend** (el repositorio hermano `ProyectoFinalED-frontend`, que arranca contra la API de la Entrega 1), y luego se adelantan los commits de API que no dependen del resto del modelo: **19 → 19a → 21**, para que el frontend pueda correr en automático varias compañías, crear compañías y máquinas y ver el ranking. Después siguen **14 → 14a → 14b → 15 → 16 → 17 → 18 → 14c → 20 → 22 → 23** y la etapa F. La dificultad (14c) va después del historial porque se calibra con todo lo demás funcionando.
 
 ### Etapa C — Estructuras nuevas (`estructuras/`, genéricas y sin dominio)
 9. ~~`feat: árbol n-ario genérico`~~ **Pospuesto** a la opción B (etapa G).
@@ -511,19 +563,22 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 13. `feat: organización con varias compañías`: `Organizacion` con el `ArrayList<Planta>`, las semillas derivadas, el tick que recorre las compañías en orden y el ranking global. Prueba: misma semilla, mismo resultado.
 13a. `feat: crear máquinas con etiqueta única`: el `TreeSet` de etiquetas de cada compañía, la creación desde un tipo del catálogo y la entrada en los dos rankings. Pruebas: la máquina queda al final del inventario y en los rankings, y una etiqueta repetida se rechaza.
 13b. `feat: crear compañías con nombre único`: el `TreeSet` de nombres, la semilla derivada del índice y el ranking y el historial propios. Pruebas: el nombre repetido se rechaza, y la misma secuencia de creaciones da la misma simulación.
-14. `feat: modo manual`: el modo en `Planta` y `Organizacion`, `clasificarSiguiente` y `asignarSiguiente`. Pruebas: en manual no se generan fallos aleatorios ni se asigna nada solo.
+14. `feat: modo manual`: `ModoSimulacion`, el modo en `Planta` y `Organizacion` (una compañía creada después lo hereda), `clasificarSiguiente` y `asignarSiguiente` (comparten `asignarUna` con el paso 6). Pruebas: en manual no pasa nada solo; el ciclo inyectar → clasificar → asignar; los botones se rechazan en automático; el modo llega a todas las compañías; reiniciar lo conserva.
+14a. `feat: tipo de fallo y técnicos con especialidad`: `TipoFallo` en los sensores y en `Anomalia`, `EventoFallo` y `OrdenTrabajo`; `Tecnico` con especialidad; una cola FIFO por especialidad; la asignación automática que espera a la especialidad; la manual con penalidad × 2. Pruebas: cada fallo pide la especialidad de su sensor, la orden espera a su especialidad y la penalidad duplica la duración.
+14b. `feat: economía y partida`: caja por compañía, ingresos, mano de obra, quiebra, partida de 1000 ticks y su resumen. Pruebas: una máquina detenida no produce, la mano de obra se cobra, la quiebra congela la compañía y la partida termina en el tick 1000.
+14c. `feat: niveles de dificultad`: los multiplicadores y la elección al reiniciar. Prueba: la misma semilla en difícil produce más fallos que en fácil. **Se puede posponer** si al calibrar no se nota (sección 16).
 15. `feat: solicitudes de overhaul y técnicos del fabricante`: `SolicitudOverhaul`, `TecnicoExterno`, aprobar (con rechazo de duplicadas), el montículo con secuencia y la cola FIFO. Pruebas: el mayor puntaje sale primero y los empates salen por orden de llegada.
-16. `feat: ejecutar overhauls en el tick`: `EN_OVERHAUL`, la regla de la cima y el cierre del overhaul. **Se propone primero la regla pendiente sobre la P4.** Pruebas: no consume técnicos internos y vuelve con puntaje 0 y reinsertada.
-17. `feat: reemplazo de máquina`: `set` en el inventario, la jerarquía y los dos rankings. Prueba.
-18. `feat: historial con árbol de segmentos`: uno por compañía y uno global, alimentados en el tick. Prueba de suma y pico en una ventana.
+16. `feat: ejecutar overhauls en el tick`: `EN_OVERHAUL`, la regla de la cima, el cierre del overhaul, su costo, y las **dos reglas de desgaste** (historial de fallos y +25 % por overhaul). **Se propone primero la regla pendiente sobre la P4.** Pruebas: no consume técnicos internos, vuelve con puntaje 0 y reinsertada, y el desgaste sube la probabilidad de fallo.
+17. `feat: reemplazo de máquina`: `set` en el inventario, la jerarquía, los dos rankings y su costo. Prueba.
+18. `feat: historial con árbol de segmentos`: dos series (puntaje de fallos y costo), por compañía y globales, alimentadas en el tick. Prueba de suma y pico en una ventana.
 
 ### Etapa E — API de la Entrega 2
 19. `refactor: el servicio usa la organización y rutas por compañía`: `/api/companias` y `/api/companias/{id}/...`, con `docs/API.md` actualizado.
 19a. `feat: endpoints para crear compañías y máquinas`: `POST /api/companias` y `POST /api/companias/{id}/maquinas`, con 400 y 409. Pruebas MockMvc.
-20. `feat: endpoints del modo manual`.
+20. `feat: endpoints del modo manual y la partida`: el modo, clasificar, asignar por especialidad, la caja y la quiebra en los DTOs, la dificultad al reiniciar y el resumen de la partida.
 21. `feat: endpoints del ranking y las recomendaciones`.
 22. `feat: endpoints de overhaul y reemplazo`.
-23. `feat: endpoint del historial por ventana de ticks`.
+23. `feat: endpoint del historial por ventana de ticks`: total y pico de las dos series.
 
 ### Etapa F — Documentación
 24. `docs: documento explicativo de la Entrega 2`: el por qué y el cómo de cada estructura de la sección 16, con sus complejidades, la trampa de la clave que cambia y la justificación del árbol de segmentos frente a las sumas prefijas.
