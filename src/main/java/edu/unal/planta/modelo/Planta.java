@@ -44,6 +44,12 @@ import java.util.Queue;
  */
 public final class Planta {
 
+    /** Id de la compañía: su índice en la organización. */
+    private final int idCompania;
+
+    /** Nombre visible de la compañía. */
+    private final String nombre;
+
     private final long semilla;
 
     /** Arreglo dinámico: inventario de máquinas. Se recorre completo en cada tick. */
@@ -77,18 +83,36 @@ public final class Planta {
     private int siguienteIdOrden;
 
     /**
-     * Crea la planta con su inventario y sus técnicos, lista para el primer tick.
+     * Crea una planta suelta, sin organización: la planta única de la Entrega 1.
+     *
+     * <p>Es la compañía 0, se llama "Planta" y no tiene ranking global.</p>
      *
      * @param semilla semilla del generador aleatorio; la misma semilla repite la simulación
      */
     public Planta(long semilla) {
+        this(0, "Planta", semilla, null);
+    }
+
+    /**
+     * Crea la planta de una compañía, con su inventario y sus técnicos, lista para el primer tick.
+     *
+     * @param idCompania    id de la compañía: su índice en la organización
+     * @param nombre        nombre visible de la compañía
+     * @param semilla       semilla del generador aleatorio; la misma semilla repite la simulación
+     * @param rankingGlobal ranking de toda la organización, que esta planta mantiene al día con
+     *                      sus máquinas; {@code null} si la planta está sola
+     * @throws NullPointerException si el nombre es nulo
+     */
+    public Planta(int idCompania, String nombre, long semilla, RankingFallos rankingGlobal) {
+        this.idCompania = idCompania;
+        this.nombre = Objects.requireNonNull(nombre, "La compañía debe tener nombre");
         this.semilla = semilla;
-        this.inventario = ConfiguracionPlanta.crearMaquinas();
+        this.inventario = ConfiguracionPlanta.crearMaquinas(idCompania);
         this.tecnicos = ConfiguracionPlanta.crearTecnicos();
         this.eventos = new ArrayDeque<>();
         this.tecnicosLibres = new ArrayDeque<>(tecnicos);
         this.ordenes = new ColaPrioridadOrdenes();
-        this.ranking = new RankingFallos(inventario);
+        this.ranking = new RankingFallos(inventario, rankingGlobal);
         this.pilaDeshacer = new ArrayDeque<>();
         this.bitacora = new ArrayDeque<>();
         this.observadores = new ArrayList<>();
@@ -325,12 +349,14 @@ public final class Planta {
      * durante la presentación.</p>
      */
     public void reiniciar() {
+        // Reiniciar deja el puntaje en 0, que es la clave del ranking. Cada máquina sale de los
+        // rankings (el de la compañía y el global) antes de que su clave cambie, y vuelve a entrar
+        // después. Al revés, el árbol no la encontraría (ver RankingFallos).
         for (Maquina maquina : inventario) {
+            ranking.quitar(maquina);
             maquina.reiniciar();
+            ranking.agregar(maquina);
         }
-        // Reiniciar dejó todos los puntajes en 0 con las máquinas dentro del árbol, así que el
-        // árbol quedó desordenado. Se arma de nuevo; no se puede usar remove (ver RankingFallos).
-        ranking.reconstruir(inventario);
         for (Tecnico tecnico : tecnicos) {
             tecnico.reiniciar();
         }
@@ -460,6 +486,24 @@ public final class Planta {
      */
     public long semilla() {
         return semilla;
+    }
+
+    /**
+     * Devuelve el id de la compañía: su índice en la organización.
+     *
+     * @return id de la compañía
+     */
+    public int idCompania() {
+        return idCompania;
+    }
+
+    /**
+     * Devuelve el nombre visible de la compañía.
+     *
+     * @return nombre de la compañía
+     */
+    public String nombre() {
+        return nombre;
     }
 
     /**

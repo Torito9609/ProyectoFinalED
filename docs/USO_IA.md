@@ -250,6 +250,18 @@ Convención de la columna **Autoría**:
 | `test/.../RankingFallosTest.java` | IA | 3 pruebas: reordenar, empate y consulta por umbral |
 | `test/.../PlantaTest.java` | IA | 1 prueba: tras 500 ticks el ranking coincide con ordenar el inventario, y se rehace al reiniciar |
 
+### Entrega 2 — Commit 13: organización con varias compañías
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Organizacion.java` | IA | `ArrayList<Planta>` (id = índice), semillas `maestra × 1000 + id`, tick en orden y ranking global |
+| `modelo/Maquina.java` | IA | Clave compuesta `(idCompania, indice)`, decisión del equipo |
+| `modelo/RankingFallos.java` | IA | Un solo comparador por clave compuesta; referencia al global; `agregar` y `quitar`; se retira `reconstruir` |
+| `modelo/Planta.java` | IA | Id, nombre y ranking global; `reiniciar()` saca y vuelve a meter cada máquina en los rankings |
+| `modelo/ConfiguracionPlanta.java` | IA | `crearMaquinas(idCompania)` y `NOMBRES_COMPANIAS` |
+| `test/.../OrganizacionTest.java` | IA | 2 pruebas: misma semilla maestra, mismo resultado; ranking global igual a ordenar las 18 máquinas |
+| `test/.../RankingFallosTest.java`, `PlantaTest.java` | IA | Ajustados al desempate por clave compuesta |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

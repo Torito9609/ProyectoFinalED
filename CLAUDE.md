@@ -398,7 +398,9 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
   - `numeroOverhauls ≥ maximoOverhauls` y además supera el umbral → REEMPLAZO.
 - **El puntaje solo cambia en un lugar:** `RankingFallos.sumarFallo(maquina, peso)` hace **eliminar → sumar → insertar**, en el ranking de la compañía y en el global. Si la clave cambiara con la máquina dentro del `TreeSet`, el árbol quedaría desordenado y `remove` dejaría de encontrarla, sin lanzar ningún error. **Esta trampa debe aparecer en el documento explicativo.**
 - **El ranking se actualiza cuando hay un evento, no cada cierto tiempo:** en el paso 4 del tick, cuando se clasifica un evento como P1–P3, ya sea en automático o en manual. También se reinserta al terminar un overhaul (el puntaje vuelve a 0), y con un reemplazo la máquina vieja sale y la nueva entra.
-- Las etiquetas se repiten entre compañías. El comparador del ranking global ordena por puntaje descendente, luego por compañía y luego por etiqueta. El de cada compañía, por puntaje descendente y luego por etiqueta. Sin el desempate, el `TreeSet` trataría dos máquinas distintas como la misma.
+- **Ids (decisión del 10 de noviembre).** Cada máquina se identifica con una **clave compuesta** `(idCompania, indice)`, como la clave primaria de una tabla: el id de su compañía (su índice en la organización) y su índice en el inventario. Son los mismos números de la API (`/companias/{id}/maquinas/{indice}`), se fijan en el constructor (`final`) y nunca cambian, porque nada se elimina y un reemplazo ocupa el mismo índice.
+- **Un solo comparador para los dos rankings:** puntaje descendente, luego `idCompania` y luego `indice`. Sin el desempate, el `TreeSet` trataría dos máquinas distintas como la misma. La clave usa solo números que nunca cambian, así que **no depende de las etiquetas**: que sean únicas es una regla del negocio, no de la estructura.
+- **Una máquina vive en dos árboles** (el de su compañía y el global). El ranking de cada compañía conoce al global, y `agregar`, `quitar` y `sumarFallo` actúan sobre los dos. Cualquier cambio de puntaje (un fallo, el reinicio, el cierre de un overhaul) sigue la regla **se saca antes de cambiar la clave y se vuelve a meter después**.
 
 ### Overhaul y reemplazo
 1. Al clasificar un evento se actualiza el ranking, y la recomendación aparece en la API. **La recomendación no asigna a nadie.**
@@ -415,7 +417,7 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 
 ### Crear compañías y máquinas (decisión del 10 de noviembre)
 - **Crear una compañía:** se da un nombre, que debe ser único en la organización (`TreeSet`, O(log n)). Entra al final del `ArrayList` de compañías y su id es su índice. Su semilla se deriva de la maestra y de su índice, así que la misma secuencia de acciones produce la misma simulación. Arranca con su propio ranking, su propio árbol de segmentos y los técnicos internos de la configuración. Si arranca con las 6 máquinas por defecto o vacía, se propone en el commit 13b.
-- **Crear una máquina:** se da la compañía, un tipo del catálogo de la sección 6 (los sensores y parámetros salen del tipo) y una etiqueta, que debe ser única **dentro de su compañía** (un `TreeSet` por compañía; entre compañías las etiquetas se pueden repetir, como dice "Puntaje de fallos"). Se agrega al final del inventario (O(1) amortizado), con puntaje 0, y entra en el ranking de su compañía y en el global (O(log n) cada uno).
+- **Crear una máquina:** se da la compañía, un tipo del catálogo de la sección 6 (los sensores y parámetros salen del tipo) y una etiqueta, que debe ser única **dentro de su compañía** (un `TreeSet` por compañía; entre compañías las etiquetas se pueden repetir, porque la clave de la máquina es su id compuesto). Se agrega al final del inventario (O(1) amortizado), con puntaje 0, y entra en el ranking de su compañía y en el global (O(log n) cada uno).
 - **Crear no se deshace.** Una máquina nueva puede fallar y entrar en las colas en el siguiente tick; deshacerla obligaría a sacarla de estructuras donde no es el siguiente elemento (sección 8).
 - **No se eliminan compañías ni máquinas.** `ArrayList.remove` cuesta O(n) y corre los índices, que son los ids de la API. Además, una máquina eliminada podría tener una solicitud en el montículo, y sacarla con `PriorityQueue.remove(objeto)` cuesta O(n) y extrae un elemento que no es la cima, lo que viola el tipo abstracto de datos. Las máquinas se **reemplazan**, no se eliminan.
 - Un nombre o etiqueta repetido responde `409`; un tipo inexistente o un nombre vacío, `400`.
@@ -428,6 +430,7 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
 - **Preorden:** el tick global y el dibujo del árbol en el frontend. O(n).
 - La API que se propuso el 7 de noviembre (con `reducirPostorden`) está en `docs/sesiones/2026-11-07.md` y es el punto de partida.
 - Si se retoma, el `ArrayList<Planta>` de la opción A pasa a ser los hijos de la raíz. El diseño detallado se registra aquí antes de implementarlo.
+- **La ubicación vive en el árbol, no en la máquina.** `Maquina` guarda a qué compañía *pertenece* (su id, que nunca cambia), nunca *dónde está* (sede o línea). La posición del nodo en el árbol es la ubicación; la ruta para mostrar sale de recorrer el árbol. Si la máquina guardara su sede habría dos fuentes de verdad, y ese campo no podría ser parte de la clave del ranking, porque cambiaría con la máquina dentro del `TreeSet`.
 
 ### Orden de un tick de la organización (`Organizacion.tick()`)
 1. Recorrer las compañías en el orden del `ArrayList` y ejecutar `Planta.tick()` en cada una (pasos 1–7 de la sección 7; el paso 4 actualiza los rankings).
@@ -446,7 +449,7 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
 - **El usuario dispara operaciones; no elige elementos.** "Asignar a mano" no significa escoger cualquier orden o cualquier técnico. Eso sería sacar un elemento que no es el siguiente de la cola con prioridad, o saltarse la FIFO de técnicos, y viola el tipo abstracto de datos. Es el mismo argumento de la sección 8. El botón ejecuta la operación del tipo de dato (`extraer`, `desencolar`), y la estructura decide qué sale.
 
 ### Valores iniciales (PROVISIONALES — los define Cristian)
-- **3 compañías**, cada una con las 6 máquinas de la sección 6 y 2 técnicos internos, con semillas derivadas de la maestra.
+- **3 compañías** ("Planta Norte", "Planta Centro", "Planta Sur"), cada una con las 6 máquinas de la sección 6 y 2 técnicos internos. La semilla de la compañía `i` es `maestra × 1000 + i`.
 - **2 técnicos del fabricante**, compartidos. El overhaul dura **30 ticks**.
 - `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 3 (subido de 2 el 10 de noviembre). Horizonte del historial: 2000 ticks.
 - Todos estos valores van en `ConfiguracionPlanta` (o en una `ConfiguracionOrganizacion` si crece demasiado; se propone antes de crearla).

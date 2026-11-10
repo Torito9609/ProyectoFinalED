@@ -28,6 +28,12 @@ public final class Maquina {
      */
     private static final double MAX_FACTOR_DESGASTE = 2.0;
 
+    /** Id de la compañía dueña de la máquina: su índice en la organización. */
+    private final int idCompania;
+
+    /** Posición de la máquina en el inventario de su compañía. */
+    private final int indice;
+
     private final String etiqueta;
     private final String tipo;
     private final List<Sensor> sensores;
@@ -56,6 +62,13 @@ public final class Maquina {
     /**
      * Crea una máquina lista para operar.
      *
+     * <p>El par {@code (idCompania, indice)} es la <strong>clave compuesta</strong> que identifica
+     * a la máquina en toda la organización, como la clave primaria de una tabla. Son los mismos
+     * números de la API ({@code /companias/{id}/maquinas/{indice}}) y nunca cambian: las máquinas
+     * no se eliminan, y un reemplazo ocupa el mismo índice.</p>
+     *
+     * @param idCompania          id de la compañía dueña; 0 o más
+     * @param indice              posición en el inventario de la compañía; 0 o más
      * @param etiqueta            identificador visible, por ejemplo {@code "PRENSA-01"}
      * @param tipo                descripción del equipo, por ejemplo {@code "Prensa hidráulica"}
      * @param sensores            variables que mide; al menos una
@@ -66,8 +79,15 @@ public final class Maquina {
      * @throws IllegalArgumentException si algún parámetro está fuera de rango
      * @throws NullPointerException     si la etiqueta, el tipo o los sensores son nulos
      */
-    public Maquina(String etiqueta, String tipo, List<Sensor> sensores, int intervaloPreventivo,
-                   double tasaBaseFallo, int cargaInicial, int capacidadLecturas) {
+    public Maquina(int idCompania, int indice, String etiqueta, String tipo, List<Sensor> sensores,
+                   int intervaloPreventivo, double tasaBaseFallo, int cargaInicial,
+                   int capacidadLecturas) {
+        if (idCompania < 0 || indice < 0) {
+            throw new IllegalArgumentException(
+                    "El id de compañía y el índice no pueden ser negativos: " + idCompania + ", " + indice);
+        }
+        this.idCompania = idCompania;
+        this.indice = indice;
         this.etiqueta = Objects.requireNonNull(etiqueta, "La máquina debe tener etiqueta");
         this.tipo = Objects.requireNonNull(tipo, "La máquina debe tener tipo");
         this.sensores = List.copyOf(Objects.requireNonNull(sensores, "La máquina debe tener sensores"));
@@ -95,6 +115,28 @@ public final class Maquina {
         this.preventivaPendiente = false;
         this.puntajeFallos = 0;
         this.numeroOverhauls = 0;
+    }
+
+    /**
+     * Devuelve el id de la compañía dueña de la máquina.
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return índice de la compañía en la organización
+     */
+    public int idCompania() {
+        return idCompania;
+    }
+
+    /**
+     * Devuelve la posición de la máquina en el inventario de su compañía.
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return índice en el inventario
+     */
+    public int indice() {
+        return indice;
     }
 
     /**

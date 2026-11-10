@@ -60,7 +60,8 @@ class PlantaTest {
 
         List<Maquina> ordenado = new ArrayList<>(planta.inventario());
         ordenado.sort(Comparator.comparingInt(Maquina::puntajeFallos).reversed()
-                .thenComparing(Maquina::etiqueta));
+                .thenComparingInt(Maquina::idCompania)
+                .thenComparingInt(Maquina::indice));
         assertTrue(ordenado.get(0).puntajeFallos() > 0,
                 "la simulación debe haber sumado fallos; si no, la prueba no compara nada");
         assertEquals(ordenado, planta.rankingFallos());

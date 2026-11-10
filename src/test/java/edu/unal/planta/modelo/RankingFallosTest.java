@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 /**
  * Pruebas de {@link RankingFallos}.
  *
- * <p>Usa las seis máquinas de la configuración. Sin fallos, todas tienen puntaje 0 y el ranking
- * queda en orden alfabético de etiqueta: BOMBA-01, COMPRES-01, HORNO-01, PRENSA-01, ROBOT-01,
- * TORNO-01.</p>
+ * <p>Usa las seis máquinas de la configuración, todas de la compañía 0. Sin fallos, todas tienen
+ * puntaje 0 y el ranking queda en el orden de su índice en el inventario: PRENSA-01, TORNO-01,
+ * ROBOT-01, COMPRES-01, HORNO-01, BOMBA-01.</p>
  */
 @DisplayName("RankingFallos")
 class RankingFallosTest {
@@ -23,21 +23,21 @@ class RankingFallosTest {
     @BeforeEach
     void crearRanking() {
         maquinas = ConfiguracionPlanta.crearMaquinas();
-        ranking = new RankingFallos(maquinas);
+        ranking = new RankingFallos(maquinas, null);
     }
 
     @Test
-    @DisplayName("un fallo lleva la máquina al primer lugar y las demás siguen por etiqueta")
+    @DisplayName("un fallo lleva la máquina al primer lugar y las demás siguen por índice")
     void sumarFalloReordena() {
         ranking.sumarFallo(maquina("TORNO-01"), 3);
 
-        assertEquals(List.of("TORNO-01", "BOMBA-01", "COMPRES-01", "HORNO-01", "PRENSA-01", "ROBOT-01"),
+        assertEquals(List.of("TORNO-01", "PRENSA-01", "ROBOT-01", "COMPRES-01", "HORNO-01", "BOMBA-01"),
                 etiquetas(ranking.enOrden()));
         assertEquals(3, maquina("TORNO-01").puntajeFallos());
     }
 
     @Test
-    @DisplayName("dos máquinas con el mismo puntaje se quedan las dos, desempatadas por etiqueta")
+    @DisplayName("dos máquinas con el mismo puntaje se quedan las dos, desempatadas por índice")
     void empateConservaAmbas() {
         ranking.sumarFallo(maquina("TORNO-01"), 2);
         ranking.sumarFallo(maquina("PRENSA-01"), 2);

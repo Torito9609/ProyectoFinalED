@@ -73,6 +73,14 @@ public final class ConfiguracionPlanta {
      */
     public static final int MAXIMO_OVERHAULS = 3;
 
+    // ---------------------------------------------------------------------------------
+    // Organización (Entrega 2). Valores PROVISIONALES.
+    // ---------------------------------------------------------------------------------
+
+    /** Nombres de las compañías con que arranca la organización; el id de cada una es su posición. */
+    public static final List<String> NOMBRES_COMPANIAS =
+            List.of("Planta Norte", "Planta Centro", "Planta Sur");
+
     /** Nombres de los técnicos. Son menos que las máquinas, para que se formen filas. */
     private static final List<String> NOMBRES_TECNICOS = List.of("Ana", "Luis");
 
@@ -129,12 +137,17 @@ public final class ConfiguracionPlanta {
      * lleguen más rápido de lo que los técnicos las atienden, y eso depende de la tasa base de
      * fallo y de la duración de las reparaciones, no del número de máquinas.</p>
      *
+     * <p>Cada máquina recibe como índice su posición en la lista, así que el índice coincide con
+     * su lugar en el inventario.</p>
+     *
+     * @param idCompania id de la compañía dueña de las máquinas
      * @return lista de máquinas recién creadas, todas operando
      */
-    public static List<Maquina> crearMaquinas() {
+    public static List<Maquina> crearMaquinas(int idCompania) {
         List<Maquina> maquinas = new ArrayList<>();
 
         maquinas.add(new Maquina(
+                idCompania, maquinas.size(),
                 "PRENSA-01",
                 "Prensa hidráulica",
                 List.of(
@@ -147,6 +160,7 @@ public final class ConfiguracionPlanta {
                 CAPACIDAD_LECTURAS));
 
         maquinas.add(new Maquina(
+                idCompania, maquinas.size(),
                 "TORNO-01",
                 "Torno CNC",
                 List.of(
@@ -159,6 +173,7 @@ public final class ConfiguracionPlanta {
                 CAPACIDAD_LECTURAS));
 
         maquinas.add(new Maquina(
+                idCompania, maquinas.size(),
                 "ROBOT-01",
                 "Brazo robótico de soldadura",
                 List.of(
@@ -171,6 +186,7 @@ public final class ConfiguracionPlanta {
                 CAPACIDAD_LECTURAS));
 
         maquinas.add(new Maquina(
+                idCompania, maquinas.size(),
                 "COMPRES-01",
                 "Compresor de tornillo",
                 List.of(
@@ -183,6 +199,7 @@ public final class ConfiguracionPlanta {
                 CAPACIDAD_LECTURAS));
 
         maquinas.add(new Maquina(
+                idCompania, maquinas.size(),
                 "HORNO-01",
                 "Horno de tratamiento térmico",
                 List.of(
@@ -195,6 +212,7 @@ public final class ConfiguracionPlanta {
                 CAPACIDAD_LECTURAS));
 
         maquinas.add(new Maquina(
+                idCompania, maquinas.size(),
                 "BOMBA-01",
                 "Bomba centrífuga",
                 List.of(
@@ -207,6 +225,15 @@ public final class ConfiguracionPlanta {
                 CAPACIDAD_LECTURAS));
 
         return maquinas;
+    }
+
+    /**
+     * Crea las seis máquinas para la compañía 0. Es la planta única de la Entrega 1.
+     *
+     * @return lista de máquinas recién creadas, todas operando
+     */
+    public static List<Maquina> crearMaquinas() {
+        return crearMaquinas(0);
     }
 
     /**

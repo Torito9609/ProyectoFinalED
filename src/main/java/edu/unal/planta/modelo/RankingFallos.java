@@ -9,7 +9,11 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 /**
- * Ranking de las máquinas de una compañía por puntaje de fallos, de la peor a la mejor.
+ * Ranking de máquinas por puntaje de fallos, de la peor a la mejor.
+ *
+ * <p>Hay uno por compañía y uno global, que es la misma clase con todas las máquinas de la
+ * organización. El de cada compañía conoce al global y lo mantiene al día: cada vez que una
+ * máquina entra, sale o cambia de puntaje en su compañía, lo mismo pasa en el global.</p>
  *
  * <p><strong>Estructura:</strong> un {@link TreeSet}, que internamente es un árbol rojo-negro, es
  * decir un árbol binario de búsqueda balanceado. El orden siempre está listo: no hay que ordenar
@@ -21,16 +25,18 @@ import java.util.TreeSet;
  * consulta, y el frontend consulta en cada sondeo. Los fallos son mucho menos frecuentes que las
  * consultas, así que conviene pagar O(log n) por fallo y tener el orden listo.</p>
  *
- * <p><strong>Orden:</strong> puntaje descendente y, en empate, etiqueta ascendente. El desempate es
- * obligatorio: el {@code TreeSet} considera iguales dos elementos que el comparador declara
- * iguales, así que sin él dos máquinas con el mismo puntaje se tratarían como una sola y la segunda
- * no entraría al árbol. Dentro de una compañía las etiquetas son únicas.</p>
+ * <p><strong>Orden:</strong> puntaje descendente y, en empate, por la clave compuesta de la máquina:
+ * {@code idCompania} y luego {@code indice}. El desempate es obligatorio: el {@code TreeSet}
+ * considera iguales dos elementos que el comparador declara iguales, así que sin él dos máquinas
+ * con el mismo puntaje se tratarían como una sola y la segunda no entraría al árbol. La clave
+ * compuesta es única en toda la organización y nunca cambia, así que el mismo orden sirve para el
+ * ranking de una compañía y para el global.</p>
  *
  * <p><strong>La trampa de la clave que cambia.</strong> El puntaje es la clave de orden. Si
  * cambiara con la máquina dentro del árbol, el árbol quedaría desordenado y {@code remove} dejaría
  * de encontrarla, sin lanzar ningún error. Por eso el puntaje solo cambia en
- * {@link #sumarFallo(Maquina, int)}, que primero saca la máquina, luego suma y luego la vuelve a
- * insertar. {@link Maquina#sumarPuntaje(int)} tiene visibilidad de paquete para que nadie fuera de
+ * {@link #sumarFallo(Maquina, int)}, que primero saca la máquina de los dos rankings, luego suma y
+ * luego la vuelve a insertar en ambos. {@link Maquina#sumarPuntaje(int)} tiene visibilidad de paquete para que nadie fuera de
  * {@code modelo} pueda saltarse este paso.</p>
  *
  * @author Cristian Robayo
@@ -38,47 +44,92 @@ import java.util.TreeSet;
  */
 public final class RankingFallos {
 
-    /** Puntaje de mayor a menor y, en empate, etiqueta en orden alfabético. */
+    /** Puntaje de mayor a menor y, en empate, la clave compuesta (compañía, índice). */
     private static final Comparator<Maquina> ORDEN =
             Comparator.comparingInt(Maquina::puntajeFallos).reversed()
-                    .thenComparing(Maquina::etiqueta);
+                    .thenComparingInt(Maquina::idCompania)
+                    .thenComparingInt(Maquina::indice);
 
     /** Árbol rojo-negro con las máquinas, siempre en orden de ranking. */
     private final TreeSet<Maquina> arbol;
 
+    /** Ranking global que se mantiene al día con este; {@code null} si no hay. */
+    private final RankingFallos global;
+
     /**
-     * Crea el ranking con las máquinas dadas.
+     * Crea un ranking con las máquinas dadas, y las agrega también al global si se indica.
+     *
+     * <p>Para crear el ranking global se pasa una colección vacía y {@code null}: las compañías lo
+     * van llenando al crear los suyos.</p>
      *
      * <p>Complejidad: O(n log n): n inserciones de O(log n).</p>
      *
-     * @param maquinas máquinas de la compañía
+     * @param maquinas máquinas iniciales
+     * @param global   ranking global que se mantiene al día con este, o {@code null}
      * @throws NullPointerException si la colección es nula
      */
-    public RankingFallos(Collection<Maquina> maquinas) {
+    public RankingFallos(Collection<Maquina> maquinas, RankingFallos global) {
         this.arbol = new TreeSet<>(ORDEN);
-        this.arbol.addAll(Objects.requireNonNull(maquinas, "Las máquinas no pueden ser nulas"));
+        this.global = global;
+        for (Maquina maquina : Objects.requireNonNull(maquinas, "Las máquinas no pueden ser nulas")) {
+            agregar(maquina);
+        }
+    }
+
+    /**
+     * Agrega una máquina a este ranking y al global.
+     *
+     * <p>Complejidad: O(log n).</p>
+     *
+     * @param maquina máquina a agregar
+     */
+    public void agregar(Maquina maquina) {
+        arbol.add(maquina);
+        if (global != null) {
+            global.agregar(maquina);
+        }
+    }
+
+    /**
+     * Saca una máquina de este ranking y del global.
+     *
+     * <p>Hay que llamarlo <strong>antes</strong> de cambiar el puntaje de la máquina por cualquier
+     * vía: con la clave ya cambiada, el árbol no la encontraría.</p>
+     *
+     * <p>Complejidad: O(log n).</p>
+     *
+     * @param maquina máquina a sacar; debe estar en el ranking
+     * @throws IllegalStateException si la máquina no está en el ranking
+     */
+    public void quitar(Maquina maquina) {
+        if (!arbol.remove(maquina)) {
+            throw new IllegalStateException(
+                    "La máquina " + maquina.etiqueta() + " no está en el ranking: "
+                            + "su puntaje cambió por fuera de RankingFallos o nunca se insertó");
+        }
+        if (global != null) {
+            global.quitar(maquina);
+        }
     }
 
     /**
      * Suma un fallo a una máquina y la reubica en el ranking: <strong>eliminar → sumar →
      * insertar</strong>.
      *
-     * <p>Es el único lugar donde cambia el puntaje de una máquina.</p>
+     * <p>Es el único lugar donde cambia el puntaje de una máquina. La máquina sale de los dos
+     * rankings, el de su compañía y el global, antes de que cambie su clave, y vuelve a entrar en
+     * ambos después.</p>
      *
-     * <p>Complejidad: O(log n): una eliminación y una inserción en el árbol.</p>
+     * <p>Complejidad: O(log n): una eliminación y una inserción en cada árbol.</p>
      *
      * @param maquina máquina que falló; debe estar en el ranking
      * @param peso    puntos del fallo (ver {@link Prioridad#peso()})
      * @throws IllegalStateException si la máquina no está en el ranking
      */
     public void sumarFallo(Maquina maquina, int peso) {
-        if (!arbol.remove(maquina)) {
-            throw new IllegalStateException(
-                    "La máquina " + maquina.etiqueta() + " no está en el ranking: "
-                            + "su puntaje cambió por fuera de RankingFallos o nunca se insertó");
-        }
+        quitar(maquina);
         maquina.sumarPuntaje(peso);
-        arbol.add(maquina);
+        agregar(maquina);
     }
 
     /**
@@ -114,23 +165,6 @@ public final class RankingFallos {
             candidatas.add(maquina);
         }
         return Collections.unmodifiableList(candidatas);
-    }
-
-    /**
-     * Vacía el ranking y vuelve a insertar las máquinas, con su puntaje actual.
-     *
-     * <p>Sirve cuando el puntaje de muchas máquinas cambió de una vez, como al reiniciar la
-     * simulación. En ese caso no se puede eliminar cada máquina con {@code remove}, porque su clave
-     * ya cambió y el árbol no la encontraría; hay que descartar el árbol entero y armarlo de
-     * nuevo.</p>
-     *
-     * <p>Complejidad: O(n log n).</p>
-     *
-     * @param maquinas máquinas de la compañía
-     */
-    public void reconstruir(Collection<Maquina> maquinas) {
-        arbol.clear();
-        arbol.addAll(maquinas);
     }
 
     /**
