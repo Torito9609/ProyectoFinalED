@@ -473,6 +473,7 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
   - una gráfica del historial con una ventana [a, b] seleccionable, que muestre el total y el pico;
   - el interruptor de modo.
 - Como en la Entrega 1, cada estructura se dibuja con su comportamiento real, sin inventar estado interno que la librería no expone.
+- **Estilo (decisión del 10 de noviembre):** la vista pesa mucho en la nota, así que el frontend es un **juego con cámara fija** (un diorama isométrico low-poly, con toda la planta a la vista), hecho con React + Vite + TypeScript + React Three Fiber, en el repositorio `ProyectoFinalED-frontend`. **Cada estructura es un objeto del mundo que se comporta como su tipo abstracto**: la cola circular es un tablero en anillo junto a cada máquina, la cola de eventos una banda transportadora, la cola P1–P4 un tablero de 4 carriles, la cola de técnicos una banca donde hacen fila y caminan a la máquina, y la pila un montón de carpetas. Un HUD encima muestra las cifras exactas (índices, `frente` y `final`, ticks restantes) y los controles. Se descartó Unity porque su parte visual se arma en el editor, que Claude Code no puede operar.
 
 ---
 
@@ -497,6 +498,8 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 8. `feat: CORS para el frontend local y contrato de la API`: configuración de CORS para `localhost`, `docs/API.md` y el README con cómo ejecutar el backend.
 
 **Numeración:** el 10 de noviembre se pospuso el árbol n-ario y se agregó crear compañías y máquinas. Para no romper las referencias de la bitácora, los números no se corren: el 9 queda pospuesto y los commits nuevos llevan letra (13a, 13b, 19a).
+
+**Orden de ejecución (decisión del 10 de noviembre):** los números identifican cada commit, pero no fijan el orden. Después del 13b se hace una **pausa de QA con el frontend** (el repositorio hermano `ProyectoFinalED-frontend`, que arranca contra la API de la Entrega 1), y luego se adelantan los commits de API que no dependen del resto del modelo: **19 → 19a → 21**, para que el frontend pueda correr en automático varias compañías, crear compañías y máquinas y ver el ranking. Después siguen **14 → 15 → 16 → 17 → 18 → 20 → 22 → 23** y la etapa F.
 
 ### Etapa C — Estructuras nuevas (`estructuras/`, genéricas y sin dominio)
 9. ~~`feat: árbol n-ario genérico`~~ **Pospuesto** a la opción B (etapa G).

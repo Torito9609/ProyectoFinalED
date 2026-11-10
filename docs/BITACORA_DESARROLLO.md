@@ -607,6 +607,7 @@ todavía no se han aprobado.
 | 2026-11-05 | 5 y 15 (`PriorityQueue` prohibida) | Permitir `PriorityQueue` solo para las solicitudes de overhaul, con número de secuencia como desempate | Los montículos ya se vieron en el curso, y la secuencia resuelve el orden de llegada entre empates | **Aprobada**; `CLAUDE.md` ya actualizado |
 | 2026-11-10 | 10, 16 y 17 (árbol n-ario) | Posponer el árbol n-ario a una opción B opcional; las compañías van en un `ArrayList`; se pueden crear compañías y máquinas con nombres únicos en un `TreeSet`; no se eliminan | Con profundidad fija de 2, una lista hace lo mismo que el árbol y no se puede defender. El árbol se justifica con niveles variables | **Aprobada** por Kevin; `CLAUDE.md` ya actualizado |
 | 2026-11-10 | 16, «Valores iniciales» | `maximoOverhauls` sube de 2 a 3 | Decisión del equipo al aprobar el commit 11: una máquina recibe hasta tres overhauls antes de que se recomiende reemplazarla | **Aprobada** por Kevin; `CLAUDE.md` ya actualizado |
+| 2026-11-10 | 17 (orden de los commits) | Pausa de QA con el frontend después del 13b, y adelantar 19 → 19a → 21 antes del 14 | La vista pesa mucho en la nota. El frontend (un juego con cámara fija, en React Three Fiber) debe poder correr todo cuanto antes, y el QA manual detecta problemas que las pruebas no ven | **Aprobada** por Kevin; `CLAUDE.md` ya actualizado |
 | 2026-11-10 | 16, «Puntaje de fallos» (desempate del ranking) | Las máquinas se identifican con la clave compuesta `(idCompania, indice)`; los dos rankings usan un solo comparador: puntaje, compañía, índice. Antes: compañía y etiqueta | La clave queda hecha de números que nunca cambian y coinciden con la API; ya no depende de que las etiquetas sean únicas, lo que deja libre la opción B (sedes y líneas) | **Aprobada** por Kevin; `CLAUDE.md` ya actualizado |
 | 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 
@@ -634,7 +635,8 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b | Modelo de la Entrega 2, con la creación de compañías y máquinas | **Siguiente: commit 11** |
-| E | 19–23, 19a | API de la Entrega 2 | Pendiente |
+| D | 11–18, 13a, 13b | Modelo de la Entrega 2, con la creación de compañías y máquinas | 11, 12, 13, 13a y 13b **terminados** (2026-11-10); faltan 14–18 |
+| — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **En curso** |
+| E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | Pendiente: **siguiente en el backend, commit 19** |
 | F | 24–25 | Documentación | Pendiente |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |
