@@ -241,6 +241,15 @@ Convención de la columna **Autoría**:
 | `modelo/ConfiguracionPlanta.java` | IA | `UMBRAL_OVERHAUL = 12`; `MAXIMO_OVERHAULS = 3`, valor que decidió el equipo |
 | `test/.../MaquinaTest.java` | IA | 4 pruebas de la recomendación |
 
+### Entrega 2 — Commit 12: ranking de fallos por compañía
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/RankingFallos.java` | IA | `TreeSet` con orden por puntaje descendente y etiqueta; `sumarFallo` (eliminar → sumar → insertar), `enOrden`, `conPuntajeMinimo` y `reconstruir` |
+| `modelo/Planta.java` | IA | El paso 4 suma el fallo al ranking; `reiniciar()` reconstruye el ranking; nuevo `rankingFallos()` |
+| `test/.../RankingFallosTest.java` | IA | 3 pruebas: reordenar, empate y consulta por umbral |
+| `test/.../PlantaTest.java` | IA | 1 prueba: tras 500 ticks el ranking coincide con ordenar el inventario, y se rehace al reiniciar |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

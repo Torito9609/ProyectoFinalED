@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.unal.planta.modelo.comandos.ComandoOperador;
 import edu.unal.planta.modelo.comandos.PararOArrancarMaquina;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,6 +48,26 @@ class PlantaTest {
                 "con la misma semilla la simulación debe repetirse igual, para poder ensayar la demo");
         assertNotEquals(primera.bitacora(), distinta.bitacora(),
                 "con otra semilla la simulación debe ser distinta");
+    }
+
+    @Test
+    @DisplayName("tras muchos ticks el ranking coincide con ordenar el inventario, y se rehace al reiniciar")
+    void rankingCoincideConOrdenarElInventario() {
+        Planta planta = new Planta(SEMILLA);
+        for (int i = 0; i < 500; i++) {
+            planta.tick();
+        }
+
+        List<Maquina> ordenado = new ArrayList<>(planta.inventario());
+        ordenado.sort(Comparator.comparingInt(Maquina::puntajeFallos).reversed()
+                .thenComparing(Maquina::etiqueta));
+        assertTrue(ordenado.get(0).puntajeFallos() > 0,
+                "la simulación debe haber sumado fallos; si no, la prueba no compara nada");
+        assertEquals(ordenado, planta.rankingFallos());
+
+        planta.reiniciar();
+        assertEquals(6, planta.rankingFallos().size());
+        assertTrue(planta.rankingFallos().stream().allMatch(m -> m.puntajeFallos() == 0));
     }
 
     @Test

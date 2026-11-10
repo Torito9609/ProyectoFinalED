@@ -10,9 +10,9 @@ import java.util.Objects;
 import java.util.Queue;
 
 /**
- * Fachada del modelo: contiene las cinco estructuras de datos y ejecuta la simulación.
+ * Fachada del modelo: contiene las estructuras de datos de una planta y ejecuta la simulación.
  *
- * <h2>Las cinco estructuras</h2>
+ * <h2>Las estructuras</h2>
  * <table border="1">
  *   <caption>Estructuras que viven en esta clase</caption>
  *   <tr><th>Campo</th><th>Estructura</th><th>Para qué</th></tr>
@@ -25,6 +25,8 @@ import java.util.Queue;
  *       <td>Órdenes de trabajo P1 a P4</td></tr>
  *   <tr><td>{@code pilaDeshacer}</td><td>{@code ArrayDeque} como pila</td>
  *       <td>Acciones del operador que se pueden revertir</td></tr>
+ *   <tr><td>{@code ranking}</td><td>{@link RankingFallos} ({@code TreeSet}, árbol rojo-negro)</td>
+ *       <td>Máquinas ordenadas por puntaje de fallos (Entrega 2)</td></tr>
  * </table>
  *
  * <p>La cola circular no aparece aquí porque cada {@link Maquina} es dueña de la suya, con sus
@@ -59,6 +61,9 @@ public final class Planta {
     /** Cola con prioridad: órdenes de trabajo por atender. */
     private final ColaPrioridadOrdenes ordenes;
 
+    /** Árbol rojo-negro ({@code TreeSet}): máquinas ordenadas por puntaje de fallos. */
+    private final RankingFallos ranking;
+
     /** Pila: acciones del operador, la última en entrar es la primera en revertirse. */
     private final Deque<ComandoOperador> pilaDeshacer;
 
@@ -83,6 +88,7 @@ public final class Planta {
         this.eventos = new ArrayDeque<>();
         this.tecnicosLibres = new ArrayDeque<>(tecnicos);
         this.ordenes = new ColaPrioridadOrdenes();
+        this.ranking = new RankingFallos(inventario);
         this.pilaDeshacer = new ArrayDeque<>();
         this.bitacora = new ArrayDeque<>();
         this.observadores = new ArrayList<>();
@@ -212,6 +218,10 @@ public final class Planta {
      * vacía y no se vería su comportamiento.</p>
      *
      * <p>Si la orden resulta P1, la máquina se detiene de inmediato.</p>
+     *
+     * <p>El fallo se suma al ranking aquí, cuando ocurre, y no cada cierto tiempo: reubicar una
+     * máquina cuesta O(log n), mientras que reordenar todo en cada tick costaría O(n log n) aunque
+     * no hubiera fallos nuevos.</p>
      */
     private void clasificarUnEvento() {
         EventoFallo evento = eventos.poll();
@@ -222,6 +232,7 @@ public final class Planta {
         Sensor sensor = maquina.sensor(evento.indiceSensor());
         OrdenTrabajo orden = Clasificador.clasificar(evento, sensor, siguienteIdOrden++);
         ordenes.insertar(orden);
+        ranking.sumarFallo(maquina, orden.prioridad().peso());
         registrar("Clasificado: " + orden.etiquetaCorta() + " → " + orden.prioridad().etiqueta());
 
         if (orden.prioridad() == Prioridad.P1) {
@@ -317,6 +328,9 @@ public final class Planta {
         for (Maquina maquina : inventario) {
             maquina.reiniciar();
         }
+        // Reiniciar dejó todos los puntajes en 0 con las máquinas dentro del árbol, así que el
+        // árbol quedó desordenado. Se arma de nuevo; no se puede usar remove (ver RankingFallos).
+        ranking.reconstruir(inventario);
         for (Tecnico tecnico : tecnicos) {
             tecnico.reiniciar();
         }
@@ -466,6 +480,17 @@ public final class Planta {
      */
     public Maquina maquina(int indice) {
         return inventario.get(indice);
+    }
+
+    /**
+     * Devuelve las máquinas ordenadas por puntaje de fallos, de la peor a la mejor.
+     *
+     * <p>Complejidad: O(n), un recorrido en orden del árbol; no se ordena nada.</p>
+     *
+     * @return copia no modificable, en orden de ranking
+     */
+    public List<Maquina> rankingFallos() {
+        return ranking.enOrden();
     }
 
     /**
