@@ -354,6 +354,17 @@ Convención de la columna **Autoría**:
 | `api/ManejadorErrores.java` | IA | `IllegalStateException` del modelo → 409 |
 | `test/.../ContabilidadTest.java`, `PlantaTest.java`, `OrganizacionTest.java`, `ServicioSimulacionTest.java` | IA | 6 pruebas |
 
+### Entrega 2 — Commit 15: solicitudes de overhaul y técnicos del fabricante
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/SolicitudOverhaul.java` | IA | Puntaje congelado y comparador con secuencia para los empates |
+| `modelo/TecnicoExterno.java` | IA | Técnico del fabricante; asignar y terminar llegan en el commit 16 |
+| `modelo/Organizacion.java` | IA | Montículo (`PriorityQueue`), cola FIFO de técnicos del fabricante, `aprobarOverhaul` (solo con recomendación, opción a del equipo), la cima y el orden de salida |
+| `modelo/Maquina.java` | IA | Marca `overhaulPendiente`, con visibilidad de paquete para cambiarla |
+| `modelo/Planta.java`, `ConfiguracionPlanta.java` | IA | `anotar` para la bitácora; 2 técnicos del fabricante y `DURACION_OVERHAUL = 30` |
+| `test/.../SolicitudOverhaulTest.java`, `OrganizacionTest.java` | IA | 3 pruebas: el orden del comparador, la salida por puntaje y los rechazos con el reinicio |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

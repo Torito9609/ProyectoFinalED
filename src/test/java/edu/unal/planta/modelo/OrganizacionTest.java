@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +57,52 @@ class OrganizacionTest {
         assertTrue(organizacion.rankingGlobal().contains(nueva));
         assertTrue(organizacion.rankingGlobal().contains(otra));
         assertEquals(20, organizacion.rankingGlobal().size());
+    }
+
+    @Test
+    @DisplayName("las solicitudes de overhaul salen por puntaje, sin importar el orden en que se aprueban")
+    void overhaulsSalenPorPuntaje() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        for (int i = 0; i < TICKS; i++) {
+            organizacion.tick();
+        }
+        List<Maquina> candidatas =
+                organizacion.rankingGlobalConPuntajeMinimo(ConfiguracionPlanta.UMBRAL_OVERHAUL);
+        assertTrue(candidatas.size() >= 3, "debe haber al menos tres máquinas sobre el umbral");
+
+        List<Maquina> aprobadas = new ArrayList<>(candidatas.subList(0, 3));
+        Collections.reverse(aprobadas);
+        for (Maquina maquina : aprobadas) {
+            organizacion.aprobarOverhaul(maquina.idCompania(), maquina.indice());
+        }
+
+        List<Integer> puntajes = organizacion.solicitudesEnOrdenDeSalida().stream()
+                .map(SolicitudOverhaul::puntajeCongelado).toList();
+        List<Integer> esperados = candidatas.subList(0, 3).stream()
+                .map(Maquina::puntajeFallos).toList();
+        assertEquals(esperados, puntajes, "se aprobaron de menor a mayor y salen de mayor a menor");
+        assertEquals(puntajes.get(0), organizacion.siguienteOverhaul().orElseThrow().puntajeCongelado());
+    }
+
+    @Test
+    @DisplayName("se rechaza una solicitud repetida o sin recomendación, y reiniciar vacía el montículo")
+    void overhaulRechazadoYReinicio() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        assertThrows(IllegalStateException.class, () -> organizacion.aprobarOverhaul(0, 0),
+                "en el tick 0 ninguna máquina tiene recomendación");
+        for (int i = 0; i < TICKS; i++) {
+            organizacion.tick();
+        }
+        Maquina peor = organizacion.rankingGlobal().get(0);
+        organizacion.aprobarOverhaul(peor.idCompania(), peor.indice());
+
+        assertThrows(IllegalStateException.class,
+                () -> organizacion.aprobarOverhaul(peor.idCompania(), peor.indice()));
+
+        organizacion.reiniciar();
+        assertTrue(organizacion.siguienteOverhaul().isEmpty());
+        assertFalse(peor.overhaulPendiente());
+        assertEquals(organizacion.tecnicosExternos().size(), organizacion.tecnicosExternosLibres().size());
     }
 
     @Test

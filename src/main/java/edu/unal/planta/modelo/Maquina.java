@@ -49,6 +49,9 @@ public final class Maquina {
     private boolean alarmaActiva;
     private boolean preventivaPendiente;
 
+    /** Si la máquina tiene una solicitud de overhaul esperando en el montículo (Entrega 2). */
+    private boolean overhaulPendiente;
+
     /**
      * Fallos ponderados por {@link Prioridad#peso()}, acumulados desde el último overhaul. Es la
      * clave de orden del ranking de fallos: solo cambia con {@link #sumarPuntaje(int)}, que no es
@@ -113,6 +116,7 @@ public final class Maquina {
         this.anomalia = null;
         this.alarmaActiva = false;
         this.preventivaPendiente = false;
+        this.overhaulPendiente = false;
         this.puntajeFallos = 0;
         this.numeroOverhauls = 0;
     }
@@ -404,6 +408,29 @@ public final class Maquina {
     }
 
     /**
+     * Indica si la máquina tiene una solicitud de overhaul esperando en el montículo.
+     *
+     * <p>Sirve para rechazar una segunda solicitud en O(1). La alternativa,
+     * {@code PriorityQueue.contains}, recorre todo el montículo: O(n). Es la misma idea que
+     * {@link #preventivaPendiente()}.</p>
+     *
+     * @return {@code true} si hay una solicitud pendiente
+     */
+    public boolean overhaulPendiente() {
+        return overhaulPendiente;
+    }
+
+    /**
+     * Marca o desmarca la solicitud de overhaul pendiente. Tiene visibilidad de paquete: solo la
+     * organización, dueña del montículo, la cambia.
+     *
+     * @param pendiente {@code true} al aprobar; {@code false} cuando un técnico la toma
+     */
+    void marcarOverhaulPendiente(boolean pendiente) {
+        this.overhaulPendiente = pendiente;
+    }
+
+    /**
      * Agrega una lectura al historial reciente.
      *
      * <p>Si la cola circular está llena, la lectura más antigua se descarta.</p>
@@ -509,6 +536,7 @@ public final class Maquina {
         anomalia = null;
         alarmaActiva = false;
         preventivaPendiente = false;
+        overhaulPendiente = false;
         puntajeFallos = 0;
         numeroOverhauls = 0;
         lecturas.vaciar();

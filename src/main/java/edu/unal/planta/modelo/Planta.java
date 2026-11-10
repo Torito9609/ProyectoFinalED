@@ -1027,6 +1027,17 @@ public final class Planta {
     }
 
     /**
+     * Deja una línea en la bitácora desde otra clase del modelo, por ejemplo cuando la organización
+     * aprueba un overhaul de esta compañía.
+     *
+     * @param mensaje texto de la línea, sin el tick
+     */
+    void anotar(String mensaje) {
+        registrar(mensaje);
+        notificar();
+    }
+
+    /**
      * Agrega una línea a la bitácora, descartando las más viejas si se pasa del máximo.
      *
      * @param mensaje qué pasó

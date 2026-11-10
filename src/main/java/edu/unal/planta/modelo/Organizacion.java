@@ -1,9 +1,13 @@
 package edu.unal.planta.modelo;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -20,6 +24,11 @@ import java.util.TreeSet;
  *   máquinas de todas las compañías. Cada compañía lo mantiene al día con las suyas.</li>
  *   <li><strong>Conjunto</strong> ({@code TreeSet} declarado como {@code Set}): los nombres de las
  *   compañías, para que no se repitan. Responde "¿ya existe?" en O(log c).</li>
+ *   <li><strong>Montículo binario</strong> ({@code PriorityQueue}): las solicitudes de overhaul
+ *   aprobadas, de todas las compañías. La cima es la máquina en peor estado. Insertar y extraer
+ *   cuestan O(log s).</li>
+ *   <li><strong>Cola FIFO</strong> ({@code ArrayDeque}): los técnicos del fabricante libres,
+ *   compartidos por todas las compañías.</li>
  * </ul>
  *
  * <p>Todas las plantas tienen siempre el mismo tick que la organización: las iniciales arrancan
@@ -66,6 +75,21 @@ public final class Organizacion {
     private ModoSimulacion modo;
 
     /**
+     * Montículo binario: solicitudes de overhaul aprobadas. Mayor puntaje congelado primero; en un
+     * empate, la que llegó antes ({@link SolicitudOverhaul#COMPARADOR}).
+     */
+    private final PriorityQueue<SolicitudOverhaul> solicitudes;
+
+    /** Todos los técnicos del fabricante, libres u ocupados, para mostrarlos. */
+    private final List<TecnicoExterno> tecnicosExternos;
+
+    /** Cola FIFO: técnicos del fabricante libres. */
+    private final Queue<TecnicoExterno> externosLibres;
+
+    /** Número de llegada de la próxima solicitud: desempata el montículo. */
+    private long siguienteSecuencia;
+
+    /**
      * Crea la organización con las compañías de la configuración, listas para el primer tick.
      *
      * <p>Complejidad: O(N log N), con N el total de máquinas, por las inserciones en el ranking
@@ -80,6 +104,10 @@ public final class Organizacion {
         this.nombres = new TreeSet<>();
         this.tick = 0;
         this.modo = ModoSimulacion.AUTOMATICO;
+        this.solicitudes = new PriorityQueue<>(SolicitudOverhaul.COMPARADOR);
+        this.tecnicosExternos = ConfiguracionPlanta.crearTecnicosExternos();
+        this.externosLibres = new ArrayDeque<>(tecnicosExternos);
+        this.siguienteSecuencia = 1;
         for (String nombre : ConfiguracionPlanta.NOMBRES_COMPANIAS) {
             crearCompania(nombre);
         }
@@ -196,12 +224,19 @@ public final class Organizacion {
      *
      * <p>Cada planta saca sus máquinas del ranking global antes de reiniciarlas y las vuelve a
      * meter después, así que el ranking global queda consistente sin rearmarlo. El modo se
-     * conserva.</p>
+     * conserva. El montículo de overhauls se vacía y los técnicos del fabricante quedan libres.</p>
      */
     public void reiniciar() {
         for (Planta compania : companias) {
             compania.reiniciar();
         }
+        solicitudes.clear();
+        externosLibres.clear();
+        for (TecnicoExterno externo : tecnicosExternos) {
+            externo.reiniciar();
+            externosLibres.add(externo);
+        }
+        siguienteSecuencia = 1;
         tick = 0;
     }
 
@@ -252,6 +287,99 @@ public final class Organizacion {
      */
     public List<Maquina> rankingGlobalConPuntajeMinimo(int umbral) {
         return rankingGlobal.conPuntajeMinimo(umbral);
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Overhauls
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Aprueba un overhaul: la solicitud entra al montículo con el puntaje actual de la máquina,
+     * congelado como clave.
+     *
+     * <p>Solo se aprueba si la máquina tiene recomendación de overhaul o de reemplazo, es decir si
+     * su puntaje alcanzó el umbral: la recomendación filtra, y el jugador decide cuándo aprobar y si
+     * paga. La máquina sigue operando mientras espera. El modo automático nunca aprueba.</p>
+     *
+     * <p>Complejidad: O(log s), con s las solicitudes en el montículo. La solicitud repetida se
+     * detecta en O(1) con la marca de la máquina, sin recorrer el montículo.</p>
+     *
+     * @param idCompania    id de la compañía
+     * @param indiceMaquina índice de la máquina en su inventario
+     * @return la solicitud creada
+     * @throws IndexOutOfBoundsException si la compañía o la máquina no existen
+     * @throws IllegalStateException     si la compañía está en quiebra, si la máquina ya tiene una
+     *                                   solicitud pendiente o si no tiene recomendación de overhaul
+     */
+    public SolicitudOverhaul aprobarOverhaul(int idCompania, int indiceMaquina) {
+        Planta compania = compania(idCompania);
+        Maquina maquina = compania.maquina(indiceMaquina);
+        if (compania.enQuiebra()) {
+            throw new IllegalStateException(compania.nombre() + " está en quiebra: no acepta acciones");
+        }
+        if (maquina.overhaulPendiente()) {
+            throw new IllegalStateException(maquina.etiqueta() + " ya tiene un overhaul pendiente");
+        }
+        if (maquina.recomendacion() == Recomendacion.NINGUNA) {
+            throw new IllegalStateException(maquina.etiqueta() + " no tiene recomendación de overhaul: "
+                    + "puntaje " + maquina.puntajeFallos() + " de " + ConfiguracionPlanta.UMBRAL_OVERHAUL);
+        }
+        SolicitudOverhaul solicitud = new SolicitudOverhaul(idCompania, indiceMaquina,
+                maquina.etiqueta(), maquina.puntajeFallos(), siguienteSecuencia++, tick);
+        solicitudes.add(solicitud);
+        maquina.marcarOverhaulPendiente(true);
+        compania.anotar("Overhaul aprobado para " + maquina.etiqueta()
+                + " (puntaje " + solicitud.puntajeCongelado() + ")");
+        return solicitud;
+    }
+
+    /**
+     * Devuelve la cima del montículo: la solicitud que saldrá primero.
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return la siguiente solicitud, o vacío si no hay ninguna
+     */
+    public Optional<SolicitudOverhaul> siguienteOverhaul() {
+        return Optional.ofNullable(solicitudes.peek());
+    }
+
+    /**
+     * Devuelve las solicitudes en el orden en que saldrán del montículo.
+     *
+     * <p>{@code PriorityQueue} no expone su arreglo interno (el orden de {@code toArray()} no está
+     * garantizado), así que la vista no dibuja el árbol: muestra la cima y este orden de salida. Se
+     * calcula extrayendo de una <strong>copia</strong>, sin tocar el montículo.</p>
+     *
+     * <p>Complejidad: O(s log s), con s las solicitudes; s es pequeño.</p>
+     *
+     * @return lista no modificable, de la primera a la última en salir
+     */
+    public List<SolicitudOverhaul> solicitudesEnOrdenDeSalida() {
+        PriorityQueue<SolicitudOverhaul> copia = new PriorityQueue<>(solicitudes);
+        List<SolicitudOverhaul> enOrden = new ArrayList<>(copia.size());
+        while (!copia.isEmpty()) {
+            enOrden.add(copia.poll());
+        }
+        return Collections.unmodifiableList(enOrden);
+    }
+
+    /**
+     * Devuelve todos los técnicos del fabricante, libres u ocupados.
+     *
+     * @return lista no modificable
+     */
+    public List<TecnicoExterno> tecnicosExternos() {
+        return Collections.unmodifiableList(tecnicosExternos);
+    }
+
+    /**
+     * Devuelve los técnicos del fabricante libres, del primero al último en recibir un overhaul.
+     *
+     * @return copia inmutable de la cola
+     */
+    public List<TecnicoExterno> tecnicosExternosLibres() {
+        return List.copyOf(externosLibres);
     }
 
     /**

@@ -99,6 +99,12 @@ public final class ConfiguracionPlanta {
     public static final List<String> NOMBRES_COMPANIAS =
             List.of("Planta Norte", "Planta Centro", "Planta Sur");
 
+    /** Nombres de los técnicos del fabricante, compartidos por todas las compañías. */
+    private static final List<String> NOMBRES_TECNICOS_EXTERNOS = List.of("Fabricante 1", "Fabricante 2");
+
+    /** Ticks que tarda un overhaul. La máquina no produce mientras tanto. */
+    public static final int DURACION_OVERHAUL = 30;
+
     /**
      * Cuántas veces más tarda una reparación si el técnico no es de la especialidad del fallo.
      * Es lo que cuesta, en el modo manual, mandar a un técnico de la otra especialidad.
@@ -263,5 +269,18 @@ public final class ConfiguracionPlanta {
         tecnicos.add(new Tecnico("Ana", TipoFallo.MECANICO));
         tecnicos.add(new Tecnico("Luis", TipoFallo.ELECTRICO));
         return tecnicos;
+    }
+
+    /**
+     * Crea los técnicos del fabricante, todos libres.
+     *
+     * @return lista de técnicos del fabricante recién creados
+     */
+    public static List<TecnicoExterno> crearTecnicosExternos() {
+        List<TecnicoExterno> externos = new ArrayList<>();
+        for (String nombre : NOMBRES_TECNICOS_EXTERNOS) {
+            externos.add(new TecnicoExterno(nombre));
+        }
+        return externos;
     }
 }
