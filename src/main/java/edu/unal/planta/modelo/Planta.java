@@ -616,6 +616,20 @@ public final class Planta {
     }
 
     /**
+     * Devuelve las máquinas con puntaje mayor o igual que el umbral, en orden de ranking. Con el
+     * umbral de overhaul son las candidatas a overhaul.
+     *
+     * <p>Complejidad: O(log n + k), con k las máquinas devueltas: una consulta por rango en el
+     * árbol, que se detiene en la primera máquina por debajo del umbral.</p>
+     *
+     * @param umbral puntaje mínimo
+     * @return copia no modificable, en orden de ranking
+     */
+    public List<Maquina> rankingConPuntajeMinimo(int umbral) {
+        return ranking.conPuntajeMinimo(umbral);
+    }
+
+    /**
      * Devuelve los eventos que esperan clasificación, del primero al último en salir.
      *
      * @return copia inmutable de la cola de eventos

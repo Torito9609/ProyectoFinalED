@@ -103,6 +103,9 @@ prioridad (los 4 carriles) y de la cola de técnicos libres.
       "intervaloPreventivo": 60,
       "tieneAnomalia": false,
       "alarmaActiva": false,
+      "puntajeFallos": 0,
+      "numeroOverhauls": 0,
+      "recomendacion": "NINGUNA",
       "sensores": [
         { "nombre": "Temperatura aceite", "unidad": "°C", "nominal": 55.0,
           "umbralAdvertencia": 70.0, "umbralAlto": 80.0, "umbralCritico": 90.0 },
@@ -157,6 +160,7 @@ prioridad (los 4 carriles) y de la cola de técnicos libres.
 |---|---|---|
 | `semilla` | — | La semilla de **esta** compañía, derivada de la maestra |
 | `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO` o `PARADA_MANUAL`. `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
+| `maquinas[i].puntajeFallos` | Clave del ranking (árbol rojo-negro) | Suma de los pesos de sus fallos desde el último overhaul: P1 = 3, P2 = 2, P3 = 1 (un preventivo P4 no suma). `recomendacion` es `NINGUNA`, `OVERHAUL` o `REEMPLAZO` (sección 4b) |
 | `maquinas[i].lecturas` | Cola circular propia | `celdas` va en **orden físico** (índice 0 a 11), no en orden de llegada. Una celda vacía es `null`. `indiceFrente` es la lectura más antigua; `indiceFinal`, donde se escribirá la próxima. Cuando la cola está llena los dos coinciden, y la próxima lectura sobrescribe el frente. `valores[k]` corresponde a `sensores[k]` |
 | `maquinas[i].sensores` | — | Umbrales para colorear cada valor: < advertencia normal; ≥ advertencia P3; ≥ alto P2; ≥ crítico P1 |
 | `eventos` | Cola FIFO (`ArrayDeque`) | El primero de la lista es el siguiente en clasificarse |
@@ -231,6 +235,42 @@ El `prefijo` sirve para sugerir la etiqueta siguiente (`TORNO-02`).
 | Nombre de compañía repetido | `409` | `Ya existe una compañía llamada Planta Norte` |
 | Etiqueta repetida en la compañía | `409` | `Ya existe una máquina con etiqueta TORNO-01 en Planta Norte` |
 | La compañía no existe | `404` | `No existe una compañía con id 99` |
+
+---
+
+## 4b. Ranking de fallos y recomendaciones
+
+| Método | Ruta | Respuesta |
+|---|---|---|
+| `GET` | `/api/ranking` | `Ranking` global: las máquinas de todas las compañías |
+| `GET` | `/api/ranking?compania={id}` | `Ranking` de esa compañía (`404` si no existe) |
+| `GET` | `/api/ranking?puntajeMinimo={k}` | Solo las máquinas con puntaje ≥ k. Se combina con `compania` |
+
+Cada ranking es un **árbol rojo-negro** (`TreeSet`) que el backend mantiene ordenado en cada fallo:
+las respuestas no se ordenan al pedirlas. Con `puntajeMinimo` se hace una **consulta por rango** en
+el árbol, O(log n + k): con `puntajeMinimo` igual a `umbralOverhaul` salen las candidatas a overhaul.
+
+**`Ranking`** (ejemplo recortado):
+
+```json
+{
+  "alcance": "Global",
+  "umbralOverhaul": 12,
+  "maximoOverhauls": 3,
+  "maquinas": [
+    { "posicion": 1, "idCompania": 2, "nombreCompania": "Planta Sur", "indice": 3,
+      "etiqueta": "COMPRES-01", "tipo": "COMPRESOR", "estado": "OPERANDO",
+      "puntajeFallos": 14, "numeroOverhauls": 0, "recomendacion": "OVERHAUL" },
+    "..."
+  ]
+}
+```
+
+- `alcance` es `"Global"` o el nombre de la compañía. `posicion` empieza en 1.
+- Orden: puntaje de mayor a menor; en un empate, por `idCompania` y luego por `indice`.
+- Una máquina se identifica por `(idCompania, indice)`, igual que en las rutas de las acciones.
+- **Recomendación:** `OVERHAUL` si `puntajeFallos ≥ umbralOverhaul`; `REEMPLAZO` si además ya tiene
+  `numeroOverhauls ≥ maximoOverhauls`; si no, `NINGUNA`. Es una sugerencia: no asigna a nadie.
 
 ---
 

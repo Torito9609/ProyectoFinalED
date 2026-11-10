@@ -58,6 +58,26 @@ class OrganizacionTest {
     }
 
     @Test
+    @DisplayName("la consulta por puntaje mínimo coincide con filtrar el ranking completo")
+    void rankingConPuntajeMinimo() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        for (int i = 0; i < TICKS; i++) {
+            organizacion.tick();
+        }
+        List<Maquina> completo = organizacion.rankingGlobal();
+        int minimo = completo.get(completo.size() / 3).puntajeFallos();
+        assertTrue(minimo > 0, "el mínimo debe dejar fuera a alguna máquina");
+
+        List<Maquina> esperado = completo.stream().filter(m -> m.puntajeFallos() >= minimo).toList();
+        assertEquals(esperado, organizacion.rankingGlobalConPuntajeMinimo(minimo));
+
+        Planta compania = organizacion.compania(1);
+        List<Maquina> esperadoCompania = compania.rankingFallos().stream()
+                .filter(m -> m.puntajeFallos() >= minimo).toList();
+        assertEquals(esperadoCompania, compania.rankingConPuntajeMinimo(minimo));
+    }
+
+    @Test
     @DisplayName("el ranking global coincide con ordenar todas las máquinas, y se rehace al reiniciar")
     void rankingGlobalCoincideConOrdenarTodo() {
         Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);

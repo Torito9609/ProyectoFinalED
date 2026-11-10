@@ -1,9 +1,12 @@
 package edu.unal.planta.servicio;
 
 import edu.unal.planta.api.dto.EstadoPlantaDto;
+import edu.unal.planta.api.dto.EntradaRankingDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
+import edu.unal.planta.api.dto.RankingDto;
 import edu.unal.planta.api.dto.ResumenCompaniaDto;
 import edu.unal.planta.api.dto.TipoMaquinaDto;
+import edu.unal.planta.modelo.ConfiguracionPlanta;
 import edu.unal.planta.modelo.EstadoMaquina;
 import edu.unal.planta.modelo.Magnitud;
 import edu.unal.planta.modelo.Maquina;
@@ -13,6 +16,7 @@ import edu.unal.planta.modelo.TipoMaquina;
 import edu.unal.planta.modelo.comandos.CambiarCargaMaquina;
 import edu.unal.planta.modelo.comandos.PararOArrancarMaquina;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -295,6 +299,45 @@ public class ServicioSimulacion {
      */
     public synchronized List<TipoMaquinaDto> tiposMaquina() {
         return TipoMaquinaDto.catalogo();
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Ranking
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Toma una foto de un ranking de fallos: el global o el de una compañía.
+     *
+     * <p>Las máquinas salen del árbol del modelo ya ordenadas: no se ordena nada aquí. Con
+     * {@code puntajeMinimo} mayor que 0 se usa la consulta por rango del árbol, que se detiene en
+     * la primera máquina por debajo del mínimo.</p>
+     *
+     * <p>Complejidad: O(n) el ranking completo; O(log n + k) desde un puntaje mínimo, con k las
+     * máquinas devueltas.</p>
+     *
+     * @param idCompania    id de la compañía, o {@code null} para el ranking global
+     * @param puntajeMinimo puntaje mínimo de las máquinas devueltas; 0 las devuelve todas
+     * @return el ranking, inmutable
+     * @throws NoEncontradoException si la compañía no existe
+     */
+    public synchronized RankingDto ranking(Integer idCompania, int puntajeMinimo) {
+        String alcance;
+        List<Maquina> maquinas;
+        if (idCompania == null) {
+            alcance = "Global";
+            maquinas = organizacion.rankingGlobalConPuntajeMinimo(puntajeMinimo);
+        } else {
+            Planta planta = buscarCompania(idCompania);
+            alcance = planta.nombre();
+            maquinas = planta.rankingConPuntajeMinimo(puntajeMinimo);
+        }
+        List<EntradaRankingDto> entradas = new ArrayList<>(maquinas.size());
+        for (Maquina maquina : maquinas) {
+            String nombreCompania = organizacion.compania(maquina.idCompania()).nombre();
+            entradas.add(EntradaRankingDto.desde(entradas.size() + 1, maquina, nombreCompania));
+        }
+        return new RankingDto(alcance, ConfiguracionPlanta.UMBRAL_OVERHAUL,
+                ConfiguracionPlanta.MAXIMO_OVERHAULS, List.copyOf(entradas));
     }
 
     private Planta buscarCompania(int id) {

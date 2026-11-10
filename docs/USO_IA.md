@@ -303,6 +303,18 @@ Convención de la columna **Autoría**:
 | `test/.../ControladorCreacionTest.java` | IA | 6 pruebas, con `@DirtiesContext` porque reiniciar conserva lo creado |
 | `docs/API.md` | IA | Sección "Crear compañías y máquinas" |
 
+### Entrega 2 — Commit 21: endpoints del ranking y las recomendaciones
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Planta.java`, `modelo/Organizacion.java` | IA | `rankingConPuntajeMinimo` y `rankingGlobalConPuntajeMinimo`: exponen la consulta por rango de `RankingFallos` |
+| `servicio/ServicioSimulacion.java` | IA | `ranking(idCompania, puntajeMinimo)`, sin ordenar nada |
+| `api/ControladorSuperusuario.java` | IA | `GET /api/ranking` con `compania` y `puntajeMinimo` opcionales |
+| `api/dto/RankingDto.java`, `EntradaRankingDto.java` | IA | El ranking con los umbrales y una entrada por máquina |
+| `api/dto/MaquinaDto.java` | IA | `puntajeFallos`, `numeroOverhauls` y `recomendacion` |
+| `test/.../ControladorSuperusuarioTest.java`, `OrganizacionTest.java` | IA | 5 pruebas MockMvc tras 300 ticks y 1 del modelo para la consulta por rango |
+| `docs/API.md` | IA | Sección "Ranking de fallos y recomendaciones" |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

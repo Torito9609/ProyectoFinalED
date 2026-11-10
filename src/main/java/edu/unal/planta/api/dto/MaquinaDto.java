@@ -18,6 +18,10 @@ import java.util.List;
  * @param intervaloPreventivo     cada cuántos ticks le toca preventivo
  * @param tieneAnomalia           si tiene un fallo físico en curso
  * @param alarmaActiva            si ya generó un evento que no se ha resuelto
+ * @param puntajeFallos           puntaje de fallos acumulado desde el último overhaul; es la clave
+ *                                del ranking
+ * @param numeroOverhauls         cuántos overhauls ha recibido
+ * @param recomendacion           {@code NINGUNA}, {@code OVERHAUL} o {@code REEMPLAZO}
  * @param sensores                definición de sus sensores
  * @param lecturas                su cola circular de lecturas
  * @author Cristian Robayo
@@ -34,6 +38,9 @@ public record MaquinaDto(
         int intervaloPreventivo,
         boolean tieneAnomalia,
         boolean alarmaActiva,
+        int puntajeFallos,
+        int numeroOverhauls,
+        String recomendacion,
         List<SensorDto> sensores,
         ColaCircularDto lecturas) {
 
@@ -49,6 +56,7 @@ public record MaquinaDto(
                 maquina.tipo().descripcion(), maquina.estado().name(),
                 maquina.carga(), maquina.ticksDesdeMantenimiento(), maquina.intervaloPreventivo(),
                 maquina.tieneAnomalia(), maquina.alarmaActiva(),
+                maquina.puntajeFallos(), maquina.numeroOverhauls(), maquina.recomendacion().name(),
                 maquina.sensores().stream().map(SensorDto::desde).toList(),
                 ColaCircularDto.desde(maquina.lecturas()));
     }
