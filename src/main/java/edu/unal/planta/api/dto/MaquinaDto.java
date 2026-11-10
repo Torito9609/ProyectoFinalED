@@ -9,7 +9,9 @@ import java.util.List;
  * @param indice                  posición en el inventario ({@code ArrayList}); es el índice que
  *                                usan las acciones del operador
  * @param etiqueta                etiqueta de la máquina, por ejemplo {@code PRENSA-01}
- * @param tipo                    tipo de máquina
+ * @param tipo                    código del tipo en el catálogo, por ejemplo {@code PRENSA}; es
+ *                                el valor que se usa para crear máquinas y para elegir su modelo
+ * @param tipoDescripcion         nombre del tipo para mostrar, por ejemplo {@code Prensa hidráulica}
  * @param estado                  nombre del estado, por ejemplo {@code OPERANDO}
  * @param carga                   carga en porcentaje (0–100)
  * @param ticksDesdeMantenimiento ticks desde el último preventivo
@@ -25,6 +27,7 @@ public record MaquinaDto(
         int indice,
         String etiqueta,
         String tipo,
+        String tipoDescripcion,
         String estado,
         int carga,
         int ticksDesdeMantenimiento,
@@ -42,7 +45,8 @@ public record MaquinaDto(
      * @return la copia
      */
     public static MaquinaDto desde(int indice, Maquina maquina) {
-        return new MaquinaDto(indice, maquina.etiqueta(), maquina.tipo().descripcion(), maquina.estado().name(),
+        return new MaquinaDto(indice, maquina.etiqueta(), maquina.tipo().name(),
+                maquina.tipo().descripcion(), maquina.estado().name(),
                 maquina.carga(), maquina.ticksDesdeMantenimiento(), maquina.intervaloPreventivo(),
                 maquina.tieneAnomalia(), maquina.alarmaActiva(),
                 maquina.sensores().stream().map(SensorDto::desde).toList(),

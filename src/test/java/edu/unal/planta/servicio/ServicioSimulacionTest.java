@@ -2,6 +2,7 @@ package edu.unal.planta.servicio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,7 @@ class ServicioSimulacionTest {
     }
 
     @Test
-    @DisplayName("arranca en pausa, en el tick 0 y con la semilla indicada")
+    @DisplayName("arranca en pausa, en el tick 0 y con la semilla maestra indicada")
     void estadoInicial() {
         assertFalse(servicio.enEjecucion());
         assertEquals(0, servicio.tickActual());
@@ -80,15 +81,23 @@ class ServicioSimulacionTest {
     }
 
     @Test
-    @DisplayName("la foto del estado refleja el tick, la semilla y si está en ejecución")
-    void estadoPlanta() {
+    @DisplayName("la foto de una compañía refleja su id, su nombre, el tick, su semilla y si está en ejecución")
+    void estadoCompania() {
         servicio.paso();
         servicio.iniciar();
 
-        var estado = servicio.estadoPlanta();
+        var estado = servicio.estadoCompania(1);
 
+        assertEquals(1, estado.idCompania());
+        assertEquals("Planta Centro", estado.nombre());
         assertEquals(1, estado.tick());
-        assertEquals(7L, estado.semilla());
+        assertEquals(7001L, estado.semilla(), "la semilla de la compañía 1 es maestra × 1000 + 1");
         assertTrue(estado.enEjecucion());
+    }
+
+    @Test
+    @DisplayName("una compañía que no existe lanza NoEncontradoException")
+    void companiaInexistente() {
+        assertThrows(NoEncontradoException.class, () -> servicio.estadoCompania(99));
     }
 }

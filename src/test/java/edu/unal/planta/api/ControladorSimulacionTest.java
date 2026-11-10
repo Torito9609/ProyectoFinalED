@@ -15,7 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Pruebas HTTP de los endpoints de control y consulta, con el servicio real.
+ * Pruebas HTTP de los endpoints de control de la simulación, con el servicio real.
  *
  * <p>El contexto de Spring, y con él el servicio, se comparte entre las pruebas. Por eso cada una
  * empieza reiniciando la simulación, que además la deja en pausa: así el reloj no avanza durante
@@ -38,19 +38,7 @@ class ControladorSimulacionTest {
     }
 
     @Test
-    @DisplayName("GET /api/planta devuelve las 6 máquinas, los 4 carriles y la cola circular")
-    void planta() throws Exception {
-        mvc.perform(get("/api/planta"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tick").value(0))
-                .andExpect(jsonPath("$.maquinas.length()").value(6))
-                .andExpect(jsonPath("$.maquinas[0].etiqueta").value("PRENSA-01"))
-                .andExpect(jsonPath("$.maquinas[0].lecturas.celdas.length()").value(12))
-                .andExpect(jsonPath("$.colaPrioridad.carriles.length()").value(4));
-    }
-
-    @Test
-    @DisplayName("GET /api/simulacion devuelve tick, semilla y ejecución")
+    @DisplayName("GET /api/simulacion devuelve tick, semilla maestra y ejecución")
     void simulacion() throws Exception {
         mvc.perform(get("/api/simulacion"))
                 .andExpect(status().isOk())

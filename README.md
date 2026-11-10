@@ -73,7 +73,7 @@ La simulación arranca **en pausa**. Para verla avanzar sin el frontend:
 
 ```bash
 curl -X POST localhost:8080/api/simulacion/iniciar
-curl localhost:8080/api/planta
+curl localhost:8080/api/companias/0
 ```
 
 La semilla, el intervalo del reloj y los orígenes permitidos por CORS se configuran en

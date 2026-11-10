@@ -8,11 +8,14 @@ endpoint cambia, se cambia aquí primero.
 - **CORS:** se permiten `GET`, `POST` y `PUT` desde cualquier puerto de `http://localhost` y
   `http://127.0.0.1` (propiedad `planta.cors.origenes`).
 - **Enumerados:** viajan como texto, con su nombre: `"OPERANDO"`, `"P1"`, `"SEVERA"`.
-- **Índices:** las máquinas y los sensores se identifican por su **posición** (desde 0), que es la
-  misma en todas las respuestas.
+- **Índices:** las compañías, las máquinas y los sensores se identifican por su **posición** (desde
+  0), que es la misma en todas las respuestas. El id de una compañía es su índice en la organización.
+  Nada se elimina, así que los ids no cambian.
 
-> **Aviso de cambio (commit 19 de la Entrega 2):** cuando se agreguen las compañías, las rutas
-> `/api/planta/...` pasarán a `/api/companias/{id}/...`. `/api/simulacion` se conserva.
+> **Cambio del commit 19 (Entrega 2):** las rutas `/api/planta/...` pasaron a
+> `/api/companias/{id}/...`, y `GET /api/planta` pasó a `GET /api/companias/{id}`. `/api/simulacion`
+> se conserva: el reloj es uno solo para toda la organización. En las máquinas, `tipo` pasó a ser el
+> **código** del catálogo (`"PRENSA"`), y la descripción viaja en el campo nuevo `tipoDescripcion`.
 
 ---
 
@@ -20,7 +23,7 @@ endpoint cambia, se cambia aquí primero.
 
 El backend no empuja cambios (no hay WebSockets). El frontend pide el estado periódicamente:
 
-- `GET /api/planta` cada **500 a 1000 ms** mientras la simulación está en ejecución. El reloj avanza
+- `GET /api/companias/{id}` (la compañía que se está viendo) cada **500 a 1000 ms**. El reloj avanza
   un tick cada 800 ms por defecto (`planta.intervalo-ms`).
 - Todas las acciones del operador **devuelven el estado completo**, así que después de una acción no
   hace falta pedirlo de nuevo.
@@ -36,7 +39,9 @@ El backend no empuja cambios (no hay WebSockets). El frontend pide el estado per
 | `POST` | `/api/simulacion/iniciar` | — | `EstadoSimulacion` |
 | `POST` | `/api/simulacion/pausar` | — | `EstadoSimulacion` |
 | `POST` | `/api/simulacion/paso` | — | `EstadoSimulacion`. Primero pausa y luego avanza **un** tick |
-| `POST` | `/api/simulacion/reiniciar` | — | `EstadoSimulacion`. Pausa y vuelve al tick 0 con la misma semilla |
+| `POST` | `/api/simulacion/reiniciar` | — | `EstadoSimulacion`. Pausa y vuelve al tick 0 con la misma semilla. Las compañías y máquinas creadas se conservan |
+
+Estas acciones actúan sobre **todas** las compañías a la vez: todas tienen siempre el mismo tick.
 
 **`EstadoSimulacion`**
 
@@ -44,26 +49,54 @@ El backend no empuja cambios (no hay WebSockets). El frontend pide el estado per
 { "tick": 14, "semilla": 7, "enEjecucion": false }
 ```
 
+`semilla` es la **semilla maestra**. La de la compañía `i` se deriva de ella: `maestra × 1000 + i`.
+
 ---
 
-## 3. Estado de la planta
+## 3. Compañías
 
 | Método | Ruta | Respuesta |
 |---|---|---|
-| `GET` | `/api/planta` | `EstadoPlanta` |
+| `GET` | `/api/companias` | Lista de `ResumenCompania`, en el orden de sus ids |
+| `GET` | `/api/companias/{id}` | `EstadoPlanta` de esa compañía |
 
-**`EstadoPlanta`** (ejemplo real del tick 14 con semilla 7, recortado con `"..."`):
+Al arrancar hay 3 compañías: `0` "Planta Norte", `1` "Planta Centro" y `2` "Planta Sur", cada una
+con las 6 máquinas y 2 técnicos.
+
+**`ResumenCompania`** (los totales para el dashboard):
 
 ```json
 {
+  "id": 0,
+  "nombre": "Planta Norte",
+  "numeroMaquinas": 6,
+  "maquinasPorEstado": { "OPERANDO": 4, "EN_ALARMA": 1, "DETENIDA": 0,
+                         "EN_MANTENIMIENTO": 1, "PARADA_MANUAL": 0 },
+  "eventosPendientes": 1,
+  "ordenesPendientes": 2,
+  "tecnicosLibres": 0
+}
+```
+
+`maquinasPorEstado` trae siempre todos los estados, incluso los que tienen 0. `eventosPendientes`,
+`ordenesPendientes` y `tecnicosLibres` son los tamaños de la cola de eventos, de la cola con
+prioridad (los 4 carriles) y de la cola de técnicos libres.
+
+**`EstadoPlanta`** (ejemplo del tick 14, recortado con `"..."`):
+
+```json
+{
+  "idCompania": 0,
+  "nombre": "Planta Norte",
   "tick": 14,
-  "semilla": 7,
+  "semilla": 7000,
   "enEjecucion": false,
   "maquinas": [
     {
       "indice": 0,
       "etiqueta": "PRENSA-01",
-      "tipo": "Prensa hidráulica",
+      "tipo": "PRENSA",
+      "tipoDescripcion": "Prensa hidráulica",
       "estado": "OPERANDO",
       "carga": 80,
       "ticksDesdeMantenimiento": 14,
@@ -122,7 +155,8 @@ El backend no empuja cambios (no hay WebSockets). El frontend pide el estado per
 
 | Campo | Estructura | Cómo leerlo |
 |---|---|---|
-| `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO` o `PARADA_MANUAL` |
+| `semilla` | — | La semilla de **esta** compañía, derivada de la maestra |
+| `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO` o `PARADA_MANUAL`. `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
 | `maquinas[i].lecturas` | Cola circular propia | `celdas` va en **orden físico** (índice 0 a 11), no en orden de llegada. Una celda vacía es `null`. `indiceFrente` es la lectura más antigua; `indiceFinal`, donde se escribirá la próxima. Cuando la cola está llena los dos coinciden, y la próxima lectura sobrescribe el frente. `valores[k]` corresponde a `sensores[k]` |
 | `maquinas[i].sensores` | — | Umbrales para colorear cada valor: < advertencia normal; ≥ advertencia P3; ≥ alto P2; ≥ crítico P1 |
 | `eventos` | Cola FIFO (`ArrayDeque`) | El primero de la lista es el siguiente en clasificarse |
@@ -136,14 +170,15 @@ El backend no empuja cambios (no hay WebSockets). El frontend pide el estado per
 
 ## 4. Acciones del operador
 
-Todas devuelven `EstadoPlanta` con código `200`.
+Todas actúan sobre una compañía y devuelven su `EstadoPlanta` con código `200`. Cada compañía tiene
+su propia pila de deshacer.
 
 | Método | Ruta | Cuerpo | Se puede deshacer |
 |---|---|---|---|
-| `POST` | `/api/planta/maquinas/{indice}/inyectar-fallo` | `{ "indiceSensor": 0, "magnitud": "SEVERA" }` | No |
-| `POST` | `/api/planta/maquinas/{indice}/parar-o-arrancar` | — | Sí |
-| `PUT` | `/api/planta/maquinas/{indice}/carga` | `{ "carga": 60 }` | Sí |
-| `POST` | `/api/planta/deshacer` | — | — |
+| `POST` | `/api/companias/{id}/maquinas/{indice}/inyectar-fallo` | `{ "indiceSensor": 0, "magnitud": "SEVERA" }` | No |
+| `POST` | `/api/companias/{id}/maquinas/{indice}/parar-o-arrancar` | — | Sí |
+| `PUT` | `/api/companias/{id}/maquinas/{indice}/carga` | `{ "carga": 60 }` | Sí |
+| `POST` | `/api/companias/{id}/deshacer` | — | — |
 
 - **Inyectar fallo:** `magnitud` es `LEVE`, `MODERADA` o `SEVERA`. Se rechaza si la máquina ya tiene
   un fallo activo (`tieneAnomalia` o `alarmaActiva`): conviene deshabilitar el botón en ese caso.
@@ -167,7 +202,7 @@ Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para 
 | Código | Cuándo | Ejemplo de mensaje |
 |---|---|---|
 | `400` | Entrada inválida: carga fuera de rango, magnitud inexistente, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
-| `404` | La máquina o el sensor no existen | `No existe una máquina con índice 99` |
+| `404` | La compañía, la máquina o el sensor no existen | `No existe una compañía con id 99` |
 | `409` | La acción no se permite en el estado actual | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
 
 En los rechazos `409` de inyectar y deshacer, la bitácora también registra el rechazo.
@@ -186,6 +221,7 @@ Probar desde la terminal:
 
 ```bash
 curl -X POST localhost:8080/api/simulacion/paso
-curl localhost:8080/api/planta
-curl -X PUT -H 'Content-Type: application/json' -d '{"carga": 60}' localhost:8080/api/planta/maquinas/0/carga
+curl localhost:8080/api/companias
+curl localhost:8080/api/companias/0
+curl -X PUT -H 'Content-Type: application/json' -d '{"carga": 60}' localhost:8080/api/companias/0/maquinas/0/carga
 ```

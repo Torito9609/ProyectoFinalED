@@ -6,13 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Estado completo de una planta: lo que el frontend necesita para dibujar todos los paneles.
+ * Estado completo de la planta de una compañía: lo que el frontend necesita para dibujar todos los
+ * paneles.
  *
  * <p>Es una foto: se arma copiando el modelo dentro de un método {@code synchronized} del
  * servicio, así que es consistente (nunca muestra un tick a medias) y no cambia después.</p>
  *
+ * @param idCompania     id de la compañía: su índice en la organización
+ * @param nombre         nombre de la compañía
  * @param tick           tick actual
- * @param semilla        semilla de la simulación
+ * @param semilla        semilla de esta compañía, derivada de la maestra
  * @param enEjecucion    si el reloj está avanzando la simulación
  * @param maquinas       el inventario ({@code ArrayList}), en orden de índice
  * @param eventos        la cola FIFO de eventos, del primero al último en salir
@@ -25,6 +28,8 @@ import java.util.List;
  * @author Kevin Toro
  */
 public record EstadoPlantaDto(
+        int idCompania,
+        String nombre,
         int tick,
         long semilla,
         boolean enEjecucion,
@@ -54,6 +59,8 @@ public record EstadoPlantaDto(
             maquinas.add(MaquinaDto.desde(i, planta.maquina(i)));
         }
         return new EstadoPlantaDto(
+                planta.idCompania(),
+                planta.nombre(),
                 planta.tickActual(),
                 planta.semilla(),
                 enEjecucion,

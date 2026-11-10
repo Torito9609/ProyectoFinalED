@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Endpoints de las acciones del operador sobre la planta.
+ * Endpoints de las acciones del operador sobre la planta de una compañía.
  *
- * <p>Cada uno llama una sola vez al servicio y devuelve el estado completo de la planta, para que
+ * <p>Cada uno llama una sola vez al servicio y devuelve el estado completo de la compañía, para que
  * el frontend vuelva a dibujar. Las validaciones y los errores ({@code 400}, {@code 404},
  * {@code 409}) los deciden el servicio y {@link ManejadorErrores}, no esta clase.</p>
  *
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Kevin Toro
  */
 @RestController
-@RequestMapping("/api/planta")
+@RequestMapping("/api/companias/{id}")
 public class ControladorOperador {
 
     private final ServicioSimulacion servicio;
@@ -37,48 +37,54 @@ public class ControladorOperador {
     }
 
     /**
-     * {@code POST /api/planta/maquinas/{indice}/inyectar-fallo}: provoca una anomalía.
+     * {@code POST /api/companias/{id}/maquinas/{indice}/inyectar-fallo}: provoca una anomalía.
      *
+     * @param id      id de la compañía
      * @param indice  posición de la máquina en el inventario
      * @param cuerpo  sensor y magnitud del fallo
-     * @return el estado de la planta después de la acción
+     * @return el estado de la compañía después de la acción
      */
     @PostMapping("/maquinas/{indice}/inyectar-fallo")
-    public EstadoPlantaDto inyectarFallo(@PathVariable int indice, @RequestBody InyeccionFalloDto cuerpo) {
-        return servicio.inyectarFallo(indice, cuerpo.indiceSensor(), cuerpo.magnitud());
+    public EstadoPlantaDto inyectarFallo(@PathVariable int id, @PathVariable int indice,
+                                         @RequestBody InyeccionFalloDto cuerpo) {
+        return servicio.inyectarFallo(id, indice, cuerpo.indiceSensor(), cuerpo.magnitud());
     }
 
     /**
-     * {@code POST /api/planta/maquinas/{indice}/parar-o-arrancar}: alterna entre operando y parada
+     * {@code POST /api/companias/{id}/maquinas/{indice}/parar-o-arrancar}: alterna entre operando y parada
      * manual. Se puede deshacer.
      *
+     * @param id     id de la compañía
      * @param indice posición de la máquina en el inventario
-     * @return el estado de la planta después de la acción
+     * @return el estado de la compañía después de la acción
      */
     @PostMapping("/maquinas/{indice}/parar-o-arrancar")
-    public EstadoPlantaDto pararOArrancar(@PathVariable int indice) {
-        return servicio.pararOArrancar(indice);
+    public EstadoPlantaDto pararOArrancar(@PathVariable int id, @PathVariable int indice) {
+        return servicio.pararOArrancar(id, indice);
     }
 
     /**
-     * {@code PUT /api/planta/maquinas/{indice}/carga}: cambia la carga. Se puede deshacer.
+     * {@code PUT /api/companias/{id}/maquinas/{indice}/carga}: cambia la carga. Se puede deshacer.
      *
+     * @param id     id de la compañía
      * @param indice posición de la máquina en el inventario
      * @param cuerpo la carga nueva
-     * @return el estado de la planta después de la acción
+     * @return el estado de la compañía después de la acción
      */
     @PutMapping("/maquinas/{indice}/carga")
-    public EstadoPlantaDto cambiarCarga(@PathVariable int indice, @RequestBody CargaDto cuerpo) {
-        return servicio.cambiarCarga(indice, cuerpo.carga());
+    public EstadoPlantaDto cambiarCarga(@PathVariable int id, @PathVariable int indice,
+                                        @RequestBody CargaDto cuerpo) {
+        return servicio.cambiarCarga(id, indice, cuerpo.carga());
     }
 
     /**
-     * {@code POST /api/planta/deshacer}: revierte la última acción del operador (cima de la pila).
+     * {@code POST /api/companias/{id}/deshacer}: revierte la última acción del operador (cima de la pila).
      *
-     * @return el estado de la planta después de la acción
+     * @param id id de la compañía
+     * @return el estado de la compañía después de la acción
      */
     @PostMapping("/deshacer")
-    public EstadoPlantaDto deshacer() {
-        return servicio.deshacer();
+    public EstadoPlantaDto deshacer(@PathVariable int id) {
+        return servicio.deshacer(id);
     }
 }

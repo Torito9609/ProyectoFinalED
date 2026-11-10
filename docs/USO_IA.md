@@ -281,6 +281,18 @@ Convención de la columna **Autoría**:
 | `modelo/Planta.java` | IA | Parámetro `tickInicial`: todas las plantas tienen el tick de la organización |
 | `test/.../OrganizacionTest.java` | IA | 2 pruebas: crear a mitad de la simulación y reproducibilidad con creaciones |
 
+### Entrega 2 — Commit 19: el servicio usa la organización y rutas por compañía
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `servicio/ServicioSimulacion.java` | IA | Guarda la `Organizacion`; las acciones reciben `idCompania`; `resumenCompanias` y `estadoCompania`, todos `synchronized` |
+| `api/ControladorCompanias.java` | IA | `GET /api/companias` y `GET /api/companias/{id}` |
+| `api/ControladorSimulacion.java`, `api/ControladorOperador.java` | IA | Sale `GET /api/planta`; las acciones pasan a `/api/companias/{id}/...` |
+| `api/dto/ResumenCompaniaDto.java` | IA | Totales por compañía, con las máquinas por estado |
+| `api/dto/EstadoPlantaDto.java`, `api/dto/MaquinaDto.java` | IA | `idCompania` y `nombre`; `tipo` como código del catálogo y `tipoDescripcion` |
+| `test/.../ControladorCompaniasTest.java` y pruebas adaptadas | IA | 4 pruebas nuevas de compañías, 1 de independencia entre compañías y 2 del servicio |
+| `docs/API.md` | IA | Contrato con las rutas por compañía |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

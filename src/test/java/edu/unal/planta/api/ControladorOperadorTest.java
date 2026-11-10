@@ -58,7 +58,7 @@ class ControladorOperadorTest {
                 .andExpect(jsonPath("$.estado").value(409))
                 .andExpect(jsonPath("$.mensaje").value(
                         "No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo"));
-        mvc.perform(get("/api/planta"))
+        mvc.perform(get("/api/companias/0"))
                 .andExpect(jsonPath("$.bitacora[-1]").value(
                         "Tick 0: Inyección rechazada: PRENSA-01 ya tiene un fallo activo"));
     }
@@ -66,7 +66,7 @@ class ControladorOperadorTest {
     @Test
     @DisplayName("una máquina o un sensor que no existen responden 404")
     void noEncontrado() throws Exception {
-        mvc.perform(post("/api/planta/maquinas/99/parar-o-arrancar"))
+        mvc.perform(post("/api/companias/0/maquinas/99/parar-o-arrancar"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensaje").value("No existe una máquina con índice 99"));
         inyectar(0, "{\"indiceSensor\": 9, \"magnitud\": \"LEVE\"}")
@@ -78,7 +78,7 @@ class ControladorOperadorTest {
     void entradaInvalida() throws Exception {
         inyectar(0, "{\"indiceSensor\": 0, \"magnitud\": \"ENORME\"}")
                 .andExpect(status().isBadRequest());
-        mvc.perform(put("/api/planta/maquinas/0/carga")
+        mvc.perform(put("/api/companias/0/maquinas/0/carga")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"carga\": 150}"))
                 .andExpect(status().isBadRequest())
@@ -88,7 +88,7 @@ class ControladorOperadorTest {
     @Test
     @DisplayName("cambiar la carga la apila en la pila de deshacer")
     void cambiarCarga() throws Exception {
-        mvc.perform(put("/api/planta/maquinas/1/carga")
+        mvc.perform(put("/api/companias/0/maquinas/1/carga")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"carga\": 35}"))
                 .andExpect(status().isOk())
@@ -99,12 +99,12 @@ class ControladorOperadorTest {
     @Test
     @DisplayName("parar y deshacer devuelve la máquina a operando")
     void pararYDeshacer() throws Exception {
-        mvc.perform(post("/api/planta/maquinas/2/parar-o-arrancar"))
+        mvc.perform(post("/api/companias/0/maquinas/2/parar-o-arrancar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.maquinas[2].estado").value("PARADA_MANUAL"))
                 .andExpect(jsonPath("$.pilaDeshacer[0]").value("Parar ROBOT-01"));
 
-        mvc.perform(post("/api/planta/deshacer"))
+        mvc.perform(post("/api/companias/0/deshacer"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.maquinas[2].estado").value("OPERANDO"))
                 .andExpect(jsonPath("$.pilaDeshacer.length()").value(0));
@@ -113,13 +113,26 @@ class ControladorOperadorTest {
     @Test
     @DisplayName("deshacer con la pila vacía responde 409")
     void deshacerVacia() throws Exception {
-        mvc.perform(post("/api/planta/deshacer"))
+        mvc.perform(post("/api/companias/0/deshacer"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.mensaje").value("No hay acciones para deshacer"));
     }
 
+    @Test
+    @DisplayName("una acción en una compañía no toca a las demás")
+    void companiasIndependientes() throws Exception {
+        mvc.perform(post("/api/companias/1/maquinas/0/parar-o-arrancar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idCompania").value(1))
+                .andExpect(jsonPath("$.maquinas[0].estado").value("PARADA_MANUAL"));
+
+        mvc.perform(get("/api/companias/0"))
+                .andExpect(jsonPath("$.maquinas[0].estado").value("OPERANDO"))
+                .andExpect(jsonPath("$.pilaDeshacer.length()").value(0));
+    }
+
     private ResultActions inyectar(int maquina, String json) throws Exception {
-        return mvc.perform(post("/api/planta/maquinas/" + maquina + "/inyectar-fallo")
+        return mvc.perform(post("/api/companias/0/maquinas/" + maquina + "/inyectar-fallo")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json));
     }

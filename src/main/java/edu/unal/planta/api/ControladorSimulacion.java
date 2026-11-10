@@ -1,6 +1,5 @@
 package edu.unal.planta.api;
 
-import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
 import edu.unal.planta.servicio.ServicioSimulacion;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Endpoints de consulta del estado y de control de la simulación.
+ * Endpoints de control de la simulación. El reloj es uno solo para toda la organización, así que
+ * estas rutas no llevan compañía.
  *
  * <p>Cada método hace lo mismo: llama una sola vez al servicio y devuelve el DTO que este arma. No
  * guarda estado ni decide nada; la concurrencia la resuelve el servicio con sus métodos
@@ -34,17 +34,7 @@ public class ControladorSimulacion {
     }
 
     /**
-     * {@code GET /api/planta}: el estado completo de la planta, para dibujar todos los paneles.
-     *
-     * @return la foto del estado
-     */
-    @GetMapping("/planta")
-    public EstadoPlantaDto planta() {
-        return servicio.estadoPlanta();
-    }
-
-    /**
-     * {@code GET /api/simulacion}: tick, semilla y si la simulación está en ejecución.
+     * {@code GET /api/simulacion}: tick, semilla maestra y si la simulación está en ejecución.
      *
      * @return el estado de la simulación
      */

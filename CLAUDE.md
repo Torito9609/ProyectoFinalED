@@ -458,7 +458,7 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
 
 ### Superficie de la API (borrador; el contrato final está en `docs/API.md`)
 - **Simulación:** `GET /api/simulacion`; `POST /api/simulacion/iniciar | pausar | paso | reiniciar`; `PUT /api/simulacion/modo`.
-- **Organización:** `GET /api/companias` (lista con totales por compañía); `GET /api/companias/{id}`, con el estado completo de una planta: inventario, cola circular, eventos, técnicos, cola con prioridad, pila y bitácora.
+- **Organización:** `GET /api/companias` (lista con totales por compañía); `GET /api/companias/{id}`, con el estado completo de una planta: inventario, cola circular, eventos, técnicos, cola con prioridad, pila y bitácora. El tipo de cada máquina viaja como código del catálogo (`tipo`, el que se usa para crear máquinas y elegir su modelo 3D) y como texto (`tipoDescripcion`). Hecho en el commit 19.
 - **Creación:** `POST /api/companias` (nombre) y `POST /api/companias/{id}/maquinas` (tipo y etiqueta).
 - **Operador (por compañía):** inyectar un fallo, parar o arrancar, cambiar la carga, deshacer, clasificar el siguiente evento y asignar la siguiente orden.
 - **Superusuario:** `GET /api/ranking` (global o por compañía); `POST /api/overhauls` (aprobar), `GET /api/overhauls` (montículo y técnicos del fabricante), `POST /api/overhauls/asignar-siguiente`; `POST .../reemplazo`; `GET /api/historial?desde=&hasta=&compania=`.
