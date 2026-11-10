@@ -262,6 +262,17 @@ Convención de la columna **Autoría**:
 | `test/.../OrganizacionTest.java` | IA | 2 pruebas: misma semilla maestra, mismo resultado; ranking global igual a ordenar las 18 máquinas |
 | `test/.../RankingFallosTest.java`, `PlantaTest.java` | IA | Ajustados al desempate por clave compuesta |
 
+### Entrega 2 — Commit 13a: crear máquinas con etiqueta única
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/TipoMaquina.java` | IA | Catálogo de los 6 tipos, con descripción y prefijo de etiqueta |
+| `modelo/ConfiguracionPlanta.java` | IA | `crearMaquina(tipo, id, indice, etiqueta)` con un `switch`; los valores de Cristian no cambian, solo se movieron |
+| `modelo/Maquina.java` | IA | Guarda el `TipoMaquina` en vez de un texto |
+| `modelo/Planta.java` | IA | `Set<String> etiquetas = new TreeSet<>()`, `existeEtiqueta` y `crearMaquina`; reiniciar conserva las máquinas creadas (opción A del equipo) |
+| `api/dto/MaquinaDto.java` | IA | Envía `tipo().descripcion()`: el JSON no cambia |
+| `test/.../PlantaTest.java`, `OrganizacionTest.java` | IA | 3 pruebas: crear, etiqueta repetida y misma etiqueta en otra compañía |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

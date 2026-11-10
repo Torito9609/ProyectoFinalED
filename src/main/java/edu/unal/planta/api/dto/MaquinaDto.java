@@ -42,7 +42,7 @@ public record MaquinaDto(
      * @return la copia
      */
     public static MaquinaDto desde(int indice, Maquina maquina) {
-        return new MaquinaDto(indice, maquina.etiqueta(), maquina.tipo(), maquina.estado().name(),
+        return new MaquinaDto(indice, maquina.etiqueta(), maquina.tipo().descripcion(), maquina.estado().name(),
                 maquina.carga(), maquina.ticksDesdeMantenimiento(), maquina.intervaloPreventivo(),
                 maquina.tieneAnomalia(), maquina.alarmaActiva(),
                 maquina.sensores().stream().map(SensorDto::desde).toList(),

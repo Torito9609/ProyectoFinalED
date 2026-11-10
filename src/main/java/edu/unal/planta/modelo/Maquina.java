@@ -35,7 +35,7 @@ public final class Maquina {
     private final int indice;
 
     private final String etiqueta;
-    private final String tipo;
+    private final TipoMaquina tipo;
     private final List<Sensor> sensores;
     private final int intervaloPreventivo;
     private final double tasaBaseFallo;
@@ -70,7 +70,7 @@ public final class Maquina {
      * @param idCompania          id de la compañía dueña; 0 o más
      * @param indice              posición en el inventario de la compañía; 0 o más
      * @param etiqueta            identificador visible, por ejemplo {@code "PRENSA-01"}
-     * @param tipo                descripción del equipo, por ejemplo {@code "Prensa hidráulica"}
+     * @param tipo                tipo de máquina del catálogo
      * @param sensores            variables que mide; al menos una
      * @param intervaloPreventivo cada cuántos ticks le toca mantenimiento preventivo
      * @param tasaBaseFallo       probabilidad base de desarrollar una anomalía por tick
@@ -79,7 +79,7 @@ public final class Maquina {
      * @throws IllegalArgumentException si algún parámetro está fuera de rango
      * @throws NullPointerException     si la etiqueta, el tipo o los sensores son nulos
      */
-    public Maquina(int idCompania, int indice, String etiqueta, String tipo, List<Sensor> sensores,
+    public Maquina(int idCompania, int indice, String etiqueta, TipoMaquina tipo, List<Sensor> sensores,
                    int intervaloPreventivo, double tasaBaseFallo, int cargaInicial,
                    int capacidadLecturas) {
         if (idCompania < 0 || indice < 0) {
@@ -149,11 +149,13 @@ public final class Maquina {
     }
 
     /**
-     * Devuelve la descripción del equipo.
+     * Devuelve el tipo de la máquina, del catálogo.
      *
-     * @return tipo de máquina
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return tipo de máquina; su descripción es, por ejemplo, {@code "Prensa hidráulica"}
      */
-    public String tipo() {
+    public TipoMaquina tipo() {
         return tipo;
     }
 

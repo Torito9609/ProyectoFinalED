@@ -8,6 +8,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Fachada del modelo: contiene las estructuras de datos de una planta y ejecuta la simulación.
@@ -27,6 +29,8 @@ import java.util.Queue;
  *       <td>Acciones del operador que se pueden revertir</td></tr>
  *   <tr><td>{@code ranking}</td><td>{@link RankingFallos} ({@code TreeSet}, árbol rojo-negro)</td>
  *       <td>Máquinas ordenadas por puntaje de fallos (Entrega 2)</td></tr>
+ *   <tr><td>{@code etiquetas}</td><td>{@code TreeSet} declarado como {@code Set} (conjunto)</td>
+ *       <td>Etiquetas de las máquinas, sin repetidos (Entrega 2)</td></tr>
  * </table>
  *
  * <p>La cola circular no aparece aquí porque cada {@link Maquina} es dueña de la suya, con sus
@@ -69,6 +73,12 @@ public final class Planta {
 
     /** Árbol rojo-negro ({@code TreeSet}): máquinas ordenadas por puntaje de fallos. */
     private final RankingFallos ranking;
+
+    /**
+     * Conjunto: etiquetas de las máquinas de la compañía, sin repetidos. Se declara con el tipo
+     * abstracto {@code Set}; la implementación elegida es {@code TreeSet} (árbol rojo-negro).
+     */
+    private final Set<String> etiquetas;
 
     /** Pila: acciones del operador, la última en entrar es la primera en revertirse. */
     private final Deque<ComandoOperador> pilaDeshacer;
@@ -113,6 +123,10 @@ public final class Planta {
         this.tecnicosLibres = new ArrayDeque<>(tecnicos);
         this.ordenes = new ColaPrioridadOrdenes();
         this.ranking = new RankingFallos(inventario, rankingGlobal);
+        this.etiquetas = new TreeSet<>();
+        for (Maquina maquina : inventario) {
+            etiquetas.add(maquina.etiqueta());
+        }
         this.pilaDeshacer = new ArrayDeque<>();
         this.bitacora = new ArrayDeque<>();
         this.observadores = new ArrayList<>();
@@ -441,6 +455,62 @@ public final class Planta {
         registrar("Inyectado por el operador: anomalía " + magnitud.descripcion().toLowerCase()
                 + " en " + maquina.etiqueta() + " / " + maquina.sensor(indiceSensor).nombre());
         notificar();
+    }
+
+    /**
+     * Indica si ya existe en la compañía una máquina con esa etiqueta.
+     *
+     * <p>La etiqueta se normaliza antes de buscarla: sin espacios a los lados y en mayúsculas, así
+     * que {@code "prensa-01"} y {@code "PRENSA-01"} son la misma.</p>
+     *
+     * <p>Complejidad: O(log n), una búsqueda en el árbol del conjunto. Con la lista habría que
+     * recorrer todo el inventario, O(n).</p>
+     *
+     * @param etiqueta etiqueta a buscar
+     * @return {@code true} si ya hay una máquina con esa etiqueta
+     * @throws NullPointerException si la etiqueta es nula
+     */
+    public boolean existeEtiqueta(String etiqueta) {
+        return etiquetas.contains(normalizarEtiqueta(etiqueta));
+    }
+
+    /**
+     * Crea una máquina nueva del catálogo y la agrega al final del inventario.
+     *
+     * <p>La máquina toma como índice el tamaño actual del inventario, arranca operando con puntaje
+     * 0 y entra al conjunto de etiquetas, al ranking de la compañía y al ranking global. No se
+     * puede deshacer: desde el tick siguiente puede fallar y entrar en las colas.</p>
+     *
+     * <p>Complejidad: O(log n): agregar al inventario es O(1) amortizado, y el conjunto y los dos
+     * rankings cuestan O(log n) cada uno.</p>
+     *
+     * @param tipo     tipo de máquina del catálogo
+     * @param etiqueta identificador visible; se guarda sin espacios a los lados y en mayúsculas
+     * @return la máquina creada
+     * @throws IllegalArgumentException si la etiqueta está vacía o ya existe en la compañía
+     * @throws NullPointerException     si el tipo o la etiqueta son nulos
+     */
+    public Maquina crearMaquina(TipoMaquina tipo, String etiqueta) {
+        Objects.requireNonNull(tipo, "La máquina debe tener tipo");
+        String normalizada = normalizarEtiqueta(etiqueta);
+        if (normalizada.isEmpty()) {
+            throw new IllegalArgumentException("La etiqueta de la máquina no puede estar vacía");
+        }
+        if (etiquetas.contains(normalizada)) {
+            throw new IllegalArgumentException("Ya existe una máquina con la etiqueta " + normalizada);
+        }
+        Maquina maquina = ConfiguracionPlanta.crearMaquina(tipo, idCompania, inventario.size(), normalizada);
+        inventario.add(maquina);
+        etiquetas.add(normalizada);
+        ranking.agregar(maquina);
+        registrar("Máquina creada: " + normalizada + " (" + tipo.descripcion() + ")");
+        notificar();
+        return maquina;
+    }
+
+    /** Quita los espacios a los lados y pasa a mayúsculas. */
+    private static String normalizarEtiqueta(String etiqueta) {
+        return Objects.requireNonNull(etiqueta, "La etiqueta no puede ser nula").strip().toUpperCase();
     }
 
     // ---------------------------------------------------------------------------------

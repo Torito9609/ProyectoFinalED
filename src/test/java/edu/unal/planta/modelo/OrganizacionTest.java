@@ -40,6 +40,23 @@ class OrganizacionTest {
     }
 
     @Test
+    @DisplayName("la misma etiqueta se puede crear en otra compañía, y entra al ranking global")
+    void etiquetaUnicaSoloDentroDeLaCompania() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        Planta norte = organizacion.compania(0);
+        Planta centro = organizacion.compania(1);
+
+        Maquina nueva = centro.crearMaquina(TipoMaquina.PRENSA, "PRENSA-02");
+        Maquina otra = norte.crearMaquina(TipoMaquina.PRENSA, "PRENSA-02");
+
+        assertEquals(1, nueva.idCompania());
+        assertEquals(0, otra.idCompania());
+        assertTrue(organizacion.rankingGlobal().contains(nueva));
+        assertTrue(organizacion.rankingGlobal().contains(otra));
+        assertEquals(20, organizacion.rankingGlobal().size());
+    }
+
+    @Test
     @DisplayName("el ranking global coincide con ordenar todas las máquinas, y se rehace al reiniciar")
     void rankingGlobalCoincideConOrdenarTodo() {
         Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);

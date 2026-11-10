@@ -145,86 +145,81 @@ public final class ConfiguracionPlanta {
      */
     public static List<Maquina> crearMaquinas(int idCompania) {
         List<Maquina> maquinas = new ArrayList<>();
-
-        maquinas.add(new Maquina(
-                idCompania, maquinas.size(),
-                "PRENSA-01",
-                "Prensa hidráulica",
-                List.of(
-                        new Sensor("Temperatura aceite", "°C", 55.0, 2.0, 70.0, 80.0, 90.0),
-                        new Sensor("Presión", "bar", 180.0, 4.0, 210.0, 230.0, 250.0),
-                        new Sensor("Vibración", "mm/s", 2.5, 0.4, 4.5, 7.1, 11.0)),
-                60,     // intervalo preventivo en ticks
-                0.06,   // tasa base de fallo: es la máquina más crítica, falla más
-                80,     // carga inicial
-                CAPACIDAD_LECTURAS));
-
-        maquinas.add(new Maquina(
-                idCompania, maquinas.size(),
-                "TORNO-01",
-                "Torno CNC",
-                List.of(
-                        new Sensor("Temperatura husillo", "°C", 45.0, 2.0, 60.0, 70.0, 85.0),
-                        new Sensor("Corriente motor", "A", 12.0, 0.8, 16.0, 19.0, 22.0),
-                        new Sensor("Vibración", "mm/s", 1.8, 0.3, 2.8, 4.5, 7.1)),
-                80,
-                0.04,
-                70,
-                CAPACIDAD_LECTURAS));
-
-        maquinas.add(new Maquina(
-                idCompania, maquinas.size(),
-                "ROBOT-01",
-                "Brazo robótico de soldadura",
-                List.of(
-                        new Sensor("Temperatura motor", "°C", 40.0, 2.0, 55.0, 65.0, 80.0),
-                        new Sensor("Corriente", "A", 8.0, 0.6, 11.0, 13.0, 16.0),
-                        new Sensor("Vibración", "mm/s", 1.4, 0.25, 2.8, 4.5, 7.1)),
-                100,
-                0.03,
-                60,
-                CAPACIDAD_LECTURAS));
-
-        maquinas.add(new Maquina(
-                idCompania, maquinas.size(),
-                "COMPRES-01",
-                "Compresor de tornillo",
-                List.of(
-                        new Sensor("Temperatura descarga", "°C", 85.0, 3.0, 100.0, 110.0, 125.0),
-                        new Sensor("Presión", "bar", 7.5, 0.2, 9.0, 9.8, 11.0),
-                        new Sensor("Vibración", "mm/s", 2.0, 0.3, 4.5, 7.1, 11.0)),
-                70,
-                0.05,
-                75,
-                CAPACIDAD_LECTURAS));
-
-        maquinas.add(new Maquina(
-                idCompania, maquinas.size(),
-                "HORNO-01",
-                "Horno de tratamiento térmico",
-                List.of(
-                        new Sensor("Temperatura cámara", "°C", 850.0, 10.0, 900.0, 940.0, 980.0),
-                        new Sensor("Temperatura carcasa", "°C", 60.0, 3.0, 80.0, 95.0, 110.0),
-                        new Sensor("Consumo de gas", "m³/h", 42.0, 2.0, 52.0, 58.0, 68.0)),
-                90,
-                0.035,
-                65,
-                CAPACIDAD_LECTURAS));
-
-        maquinas.add(new Maquina(
-                idCompania, maquinas.size(),
-                "BOMBA-01",
-                "Bomba centrífuga",
-                List.of(
-                        new Sensor("Temperatura rodamiento", "°C", 50.0, 2.0, 65.0, 75.0, 90.0),
-                        new Sensor("Presión descarga", "bar", 6.0, 0.25, 8.0, 9.0, 10.5),
-                        new Sensor("Vibración", "mm/s", 2.2, 0.35, 4.5, 7.1, 11.0)),
-                55,
-                0.055,
-                85,
-                CAPACIDAD_LECTURAS));
-
+        for (TipoMaquina tipo : TipoMaquina.values()) {
+            maquinas.add(crearMaquina(tipo, idCompania, maquinas.size(), tipo.prefijo() + "-01"));
+        }
         return maquinas;
+    }
+
+    /**
+     * Crea una máquina del catálogo, con los parámetros de su tipo.
+     *
+     * <p>Es el único lugar donde están los sensores, umbrales, intervalos, tasas de fallo y cargas
+     * de cada tipo. Los usa tanto el inventario inicial como la creación de máquinas nuevas.</p>
+     *
+     * @param tipo       tipo de máquina
+     * @param idCompania id de la compañía dueña
+     * @param indice     posición que tendrá en el inventario
+     * @param etiqueta   identificador visible
+     * @return la máquina nueva, operando
+     */
+    public static Maquina crearMaquina(TipoMaquina tipo, int idCompania, int indice, String etiqueta) {
+        return switch (tipo) {
+            case PRENSA -> new Maquina(idCompania, indice, etiqueta, tipo,
+                    List.of(
+                            new Sensor("Temperatura aceite", "°C", 55.0, 2.0, 70.0, 80.0, 90.0),
+                            new Sensor("Presión", "bar", 180.0, 4.0, 210.0, 230.0, 250.0),
+                            new Sensor("Vibración", "mm/s", 2.5, 0.4, 4.5, 7.1, 11.0)),
+                    60,     // intervalo preventivo en ticks
+                    0.06,   // tasa base de fallo: es la máquina más crítica, falla más
+                    80,     // carga inicial
+                    CAPACIDAD_LECTURAS);
+            case TORNO -> new Maquina(idCompania, indice, etiqueta, tipo,
+                    List.of(
+                            new Sensor("Temperatura husillo", "°C", 45.0, 2.0, 60.0, 70.0, 85.0),
+                            new Sensor("Corriente motor", "A", 12.0, 0.8, 16.0, 19.0, 22.0),
+                            new Sensor("Vibración", "mm/s", 1.8, 0.3, 2.8, 4.5, 7.1)),
+                    80,
+                    0.04,
+                    70,
+                    CAPACIDAD_LECTURAS);
+            case ROBOT -> new Maquina(idCompania, indice, etiqueta, tipo,
+                    List.of(
+                            new Sensor("Temperatura motor", "°C", 40.0, 2.0, 55.0, 65.0, 80.0),
+                            new Sensor("Corriente", "A", 8.0, 0.6, 11.0, 13.0, 16.0),
+                            new Sensor("Vibración", "mm/s", 1.4, 0.25, 2.8, 4.5, 7.1)),
+                    100,
+                    0.03,
+                    60,
+                    CAPACIDAD_LECTURAS);
+            case COMPRESOR -> new Maquina(idCompania, indice, etiqueta, tipo,
+                    List.of(
+                            new Sensor("Temperatura descarga", "°C", 85.0, 3.0, 100.0, 110.0, 125.0),
+                            new Sensor("Presión", "bar", 7.5, 0.2, 9.0, 9.8, 11.0),
+                            new Sensor("Vibración", "mm/s", 2.0, 0.3, 4.5, 7.1, 11.0)),
+                    70,
+                    0.05,
+                    75,
+                    CAPACIDAD_LECTURAS);
+            case HORNO -> new Maquina(idCompania, indice, etiqueta, tipo,
+                    List.of(
+                            new Sensor("Temperatura cámara", "°C", 850.0, 10.0, 900.0, 940.0, 980.0),
+                            new Sensor("Temperatura carcasa", "°C", 60.0, 3.0, 80.0, 95.0, 110.0),
+                            new Sensor("Consumo de gas", "m³/h", 42.0, 2.0, 52.0, 58.0, 68.0)),
+                    90,
+                    0.035,
+                    65,
+                    CAPACIDAD_LECTURAS);
+            case BOMBA -> new Maquina(idCompania, indice, etiqueta, tipo,
+                    List.of(
+                            new Sensor("Temperatura rodamiento", "°C", 50.0, 2.0, 65.0, 75.0, 90.0),
+                            new Sensor("Presión descarga", "bar", 6.0, 0.25, 8.0, 9.0, 10.5),
+                            new Sensor("Vibración", "mm/s", 2.2, 0.35, 4.5, 7.1, 11.0)),
+                    55,
+                    0.055,
+                    85,
+                    CAPACIDAD_LECTURAS);
+        };
     }
 
     /**

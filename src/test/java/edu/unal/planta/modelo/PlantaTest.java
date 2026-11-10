@@ -3,6 +3,7 @@ package edu.unal.planta.modelo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.unal.planta.modelo.comandos.ComandoOperador;
@@ -69,6 +70,32 @@ class PlantaTest {
         planta.reiniciar();
         assertEquals(6, planta.rankingFallos().size());
         assertTrue(planta.rankingFallos().stream().allMatch(m -> m.puntajeFallos() == 0));
+    }
+
+    @Test
+    @DisplayName("una máquina creada queda al final del inventario y en el ranking")
+    void crearMaquina() {
+        Planta planta = new Planta(SEMILLA);
+
+        Maquina nueva = planta.crearMaquina(TipoMaquina.TORNO, " torno-02 ");
+
+        assertEquals(7, planta.inventario().size());
+        assertEquals(nueva, planta.maquina(6));
+        assertEquals("TORNO-02", nueva.etiqueta());
+        assertEquals(6, nueva.indice());
+        assertTrue(planta.rankingFallos().contains(nueva));
+        assertTrue(planta.existeEtiqueta("TORNO-02"));
+    }
+
+    @Test
+    @DisplayName("una etiqueta repetida se rechaza aunque cambien las mayúsculas")
+    void etiquetaRepetidaSeRechaza() {
+        Planta planta = new Planta(SEMILLA);
+
+        assertTrue(planta.existeEtiqueta("prensa-01"));
+        assertThrows(IllegalArgumentException.class,
+                () -> planta.crearMaquina(TipoMaquina.PRENSA, "prensa-01"));
+        assertEquals(6, planta.inventario().size());
     }
 
     @Test
