@@ -388,6 +388,16 @@ Convención de la columna **Autoría**:
 | `modelo/ConfiguracionPlanta.java` | IA | `COSTO_REEMPLAZO = 300.000` |
 | `test/.../OrganizacionTest.java`, `PlantaTest.java` | IA | 3 pruebas nuevas (reemplazo, rechazos, descartes de la pila y del montículo) y 1 ajustada al mensaje nuevo |
 
+### Entrega 2 — Commit 18: historial con árbol de segmentos
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ResumenHistorial.java` | IA | Record nuevo: total y pico de las dos series (aprobado por el equipo) |
+| `modelo/Planta.java` | IA | Dos `ArbolSegmentos` por compañía, `puntajeDelTick`, `registrarHistorial` e `historial(desde, hasta)` |
+| `modelo/Organizacion.java` | IA | Dos árboles globales, paso 4 del tick e `historial(desde, hasta)` |
+| `modelo/Contabilidad.java` | IA | El costo del tick se pone en 0 al registrar el historial (aprobado por el equipo) |
+| `test/.../OrganizacionTest.java`, `PlantaTest.java` | IA | 2 pruebas nuevas (ventana por compañía y global contra un cálculo directo; reemplazo entre ticks y reinicio) y 1 ajustada |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

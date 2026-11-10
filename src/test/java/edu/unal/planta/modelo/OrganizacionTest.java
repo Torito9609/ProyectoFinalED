@@ -229,6 +229,88 @@ class OrganizacionTest {
                 + " descartado: la máquina fue reemplazada", compania.bitacora().getLast());
     }
 
+    @Test
+    @DisplayName("historial: total y pico de una ventana, por compañía y global")
+    void historialPorVentana() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        Planta compania = organizacion.compania(0);
+        long[] fallosCompania = new long[TICKS];
+        long[] costoCompania = new long[TICKS];
+        long[] fallosGlobal = new long[TICKS];
+        long[] costoGlobal = new long[TICKS];
+        for (int t = 0; t < TICKS; t++) {
+            int puntajeAntes = sumaPuntajes(compania);
+            long costosAntes = compania.costos();
+            int puntajeGlobalAntes = sumaPuntajes(organizacion);
+            long costosGlobalAntes = sumaCostos(organizacion);
+            organizacion.tick();
+            fallosCompania[t] = sumaPuntajes(compania) - puntajeAntes;
+            costoCompania[t] = compania.costos() - costosAntes;
+            fallosGlobal[t] = sumaPuntajes(organizacion) - puntajeGlobalAntes;
+            costoGlobal[t] = sumaCostos(organizacion) - costosGlobalAntes;
+        }
+
+        int desde = 50;
+        int hasta = 249;
+        assertEquals(new ResumenHistorial(suma(fallosCompania, desde, hasta), (int) pico(fallosCompania, desde, hasta),
+                        suma(costoCompania, desde, hasta), (int) pico(costoCompania, desde, hasta)),
+                compania.historial(desde, hasta));
+        assertEquals(new ResumenHistorial(suma(fallosGlobal, desde, hasta), (int) pico(fallosGlobal, desde, hasta),
+                        suma(costoGlobal, desde, hasta), (int) pico(costoGlobal, desde, hasta)),
+                organizacion.historial(desde, hasta));
+        assertEquals(sumaPuntajes(organizacion), organizacion.historial(0, TICKS - 1).totalFallos(),
+                "sin overhauls, el total de la partida es la suma de los puntajes");
+        assertTrue(organizacion.historial(desde, hasta).picoFallos() > 0);
+    }
+
+    @Test
+    @DisplayName("historial: un reemplazo hecho entre ticks cuenta en el tick siguiente, y reiniciar lo borra")
+    void historialConReemplazoYReinicio() {
+        Organizacion organizacion = organizacionEnManual();
+        Planta compania = organizacion.compania(0);
+        llevarAReemplazo(organizacion, compania, 0);
+        int tick = organizacion.tickActual();
+
+        compania.reemplazarMaquina(0);
+        organizacion.tick();
+
+        assertEquals(ConfiguracionPlanta.COSTO_REEMPLAZO, compania.historial(tick, tick).totalCosto());
+        assertEquals(ConfiguracionPlanta.COSTO_REEMPLAZO, organizacion.historial(tick, tick).picoCosto());
+
+        organizacion.reiniciar();
+        int ultimo = ConfiguracionPlanta.DURACION_PARTIDA - 1;
+        assertEquals(new ResumenHistorial(0, 0, 0, 0), organizacion.historial(0, ultimo));
+        assertEquals(new ResumenHistorial(0, 0, 0, 0), compania.historial(0, ultimo));
+    }
+
+    private static int sumaPuntajes(Planta compania) {
+        return compania.inventario().stream().mapToInt(Maquina::puntajeFallos).sum();
+    }
+
+    private static int sumaPuntajes(Organizacion organizacion) {
+        return organizacion.companias().stream().mapToInt(OrganizacionTest::sumaPuntajes).sum();
+    }
+
+    private static long sumaCostos(Organizacion organizacion) {
+        return organizacion.companias().stream().mapToLong(Planta::costos).sum();
+    }
+
+    private static long suma(long[] valores, int desde, int hasta) {
+        long total = 0;
+        for (int t = desde; t <= hasta; t++) {
+            total += valores[t];
+        }
+        return total;
+    }
+
+    private static long pico(long[] valores, int desde, int hasta) {
+        long maximo = 0;
+        for (int t = desde; t <= hasta; t++) {
+            maximo = Math.max(maximo, valores[t]);
+        }
+        return maximo;
+    }
+
     /**
      * Lleva una máquina hasta la recomendación de reemplazo: al umbral, un overhaul completo y otra
      * vez al umbral. Al terminar, la máquina queda operando y libre.

@@ -1,5 +1,6 @@
 package edu.unal.planta.modelo;
 
+import edu.unal.planta.estructuras.ArbolSegmentos;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,9 @@ import java.util.TreeSet;
  *   cuestan O(log s).</li>
  *   <li><strong>Cola FIFO</strong> ({@code ArrayDeque}): los técnicos del fabricante libres,
  *   compartidos por todas las compañías.</li>
+ *   <li><strong>Árbol de segmentos</strong> ({@link ArbolSegmentos}, dos): el historial global por
+ *   tick del puntaje de fallos y del costo, la suma de todas las compañías. Responde el total y el
+ *   pico de una ventana en O(log n).</li>
  * </ul>
  *
  * <p>Todas las plantas tienen siempre el mismo tick que la organización: las iniciales arrancan
@@ -89,6 +93,12 @@ public final class Organizacion {
     /** Número de llegada de la próxima solicitud: desempata el montículo. */
     private long siguienteSecuencia;
 
+    /** Árbol de segmentos: puntaje de fallos de toda la organización en cada tick. */
+    private ArbolSegmentos historialFallos;
+
+    /** Árbol de segmentos: costo de toda la organización en cada tick. */
+    private ArbolSegmentos historialCostos;
+
     /**
      * Crea la organización con las compañías de la configuración, listas para el primer tick.
      *
@@ -108,6 +118,8 @@ public final class Organizacion {
         this.tecnicosExternos = ConfiguracionPlanta.crearTecnicosExternos();
         this.externosLibres = new ArrayDeque<>(tecnicosExternos);
         this.siguienteSecuencia = 1;
+        this.historialFallos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
+        this.historialCostos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
         for (String nombre : ConfiguracionPlanta.NOMBRES_COMPANIAS) {
             crearCompania(nombre);
         }
@@ -184,7 +196,8 @@ public final class Organizacion {
      *
      * <p>Los fallos que clasifique cada planta actualizan su ranking y el global. Después avanzan
      * los overhauls en curso y, en modo automático, se asignan los siguientes con la regla de la
-     * cima. Si la partida ya terminó, no hace nada.</p>
+     * cima. Al final se registra el tick en los árboles de segmentos. Si la partida ya terminó, no
+     * hace nada.</p>
      */
     public void tick() {
         if (partidaTerminada()) {
@@ -200,7 +213,46 @@ public final class Organizacion {
                 // máquina de la cima no está libre.
             }
         }
+        registrarHistorial();
         tick++;
+    }
+
+    /**
+     * Paso 4 del tick: registra el puntaje de fallos y el costo de este tick en los árboles de cada
+     * compañía y, sumados, en los globales. Va después de los overhauls para que el costo del camión
+     * despachado en este tick quede en este tick.
+     *
+     * <p>Complejidad: O(c · log n), con c las compañías y n la duración de la partida.</p>
+     */
+    private void registrarHistorial() {
+        int fallos = 0;
+        long costo = 0;
+        for (Planta compania : companias) {
+            fallos += compania.puntajeDelTick();
+            costo += compania.costoDelTick();
+            compania.registrarHistorial(tick);
+        }
+        historialFallos.actualizar(tick, fallos);
+        historialCostos.actualizar(tick, Math.toIntExact(costo));
+    }
+
+    /**
+     * Devuelve el total y el pico del puntaje de fallos y del costo de toda la organización entre
+     * dos ticks, ambos incluidos. El pico es el del tick con más fallos (o más gasto) sumando todas
+     * las compañías, no el mayor de una sola.
+     *
+     * <p>Complejidad: O(log n): dos sumas y dos máximos de rango, sin recorrer la ventana.</p>
+     *
+     * @param desde primer tick de la ventana
+     * @param hasta último tick de la ventana
+     * @return el resumen de la ventana
+     * @throws IndexOutOfBoundsException si la ventana se sale de la partida
+     * @throws IllegalArgumentException  si {@code desde > hasta}
+     */
+    public ResumenHistorial historial(int desde, int hasta) {
+        return new ResumenHistorial(
+                historialFallos.suma(desde, hasta), historialFallos.maximo(desde, hasta),
+                historialCostos.suma(desde, hasta), historialCostos.maximo(desde, hasta));
     }
 
     /**
@@ -232,7 +284,8 @@ public final class Organizacion {
      *
      * <p>Cada planta saca sus máquinas del ranking global antes de reiniciarlas y las vuelve a
      * meter después, así que el ranking global queda consistente sin rearmarlo. El modo se
-     * conserva. El montículo de overhauls se vacía y los técnicos del fabricante quedan libres.</p>
+     * conserva. El montículo de overhauls se vacía, los técnicos del fabricante quedan libres y el
+     * historial vuelve a 0.</p>
      */
     public void reiniciar() {
         for (Planta compania : companias) {
@@ -245,6 +298,8 @@ public final class Organizacion {
             externosLibres.add(externo);
         }
         siguienteSecuencia = 1;
+        historialFallos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
+        historialCostos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
         tick = 0;
     }
 

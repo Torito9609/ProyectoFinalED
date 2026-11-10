@@ -384,7 +384,8 @@ class PlantaTest {
 
         assertEquals(3 * ConfiguracionPlanta.MANO_DE_OBRA_POR_TICK, planta.costos(),
                 "un técnico estuvo ocupado los 3 ticks");
-        assertEquals(ConfiguracionPlanta.MANO_DE_OBRA_POR_TICK, planta.costoDelTick());
+        assertEquals(3 * ConfiguracionPlanta.MANO_DE_OBRA_POR_TICK, planta.costoDelTick(),
+                "sin organización nadie registra el historial: el costo del tick acumula");
     }
 
     @Test

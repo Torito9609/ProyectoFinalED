@@ -40,6 +40,10 @@ public final class Contabilidad {
 
     /**
      * Empieza la cuenta de un tick nuevo: el costo del tick vuelve a 0.
+     *
+     * <p>Lo llama la planta <strong>al registrar el tick en el historial</strong>, no al empezar a
+     * contabilizar: así el costo de un tick incluye también lo que se cobra fuera del paso 7b, como
+     * el overhaul que despacha la organización o un reemplazo hecho a mano entre dos ticks.</p>
      */
     public void iniciarTick() {
         costoDelTick = 0;
@@ -119,7 +123,8 @@ public final class Contabilidad {
     }
 
     /**
-     * Devuelve lo gastado en el tick actual. Es lo que el historial guardará por tick.
+     * Devuelve lo gastado desde el último registro en el historial. Es lo que el historial guarda
+     * por tick.
      *
      * @return costo del tick
      */

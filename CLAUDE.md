@@ -444,7 +444,7 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
 1. Recorrer las compañías en el orden del `ArrayList` y ejecutar `Planta.tick()` en cada una (pasos 1–7 de la sección 7; el paso 4 actualiza los rankings).
 2. **Avanzar overhauls:** a cada técnico del fabricante ocupado se le resta un tick, y se cierran los que terminan.
 3. **Asignar overhauls** con la regla de la cima (solo en modo automático).
-4. Registrar en los árboles de segmentos (los de la compañía y los globales) el puntaje de fallos y el costo de este tick.
+4. Registrar en los árboles de segmentos (los de la compañía y los globales) el puntaje de fallos y el costo de este tick. **Los acumuladores del tick se ponen en 0 al registrar, no al empezar el tick** (decisión del 10 de noviembre, commit 18): así el valor de un tick incluye lo que se cobra fuera del paso 7b, como el overhaul que despacha la organización o un reemplazo hecho a mano entre dos ticks. La consulta devuelve un `ResumenHistorial` (total y pico de las dos series).
 5. Incrementar el tick de la organización. Si llega a la duración de la partida, la partida termina (ver "Economía y partida").
 
 ### Modo manual: juego de gestión (decisión del 10 de noviembre)

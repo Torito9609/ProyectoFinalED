@@ -36,6 +36,32 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 18 — 2026-11-10 — Historial con árbol de segmentos
+
+### Hecho
+- Dos `ArbolSegmentos` de 1000 posiciones por compañía (puntaje de fallos y costo) y dos globales,
+  alimentados en el paso 4 del tick de la organización. El global guarda la suma de las compañías
+  en cada tick, así que su pico es el del peor tick de toda la organización.
+- `historial(desde, hasta)` en `Planta` y en `Organizacion` devuelve un `ResumenHistorial`: dos
+  sumas y dos máximos de rango, O(log n), sin recorrer la ventana.
+
+### Decisiones
+- **El costo del tick se pone en 0 al registrar el historial, no en el paso 7b** (aprobado por el
+  equipo). Al diseñarlo apareció que los cobros hechos fuera del 7b se perdían: un reemplazo o un
+  overhaul despachado a mano entre dos ticks se borraba en el 7b siguiente sin llegar al árbol.
+  Ahora el valor de un tick es todo lo que pasó desde el registro anterior. Lo mismo vale para el
+  puntaje de fallos de un evento clasificado a mano entre ticks.
+- **`ResumenHistorial`** (record), en vez de cuatro métodos sueltos en cada clase (aprobado por el
+  equipo).
+- **Reiniciar crea árboles nuevos:** O(n), lo mismo que recorrer los viejos, y la estructura no
+  necesita un método más.
+- Una compañía creada a mitad de partida tiene 0 en los ticks anteriores: no hay caso especial.
+- La serie por tick para la gráfica (`valor(posicion)`, O(1)) se expone en el commit 23.
+
+### Verificación
+`./mvnw clean test`: **144 pruebas en verde**. La prueba de la ventana compara el árbol contra un
+cálculo directo (las diferencias de puntaje y de costos tick a tick). Javadoc sin advertencias.
+
 ## Entrega 2, commit 17 — 2026-11-10 — Reemplazo de máquina
 
 ### Decisiones
@@ -730,7 +756,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b, 15, 16 y 17 **terminados** (2026-11-10). Sigue el **18**; faltan 14c y 18 |
+| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b y 15–18 **terminados** (2026-11-10). Sigue el **14c** (calibración y dificultad) |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19, 19a y 21 **terminados** (2026-11-10). Faltan 20, 22 y 23 |
 | F | 24–25 | Documentación | Pendiente |

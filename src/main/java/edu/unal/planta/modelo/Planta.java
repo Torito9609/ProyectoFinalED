@@ -1,5 +1,6 @@
 package edu.unal.planta.modelo;
 
+import edu.unal.planta.estructuras.ArbolSegmentos;
 import edu.unal.planta.modelo.comandos.ComandoOperador;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -34,6 +35,8 @@ import java.util.TreeSet;
  *       <td>Máquinas ordenadas por puntaje de fallos (Entrega 2)</td></tr>
  *   <tr><td>{@code etiquetas}</td><td>{@code TreeSet} declarado como {@code Set} (conjunto)</td>
  *       <td>Etiquetas de las máquinas, sin repetidos (Entrega 2)</td></tr>
+ *   <tr><td>{@code historialFallos}, {@code historialCostos}</td><td>{@link ArbolSegmentos}</td>
+ *       <td>Puntaje de fallos y costo de cada tick, con total y pico por ventana (Entrega 2)</td></tr>
  * </table>
  *
  * <p>La cola circular no aparece aquí porque cada {@link Maquina} es dueña de la suya, con sus
@@ -110,6 +113,19 @@ public final class Planta {
     private int numeroFallos;
 
     /**
+     * Árbol de segmentos: puntaje de fallos de cada tick de la partida (Entrega 2). Responde el
+     * total y el pico de una ventana de ticks en O(log n). No es {@code final} porque reiniciar lo
+     * cambia por uno vacío.
+     */
+    private ArbolSegmentos historialFallos;
+
+    /** Árbol de segmentos: costo de cada tick de la partida (Entrega 2). */
+    private ArbolSegmentos historialCostos;
+
+    /** Puntaje de fallos acumulado desde el último registro en el historial. */
+    private int puntajeDelTick;
+
+    /**
      * Crea una planta suelta, sin organización: la planta única de la Entrega 1.
      *
      * <p>Es la compañía 0, se llama "Planta" y no tiene ranking global.</p>
@@ -165,6 +181,9 @@ public final class Planta {
         this.modo = ModoSimulacion.AUTOMATICO;
         this.contabilidad = new Contabilidad(ConfiguracionPlanta.PRESUPUESTO_INICIAL);
         this.numeroFallos = 0;
+        this.historialFallos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
+        this.historialCostos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
+        this.puntajeDelTick = 0;
         registrar("Planta iniciada con semilla " + semilla);
     }
 
@@ -328,6 +347,7 @@ public final class Planta {
         OrdenTrabajo orden = Clasificador.clasificar(evento, sensor, siguienteIdOrden++);
         ordenes.insertar(orden);
         numeroFallos++;
+        puntajeDelTick += orden.prioridad().peso();
         ranking.sumarFallo(maquina, orden.prioridad().peso());
         registrar("Clasificado: " + orden.etiquetaCorta() + " → " + orden.prioridad().etiqueta());
 
@@ -536,7 +556,6 @@ public final class Planta {
      */
     private void contabilizar() {
         boolean estabaEnQuiebra = contabilidad.enQuiebra();
-        contabilidad.iniciarTick();
         for (Maquina maquina : inventario) {
             boolean produce = maquina.estado() == EstadoMaquina.OPERANDO
                     || maquina.estado() == EstadoMaquina.EN_ALARMA;
@@ -616,6 +635,10 @@ public final class Planta {
         siguienteIdOrden = 1;
         contabilidad.reiniciar();
         numeroFallos = 0;
+        // Árboles nuevos, todos en 0: O(n), lo mismo que recorrer los viejos para borrarlos.
+        historialFallos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
+        historialCostos = new ArbolSegmentos(ConfiguracionPlanta.DURACION_PARTIDA);
+        puntajeDelTick = 0;
         // El modo no se toca: reiniciar en medio de una demostración en manual sigue en manual.
         registrar("Planta reiniciada con semilla " + semilla + " (modo " + modo.descripcion() + ")");
         notificar();
@@ -1123,12 +1146,60 @@ public final class Planta {
     }
 
     /**
-     * Devuelve lo gastado en el último tick. Es lo que guardará el historial.
+     * Devuelve lo gastado desde el último registro en el historial: el costo del tick en curso,
+     * incluidos los cobros hechos a mano entre dos ticks.
      *
      * @return costo del tick
      */
     public long costoDelTick() {
         return contabilidad.costoDelTick();
+    }
+
+    /**
+     * Devuelve el puntaje de fallos acumulado desde el último registro en el historial.
+     *
+     * @return puntaje de fallos del tick
+     */
+    public int puntajeDelTick() {
+        return puntajeDelTick;
+    }
+
+    /**
+     * Paso 4 del tick de la organización: escribe el puntaje de fallos y el costo acumulados en la
+     * posición del tick, en los dos árboles de segmentos, y pone los acumuladores en 0.
+     *
+     * <p>Los acumuladores se reinician aquí y no al empezar el tick: así el valor de un tick incluye
+     * todo lo que pasó desde el registro anterior, también lo que el jugador hizo entre dos ticks
+     * (clasificar, despachar un overhaul, reemplazar una máquina).</p>
+     *
+     * <p>Complejidad: O(log n) por árbol, con n la duración de la partida.</p>
+     *
+     * @param posicion tick de la organización que se registra
+     */
+    void registrarHistorial(int posicion) {
+        historialFallos.actualizar(posicion, puntajeDelTick);
+        historialCostos.actualizar(posicion, Math.toIntExact(contabilidad.costoDelTick()));
+        puntajeDelTick = 0;
+        contabilidad.iniciarTick();
+    }
+
+    /**
+     * Devuelve el total y el pico del puntaje de fallos y del costo de la compañía entre dos ticks,
+     * ambos incluidos.
+     *
+     * <p>Complejidad: O(log n): dos sumas y dos máximos de rango en los árboles de segmentos, sin
+     * recorrer los ticks de la ventana.</p>
+     *
+     * @param desde primer tick de la ventana
+     * @param hasta último tick de la ventana
+     * @return el resumen de la ventana
+     * @throws IndexOutOfBoundsException si la ventana se sale de la partida
+     * @throws IllegalArgumentException  si {@code desde > hasta}
+     */
+    public ResumenHistorial historial(int desde, int hasta) {
+        return new ResumenHistorial(
+                historialFallos.suma(desde, hasta), historialFallos.maximo(desde, hasta),
+                historialCostos.suma(desde, hasta), historialCostos.maximo(desde, hasta));
     }
 
     /**
