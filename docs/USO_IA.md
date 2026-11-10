@@ -365,6 +365,18 @@ Convención de la columna **Autoría**:
 | `modelo/Planta.java`, `ConfiguracionPlanta.java` | IA | `anotar` para la bitácora; 2 técnicos del fabricante y `DURACION_OVERHAUL = 30` |
 | `test/.../SolicitudOverhaulTest.java`, `OrganizacionTest.java` | IA | 3 pruebas: el orden del comparador, la salida por puntaje y los rechazos con el reinicio |
 
+### Entrega 2 — Commit 16: ejecutar overhauls en el tick
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/EstadoMaquina.java` | IA | `EN_OVERHAUL` |
+| `modelo/Maquina.java` | IA | Las dos reglas de desgaste en `probabilidadFallo` |
+| `modelo/TecnicoExterno.java` | IA | Asignar, avanzar, terminar y liberar |
+| `modelo/Planta.java` | IA | `iniciarOverhaul` (cobra), `terminarOverhaul` (reinserta en los rankings), descarte perezoso de la P4, sin preventivos ni fallos inyectados en overhaul |
+| `modelo/Organizacion.java` | IA | Avanzar overhauls, la regla de la cima, el descarte de solicitudes de compañías en quiebra y el botón manual |
+| `modelo/ConfiguracionPlanta.java` | IA | Umbral 30, máximo 1, costo 120.000 y los factores de desgaste (aprobados por el equipo) |
+| `test/...` | IA | 4 pruebas nuevas (desgaste, ciclo, cima y descarte perezoso) y 3 ajustadas al umbral nuevo |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

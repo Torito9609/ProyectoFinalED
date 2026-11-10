@@ -11,7 +11,8 @@ import java.util.Optional;
  * {@link Tecnico} porque atiende solicitudes de overhaul, no órdenes de trabajo, y no tiene
  * especialidad.</p>
  *
- * <p>Asignar, avanzar y terminar un overhaul llegan con la ejecución de los overhauls en el tick.</p>
+ * <p>Un overhaul dura {@link ConfiguracionPlanta#DURACION_OVERHAUL} ticks. Todas las operaciones
+ * cuestan O(1).</p>
  *
  * @author Cristian Robayo
  * @author Kevin Toro
@@ -67,6 +68,55 @@ public final class TecnicoExterno {
      */
     public int ticksRestantes() {
         return ticksRestantes;
+    }
+
+    /**
+     * Asigna una solicitud al técnico.
+     *
+     * @param solicitud solicitud de overhaul que va a atender
+     * @throws IllegalStateException si el técnico ya estaba ocupado
+     * @throws NullPointerException  si la solicitud es nula
+     */
+    public void asignar(SolicitudOverhaul solicitud) {
+        Objects.requireNonNull(solicitud, "La solicitud no puede ser nula");
+        if (!estaLibre()) {
+            throw new IllegalStateException("El técnico " + nombre + " ya está en un overhaul");
+        }
+        solicitudActual = solicitud;
+        ticksRestantes = ConfiguracionPlanta.DURACION_OVERHAUL;
+    }
+
+    /**
+     * Descuenta un tick al overhaul en curso. No hace nada si el técnico está libre.
+     */
+    public void avanzar() {
+        if (!estaLibre() && ticksRestantes > 0) {
+            ticksRestantes--;
+        }
+    }
+
+    /**
+     * Indica si el overhaul en curso ya terminó.
+     *
+     * @return {@code true} si tiene solicitud y no le quedan ticks
+     */
+    public boolean trabajoTerminado() {
+        return !estaLibre() && ticksRestantes == 0;
+    }
+
+    /**
+     * Deja libre al técnico y devuelve la solicitud que acabó de atender.
+     *
+     * @return la solicitud terminada
+     * @throws IllegalStateException si el técnico no tenía ninguna
+     */
+    public SolicitudOverhaul liberar() {
+        if (estaLibre()) {
+            throw new IllegalStateException("El técnico " + nombre + " no tiene ningún overhaul");
+        }
+        SolicitudOverhaul terminada = solicitudActual;
+        reiniciar();
+        return terminada;
     }
 
     /**

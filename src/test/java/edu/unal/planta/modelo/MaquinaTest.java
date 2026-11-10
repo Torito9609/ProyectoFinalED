@@ -60,6 +60,19 @@ class MaquinaTest {
         assertEquals(Recomendacion.NINGUNA, maquina.recomendacion());
     }
 
+    @Test
+    @DisplayName("desgaste: en el umbral falla el doble, y cada overhaul sube la tasa un 25 %")
+    void desgaste() {
+        double base = maquina.probabilidadFallo();
+
+        maquina.sumarPuntaje(UMBRAL);
+        assertEquals(ConfiguracionPlanta.MAX_FACTOR_HISTORIAL * base, maquina.probabilidadFallo(), 1e-12);
+
+        maquina.completarOverhaul();
+        assertEquals((1 + ConfiguracionPlanta.INCREMENTO_TASA_POR_OVERHAUL) * base,
+                maquina.probabilidadFallo(), 1e-12);
+    }
+
     /** Simula {@code veces} overhauls; cada uno deja el puntaje en 0. */
     private void completarOverhauls(int veces) {
         for (int i = 0; i < veces; i++) {

@@ -36,6 +36,36 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 16 — 2026-11-10 — Overhauls en el tick, y un hallazgo de calibración
+
+### Decisiones
+- **Umbral de overhaul de 12 a 30 y máximo de overhauls de 3 a 1.** Medido con 1000 ticks y 3
+  semillas: con 12, la mitad de las máquinas lo cruzaba antes del tick 250 y todas al final; con 3
+  overhauls, la recomendación de reemplazo no podía aparecer en una partida.
+- **Costo del overhaul: 120.000**, cobrado al despachar el camión.
+- **Descarte perezoso** de la P4 de una máquina que recibió overhaul, y de la solicitud de una
+  compañía en quiebra que llega a la cima: se extraen por la operación normal y se descartan, sin
+  sacar nada del medio de la estructura.
+- **Regla de la cima:** si la máquina de la cima no está libre (tiene alarma o no está operando),
+  el camión espera; no se salta a la segunda solicitud.
+
+### Hallazgo: el desgaste casi no cambia la economía
+Partida automática, 3 semillas × 3 compañías:
+
+| | Sin desgaste (14b) | Con desgaste (16) |
+|---|---|---|
+| Fallos por compañía | 177–196 | 182–214 |
+| Caja final | 1,76 a 2,00 millones | 1,59 a 1,91 millones |
+
+Dos causas: una máquina **en alarma sigue produciendo al 100 %**, así que un fallo casi solo
+cuesta mano de obra; y los técnicos están **saturados**: hacia el tick 700 casi todas las máquinas
+esperan en alarma, y una máquina con alarma no desarrolla otro fallo, así que "fallar el doble"
+casi no suma. Por lo mismo, en automático la máquina de la cima casi nunca está libre. El umbral
+de 30 se cruza hacia el tick 600, no hacia el 400 como se había estimado.
+
+La mecánica funciona y está probada; lo que falta es calibración. Se deja para el **14c**, con una
+propuesta de diseño: una máquina en alarma produce a media capacidad.
+
 ## Entrega 2, decisión — 2026-11-10 — El modo manual es un juego de gestión
 
 Al proponer el commit 14 apareció que el equipo tenía dos ideas distintas del modo manual. La de
@@ -676,7 +706,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b y 15 **terminados** (2026-11-10). Sigue el **16**; faltan 14c y 16–18 |
+| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b, 15 y 16 **terminados** (2026-11-10). Sigue el **17**; faltan 14c, 17 y 18 |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19, 19a y 21 **terminados** (2026-11-10). Faltan 20, 22 y 23 |
 | F | 24–25 | Documentación | Pendiente |

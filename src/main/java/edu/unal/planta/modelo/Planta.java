@@ -403,6 +403,7 @@ public final class Planta {
      * @return {@code true} si se asignó; {@code false} si no había orden o técnico de la especialidad
      */
     private boolean asignarUna() {
+        descartarPreventivosObsoletos();
         return ordenes.verSiguiente()
                 .map(orden -> asignarA(orden.tipoFallo()))
                 .orElse(false);
@@ -424,6 +425,7 @@ public final class Planta {
      * @return {@code true} si se asignó; {@code false} si no había orden o técnico libre en esa cola
      */
     private boolean asignarA(TipoFallo especialidad) {
+        descartarPreventivosObsoletos();
         Queue<Tecnico> cola = tecnicosLibres.get(especialidad);
         if (cola.isEmpty() || ordenes.estaVacia()) {
             return false;
@@ -439,6 +441,85 @@ public final class Planta {
         registrar(tecnico.nombre() + " atiende " + orden.etiquetaCorta()
                 + " (" + orden.prioridad().name() + ", " + detalle + ")");
         return true;
+    }
+
+    /**
+     * Descarte perezoso: mientras la orden del frente sea un preventivo que ya no hace falta, se
+     * extrae y se descarta sin asignarla.
+     *
+     * <p>Un preventivo sobra cuando la máquina recibió un overhaul mientras la orden esperaba,
+     * porque el overhaul es un servicio completo. Sacarlo del medio de la cola con prioridad
+     * violaría el tipo abstracto de datos, así que se deja en su carril y se descarta cuando llega
+     * al frente y sale por la operación normal {@code extraer}. Es la técnica habitual con colas de
+     * prioridad (Dijkstra la usa con las distancias viejas).</p>
+     *
+     * <p>Complejidad: O(1) por orden descartada.</p>
+     */
+    private void descartarPreventivosObsoletos() {
+        while (ordenes.verSiguiente().filter(this::preventivoObsoleto).isPresent()) {
+            OrdenTrabajo descartada = ordenes.extraer().orElseThrow();
+            registrar(descartada.etiquetaCorta() + " descartada: "
+                    + descartada.etiquetaMaquina() + " ya recibió overhaul");
+        }
+    }
+
+    /** Un preventivo sobra si la máquina ya no lo tiene pendiente o está en overhaul. */
+    private boolean preventivoObsoleto(OrdenTrabajo orden) {
+        if (orden.prioridad() != Prioridad.P4) {
+            return false;
+        }
+        Maquina maquina = inventario.get(orden.indiceMaquina());
+        return !maquina.preventivaPendiente() || maquina.estado() == EstadoMaquina.EN_OVERHAUL;
+    }
+
+    /**
+     * Inicia el overhaul de una máquina: la deja {@code EN_OVERHAUL}, quita su preventivo pendiente
+     * (el overhaul lo reemplaza) y cobra el overhaul a la caja de la compañía. Lo llama la
+     * organización al despachar el camión del fabricante.
+     *
+     * @param indiceMaquina índice de la máquina
+     * @param tecnico       nombre del técnico del fabricante, para la bitácora
+     */
+    void iniciarOverhaul(int indiceMaquina, String tecnico) {
+        Maquina maquina = inventario.get(indiceMaquina);
+        boolean estabaEnQuiebra = contabilidad.enQuiebra();
+        maquina.cambiarEstado(EstadoMaquina.EN_OVERHAUL);
+        maquina.quitarAnomalia();
+        maquina.quitarPreventivaPendiente();
+        contabilidad.cobrar(ConfiguracionPlanta.COSTO_OVERHAUL);
+        registrar(tecnico + " inicia el overhaul de " + maquina.etiqueta()
+                + " (" + ConfiguracionPlanta.DURACION_OVERHAUL + " ticks, costo "
+                + ConfiguracionPlanta.COSTO_OVERHAUL + ")");
+        if (!estabaEnQuiebra && contabilidad.enQuiebra()) {
+            registrar(nombre + " entra en quiebra: caja " + contabilidad.caja());
+        }
+        notificar();
+    }
+
+    /**
+     * Cierra el overhaul de una máquina: el puntaje vuelve a 0, sube el número de overhauls, se
+     * reinicia el reloj del preventivo (el overhaul <strong>es</strong> un servicio completo) y la
+     * máquina vuelve a operar.
+     *
+     * <p>El puntaje es la clave de los rankings, así que la máquina sale de los dos árboles antes de
+     * cambiarlo y vuelve a entrar después (la trampa de la clave que cambia).</p>
+     *
+     * <p>Complejidad: O(log N), por los dos rankings.</p>
+     *
+     * @param indiceMaquina índice de la máquina
+     */
+    void terminarOverhaul(int indiceMaquina) {
+        Maquina maquina = inventario.get(indiceMaquina);
+        ranking.quitar(maquina);
+        maquina.completarOverhaul();
+        ranking.agregar(maquina);
+        maquina.reiniciarMantenimiento();
+        maquina.quitarAnomalia();
+        maquina.quitarAlarma();
+        maquina.cambiarEstado(EstadoMaquina.OPERANDO);
+        registrar("Overhaul terminado: " + maquina.etiqueta() + " vuelve a operar con puntaje 0 ("
+                + maquina.numeroOverhauls() + " overhaul" + (maquina.numeroOverhauls() == 1 ? "" : "s") + ")");
+        notificar();
     }
 
     /**
@@ -488,7 +569,8 @@ public final class Planta {
     private void revisarPreventivos() {
         for (int indice = 0; indice < inventario.size(); indice++) {
             Maquina maquina = inventario.get(indice);
-            if (!maquina.requierePreventivo() || maquina.preventivaPendiente()) {
+            if (!maquina.requierePreventivo() || maquina.preventivaPendiente()
+                    || maquina.estado() == EstadoMaquina.EN_OVERHAUL) {
                 continue;
             }
             OrdenTrabajo orden =
@@ -696,6 +778,9 @@ public final class Planta {
     public void inyectarFallo(int indiceMaquina, int indiceSensor, Magnitud magnitud) {
         exigirEnOperacion();
         Maquina maquina = inventario.get(indiceMaquina);
+        if (maquina.estado() == EstadoMaquina.EN_OVERHAUL) {
+            throw new IllegalStateException(maquina.etiqueta() + " está en overhaul");
+        }
         if (maquina.tieneAnomalia() || maquina.alarmaActiva()) {
             registrar("Inyección rechazada: " + maquina.etiqueta() + " ya tiene un fallo activo");
             notificar();

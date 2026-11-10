@@ -71,7 +71,7 @@ con las 6 máquinas y 2 técnicos.
   "nombre": "Planta Norte",
   "numeroMaquinas": 6,
   "maquinasPorEstado": { "OPERANDO": 4, "EN_ALARMA": 1, "DETENIDA": 0,
-                         "EN_MANTENIMIENTO": 1, "PARADA_MANUAL": 0 },
+                         "EN_MANTENIMIENTO": 1, "PARADA_MANUAL": 0, "EN_OVERHAUL": 0 },
   "eventosPendientes": 1,
   "ordenesPendientes": 2,
   "tecnicosLibres": 0
@@ -161,7 +161,7 @@ prioridad (los 4 carriles) y de las dos colas de técnicos libres, sumadas.
 | Campo | Estructura | Cómo leerlo |
 |---|---|---|
 | `semilla` | — | La semilla de **esta** compañía, derivada de la maestra |
-| `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO` o `PARADA_MANUAL`. `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
+| `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO`, `PARADA_MANUAL` o `EN_OVERHAUL` (un técnico del fabricante le hace un overhaul de 30 ticks; no produce). `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
 | `maquinas[i].puntajeFallos` | Clave del ranking (árbol rojo-negro) | Suma de los pesos de sus fallos desde el último overhaul: P1 = 3, P2 = 2, P3 = 1 (un preventivo P4 no suma). `recomendacion` es `NINGUNA`, `OVERHAUL` o `REEMPLAZO` (sección 4b) |
 | `maquinas[i].lecturas` | Cola circular propia | `celdas` va en **orden físico** (índice 0 a 11), no en orden de llegada. Una celda vacía es `null`. `indiceFrente` es la lectura más antigua; `indiceFinal`, donde se escribirá la próxima. Cuando la cola está llena los dos coinciden, y la próxima lectura sobrescribe el frente. `valores[k]` corresponde a `sensores[k]` |
 | `maquinas[i].sensores` | — | Umbrales para colorear cada valor: < advertencia normal; ≥ advertencia P3; ≥ alto P2; ≥ crítico P1. `tipoFallo` (`MECANICO` o `ELECTRICO`) es el tipo de los fallos de ese sensor |
@@ -258,12 +258,12 @@ el árbol, O(log n + k): con `puntajeMinimo` igual a `umbralOverhaul` salen las 
 ```json
 {
   "alcance": "Global",
-  "umbralOverhaul": 12,
-  "maximoOverhauls": 3,
+  "umbralOverhaul": 30,
+  "maximoOverhauls": 1,
   "maquinas": [
     { "posicion": 1, "idCompania": 2, "nombreCompania": "Planta Sur", "indice": 3,
       "etiqueta": "COMPRES-01", "tipo": "COMPRESOR", "estado": "OPERANDO",
-      "puntajeFallos": 14, "numeroOverhauls": 0, "recomendacion": "OVERHAUL" },
+      "puntajeFallos": 34, "numeroOverhauls": 0, "recomendacion": "OVERHAUL" },
     "..."
   ]
 }

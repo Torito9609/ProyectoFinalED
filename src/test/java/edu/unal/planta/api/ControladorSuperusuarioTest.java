@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import edu.unal.planta.modelo.ConfiguracionPlanta;
 import edu.unal.planta.servicio.ServicioSimulacion;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +51,7 @@ class ControladorSuperusuarioTest {
         String json = mvc.perform(get("/api/ranking"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alcance").value("Global"))
-                .andExpect(jsonPath("$.umbralOverhaul").value(12))
+                .andExpect(jsonPath("$.umbralOverhaul").value(ConfiguracionPlanta.UMBRAL_OVERHAUL))
                 .andExpect(jsonPath("$.maquinas.length()").value(18))
                 .andExpect(jsonPath("$.maquinas[0].posicion").value(1))
                 .andReturn().getResponse().getContentAsString();

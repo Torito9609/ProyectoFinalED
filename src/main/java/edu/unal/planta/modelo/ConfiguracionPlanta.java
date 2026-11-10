@@ -63,15 +63,38 @@ public final class ConfiguracionPlanta {
 
     /**
      * Puntaje de fallos a partir del cual se recomienda un overhaul. Con los pesos de
-     * {@link Prioridad#peso()}, equivale por ejemplo a cuatro fallos P1 o doce fallos P3.
+     * {@link Prioridad#peso()}, equivale por ejemplo a diez fallos P1 o treinta fallos P3.
+     *
+     * <p>Subió de 12 a 30 con las partidas de 1000 ticks: con 12, la mitad de las máquinas lo
+     * cruzaba antes del tick 250 y todas al final. Con 30, las primeras lo cruzan a mitad de
+     * partida, cuando todavía vale la pena pagar un overhaul.</p>
      */
-    public static final int UMBRAL_OVERHAUL = 12;
+    public static final int UMBRAL_OVERHAUL = 30;
 
     /**
      * Número de overhauls a partir del cual, si la máquina vuelve a superar el umbral, se
      * recomienda reemplazarla en vez de hacerle otro overhaul.
+     *
+     * <p>Bajó de 3 a 1: con 3, la recomendación de reemplazo no podía aparecer en una partida de
+     * 1000 ticks.</p>
      */
-    public static final int MAXIMO_OVERHAULS = 3;
+    public static final int MAXIMO_OVERHAULS = 1;
+
+    /**
+     * Techo del factor de historial de {@link Maquina#probabilidadFallo()}: una máquina con el
+     * puntaje en el umbral, o más, falla el doble.
+     */
+    public static final double MAX_FACTOR_HISTORIAL = 2.0;
+
+    /** Cuánto sube la tasa base de fallo por cada overhaul recibido: cada overhaul rinde menos. */
+    public static final double INCREMENTO_TASA_POR_OVERHAUL = 0.25;
+
+    /**
+     * Lo que cuesta un overhaul, cobrado al despachar el camión del fabricante. Con el puntaje en
+     * el umbral, la máquina pierde unos 550 por tick en fallos de más: el overhaul se recupera en
+     * unos 250 ticks, así que conviene a mitad de partida y no al final.
+     */
+    public static final long COSTO_OVERHAUL = 120_000L;
 
     // ---------------------------------------------------------------------------------
     // Economía y partida (Entrega 2). Valores PROVISIONALES, medidos con 1000 ticks en automático:

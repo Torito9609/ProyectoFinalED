@@ -295,6 +295,15 @@ public final class Maquina {
      * cola se llena de trabajo correctivo y el preventivo se aleja todavía más. Una máquina muy
      * atrasada falla más seguido, pero no infinitamente más.</p>
      *
+     * <p><strong>Desgaste (Entrega 2).</strong> Dos factores más hacen que el overhaul y el
+     * reemplazo valgan la pena:</p>
+     * <ul>
+     *   <li><strong>historial de fallos:</strong> {@code min(2, 1 + puntaje / umbralOverhaul)}. En el
+     *   umbral la máquina falla el doble; el overhaul deja el puntaje en 0 y quita el castigo;</li>
+     *   <li><strong>cada overhaul rinde menos:</strong> la tasa base sube un 25 % por cada overhaul
+     *   recibido, y después de varios conviene reemplazar la máquina.</li>
+     * </ul>
+     *
      * <p>El cálculo no tiene aleatoriedad; el sorteo lo hace el generador de fallos.</p>
      *
      * @return probabilidad entre 0 y 1
@@ -304,7 +313,12 @@ public final class Maquina {
         double factorDesgaste = Math.min(
                 MAX_FACTOR_DESGASTE,
                 1.0 + (double) ticksDesdeMantenimiento / intervaloPreventivo);
-        return Math.min(1.0, tasaBaseFallo * factorCarga * factorDesgaste);
+        double factorHistorial = Math.min(
+                ConfiguracionPlanta.MAX_FACTOR_HISTORIAL,
+                1.0 + (double) puntajeFallos / ConfiguracionPlanta.UMBRAL_OVERHAUL);
+        double tasa = tasaBaseFallo
+                * (1.0 + ConfiguracionPlanta.INCREMENTO_TASA_POR_OVERHAUL * numeroOverhauls);
+        return Math.min(1.0, tasa * factorCarga * factorDesgaste * factorHistorial);
     }
 
     /**

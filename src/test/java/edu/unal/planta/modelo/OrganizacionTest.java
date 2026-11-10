@@ -22,6 +22,9 @@ class OrganizacionTest {
     private static final long SEMILLA_MAESTRA = 7L;
     private static final int TICKS = 300;
 
+    /** Ticks para que varias máquinas superen el umbral de overhaul. */
+    private static final int TICKS_OVERHAUL = 700;
+
     @Test
     @DisplayName("la misma semilla maestra repite la simulación, y cada compañía tiene la suya")
     void mismaSemillaMismoResultado() {
@@ -63,7 +66,7 @@ class OrganizacionTest {
     @DisplayName("las solicitudes de overhaul salen por puntaje, sin importar el orden en que se aprueban")
     void overhaulsSalenPorPuntaje() {
         Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
-        for (int i = 0; i < TICKS; i++) {
+        for (int i = 0; i < TICKS_OVERHAUL; i++) {
             organizacion.tick();
         }
         List<Maquina> candidatas =
@@ -90,7 +93,7 @@ class OrganizacionTest {
         Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
         assertThrows(IllegalStateException.class, () -> organizacion.aprobarOverhaul(0, 0),
                 "en el tick 0 ninguna máquina tiene recomendación");
-        for (int i = 0; i < TICKS; i++) {
+        for (int i = 0; i < TICKS_OVERHAUL; i++) {
             organizacion.tick();
         }
         Maquina peor = organizacion.rankingGlobal().get(0);
@@ -103,6 +106,95 @@ class OrganizacionTest {
         assertTrue(organizacion.siguienteOverhaul().isEmpty());
         assertFalse(peor.overhaulPendiente());
         assertEquals(organizacion.tecnicosExternos().size(), organizacion.tecnicosExternosLibres().size());
+    }
+
+    @Test
+    @DisplayName("el overhaul no usa técnicos internos, cobra, y la máquina vuelve con puntaje 0 y reinsertada")
+    void cicloDelOverhaul() {
+        Organizacion organizacion = organizacionEnManual();
+        Planta compania = organizacion.compania(0);
+        Maquina maquina = llevarAlUmbral(organizacion, compania, 0);
+        int internosLibres = compania.totalTecnicosLibres();
+        long caja = compania.caja();
+
+        organizacion.aprobarOverhaul(maquina.idCompania(), maquina.indice());
+        organizacion.tick();
+        assertTrue(organizacion.siguienteOverhaul().isPresent(), "en manual el tick no despacha");
+
+        long cajaAntes = compania.caja();
+        assertTrue(organizacion.asignarSiguienteOverhaul(), "el botón sí");
+        assertEquals(EstadoMaquina.EN_OVERHAUL, maquina.estado());
+        assertEquals(internosLibres, compania.totalTecnicosLibres(), "no usa técnicos internos");
+        assertEquals(cajaAntes - ConfiguracionPlanta.COSTO_OVERHAUL, compania.caja());
+        assertTrue(caja > compania.caja());
+
+        for (int i = 0; i < ConfiguracionPlanta.DURACION_OVERHAUL; i++) {
+            organizacion.tick();
+        }
+        assertEquals(EstadoMaquina.OPERANDO, maquina.estado());
+        assertEquals(0, maquina.puntajeFallos());
+        assertEquals(1, maquina.numeroOverhauls());
+        assertEquals(0, maquina.ticksDesdeMantenimiento(), "el overhaul es un servicio completo");
+        assertEquals(ordenarTodas(organizacion), organizacion.rankingGlobal(),
+                "la máquina salió y volvió a entrar al ranking con su clave nueva");
+        assertEquals(organizacion.tecnicosExternos().size(), organizacion.tecnicosExternosLibres().size());
+    }
+
+    @Test
+    @DisplayName("regla de la cima: si la máquina de la cima no está libre, el camión espera")
+    void reglaDeLaCima() {
+        Organizacion organizacion = organizacionEnManual();
+        Planta compania = organizacion.compania(0);
+        Maquina cima = llevarAlUmbral(organizacion, compania, 0);
+        Maquina segunda = llevarAlUmbral(organizacion, compania, 1);
+        organizacion.aprobarOverhaul(cima.idCompania(), cima.indice());
+        organizacion.aprobarOverhaul(segunda.idCompania(), segunda.indice());
+
+        organizacion.compania(cima.idCompania()).inyectarFallo(cima.indice(), 0, Magnitud.SEVERA);
+        organizacion.tick();
+        assertTrue(cima.alarmaActiva());
+
+        assertFalse(organizacion.asignarSiguienteOverhaul());
+        assertEquals(EstadoMaquina.OPERANDO, segunda.estado(), "no se salta a la segunda solicitud");
+        assertEquals("Tick " + organizacion.tickActual() + ": El camión espera: " + cima.etiqueta()
+                + " no está libre", organizacion.compania(cima.idCompania()).bitacora().getLast());
+    }
+
+    /** Una organización en modo manual: no aparecen fallos solos ni se asigna nada solo. */
+    private static Organizacion organizacionEnManual() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        organizacion.cambiarModo(ModoSimulacion.MANUAL);
+        return organizacion;
+    }
+
+    /**
+     * Lleva una máquina hasta el umbral de overhaul con fallos críticos inyectados y reparados a
+     * mano, sin depender del azar. Al terminar, la máquina queda operando y libre.
+     */
+    private static Maquina llevarAlUmbral(Organizacion organizacion, Planta compania, int indice) {
+        Maquina maquina = compania.maquina(indice);
+        while (maquina.puntajeFallos() < ConfiguracionPlanta.UMBRAL_OVERHAUL) {
+            compania.inyectarFallo(indice, 0, Magnitud.SEVERA);
+            organizacion.tick();
+            compania.clasificarSiguiente();
+            compania.asignarSiguiente(maquina.sensor(0).tipoFallo());
+            while (maquina.estado() != EstadoMaquina.OPERANDO) {
+                organizacion.tick();
+            }
+        }
+        return maquina;
+    }
+
+    /** Todas las máquinas ordenadas con el mismo criterio del ranking. */
+    private static List<Maquina> ordenarTodas(Organizacion organizacion) {
+        List<Maquina> todas = new ArrayList<>();
+        for (Planta compania : organizacion.companias()) {
+            todas.addAll(compania.inventario());
+        }
+        todas.sort(Comparator.comparingInt(Maquina::puntajeFallos).reversed()
+                .thenComparingInt(Maquina::idCompania)
+                .thenComparingInt(Maquina::indice));
+        return todas;
     }
 
     @Test

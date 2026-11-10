@@ -407,6 +407,29 @@ class PlantaTest {
         assertFalse(planta.enQuiebra(), "reiniciar empieza otra partida con el presupuesto inicial");
     }
 
+    @Test
+    @DisplayName("descarte perezoso: el preventivo de una máquina que recibió overhaul se descarta al salir")
+    void preventivoDescartadoTrasOverhaul() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+        while (planta.ordenes().estaVacia()) {
+            planta.tick();
+        }
+        OrdenTrabajo preventivo = planta.ordenes().verSiguiente().orElseThrow();
+        assertEquals(Prioridad.P4, preventivo.prioridad());
+        Maquina maquina = planta.maquina(preventivo.indiceMaquina());
+
+        planta.iniciarOverhaul(preventivo.indiceMaquina(), "Fabricante 1");
+        planta.asignarSiguiente(TipoFallo.MECANICO);
+
+        assertTrue(planta.bitacora().stream().anyMatch(linea -> linea.endsWith(
+                preventivo.etiquetaCorta() + " descartada: " + maquina.etiqueta() + " ya recibió overhaul")));
+        assertTrue(planta.ordenes().ordenesDe(Prioridad.P4).stream()
+                .noneMatch(orden -> orden.id() == preventivo.id()), "salió por el frente");
+        assertTrue(ordenEnCurso(planta).map(orden -> orden.id() != preventivo.id()).orElse(true),
+                "y no se le asignó a nadie");
+    }
+
     /**
      * Crea una planta donde ninguna máquina falla por azar, poniendo su carga en cero.
      *

@@ -25,7 +25,13 @@ public enum EstadoMaquina {
     EN_MANTENIMIENTO("En mantenimiento", 0x1565C0),
 
     /** El operador la paró a mano. */
-    PARADA_MANUAL("Parada manual", 0x616161);
+    PARADA_MANUAL("Parada manual", 0x616161),
+
+    /**
+     * Un técnico del fabricante le está haciendo un overhaul: no lee sensores, no falla, no recibe
+     * preventivos y no produce (Entrega 2).
+     */
+    EN_OVERHAUL("En overhaul", 0x6A1B9A);
 
     private final String descripcion;
     private final int rgb;

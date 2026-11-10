@@ -182,8 +182,9 @@ public final class Organizacion {
      * Avanza un tick en toda la organización: ejecuta {@link Planta#tick()} en cada compañía, en el
      * orden de sus ids, e incrementa el tick de la organización.
      *
-     * <p>Los fallos que clasifique cada planta actualizan su ranking y el global. Si la partida ya
-     * terminó, no hace nada.</p>
+     * <p>Los fallos que clasifique cada planta actualizan su ranking y el global. Después avanzan
+     * los overhauls en curso y, en modo automático, se asignan los siguientes con la regla de la
+     * cima. Si la partida ya terminó, no hace nada.</p>
      */
     public void tick() {
         if (partidaTerminada()) {
@@ -191,6 +192,13 @@ public final class Organizacion {
         }
         for (Planta compania : companias) {
             compania.tick();
+        }
+        avanzarOverhauls();
+        if (modo == ModoSimulacion.AUTOMATICO) {
+            while (asignarUnOverhaul()) {
+                // Cada vuelta despacha un camión; termina cuando falta técnico, solicitud o la
+                // máquina de la cima no está libre.
+            }
         }
         tick++;
     }
@@ -331,6 +339,99 @@ public final class Organizacion {
         compania.anotar("Overhaul aprobado para " + maquina.etiqueta()
                 + " (puntaje " + solicitud.puntajeCongelado() + ")");
         return solicitud;
+    }
+
+    /**
+     * Botón del modo manual: despacha el camión del fabricante para la solicitud de la cima.
+     *
+     * <p>Ejecuta una vuelta de la misma operación que el tick automático. El jugador no elige la
+     * solicitud: el montículo entrega su cima. Si no se puede, la razón queda en la bitácora de la
+     * compañía de la cima.</p>
+     *
+     * <p>Complejidad: O(log s).</p>
+     *
+     * @return {@code true} si se despachó un overhaul
+     * @throws IllegalStateException si la simulación está en modo automático
+     */
+    public boolean asignarSiguienteOverhaul() {
+        if (modo != ModoSimulacion.MANUAL) {
+            throw new IllegalStateException("La acción solo está disponible en modo manual");
+        }
+        boolean asignado = asignarUnOverhaul();
+        if (!asignado && !solicitudes.isEmpty()) {
+            SolicitudOverhaul cima = solicitudes.peek();
+            Planta compania = companias.get(cima.idCompania());
+            compania.anotar(externosLibres.isEmpty()
+                    ? "El camión espera: no hay técnicos del fabricante libres"
+                    : "El camión espera: " + cima.etiqueta() + " no está libre");
+        }
+        return asignado;
+    }
+
+    /**
+     * Paso 2 del tick de la organización: a cada técnico del fabricante ocupado se le resta un
+     * tick, y se cierran los overhauls que terminan. El técnico vuelve al final de su cola.
+     */
+    private void avanzarOverhauls() {
+        for (TecnicoExterno externo : tecnicosExternos) {
+            if (externo.estaLibre()) {
+                continue;
+            }
+            externo.avanzar();
+            if (!externo.trabajoTerminado()) {
+                continue;
+            }
+            SolicitudOverhaul terminada = externo.liberar();
+            companias.get(terminada.idCompania()).terminarOverhaul(terminada.indiceMaquina());
+            externosLibres.add(externo);
+        }
+    }
+
+    /**
+     * Despacha un overhaul con la <strong>regla de la cima</strong>: se mira la cima del montículo
+     * y, si su máquina está libre, se extrae, se desencola un técnico del fabricante y la máquina
+     * entra en overhaul. Si la máquina de la cima no está libre, se espera: no se salta a la
+     * segunda solicitud, porque eso sería sacar del montículo un elemento que no es la cima.
+     *
+     * <p>Descarte perezoso: una solicitud de una compañía en quiebra se extrae y se descarta cuando
+     * llega a la cima, para que no bloquee para siempre los overhauls de las demás.</p>
+     *
+     * <p>Complejidad: O(log s) por la extracción.</p>
+     *
+     * @return {@code true} si se despachó un overhaul
+     */
+    private boolean asignarUnOverhaul() {
+        while (!solicitudes.isEmpty() && companias.get(solicitudes.peek().idCompania()).enQuiebra()) {
+            SolicitudOverhaul descartada = solicitudes.poll();
+            Planta compania = companias.get(descartada.idCompania());
+            compania.maquina(descartada.indiceMaquina()).marcarOverhaulPendiente(false);
+            compania.anotar("Overhaul de " + descartada.etiqueta() + " descartado: la compañía está en quiebra");
+        }
+        if (externosLibres.isEmpty() || solicitudes.isEmpty()) {
+            return false;
+        }
+        SolicitudOverhaul cima = solicitudes.peek();
+        Planta compania = companias.get(cima.idCompania());
+        Maquina maquina = compania.maquina(cima.indiceMaquina());
+        if (!libreParaOverhaul(maquina)) {
+            return false;
+        }
+        solicitudes.poll();
+        TecnicoExterno externo = externosLibres.poll();
+        externo.asignar(cima);
+        maquina.marcarOverhaulPendiente(false);
+        compania.iniciarOverhaul(cima.indiceMaquina(), externo.nombre());
+        return true;
+    }
+
+    /**
+     * Una máquina está libre para el overhaul si no tiene alarma activa (y por eso tampoco una
+     * orden correctiva pendiente) y está operando o parada a mano.
+     */
+    private static boolean libreParaOverhaul(Maquina maquina) {
+        return !maquina.alarmaActiva()
+                && (maquina.estado() == EstadoMaquina.OPERANDO
+                || maquina.estado() == EstadoMaquina.PARADA_MANUAL);
     }
 
     /**
