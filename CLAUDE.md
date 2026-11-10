@@ -448,7 +448,7 @@ El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no so
 ### Valores iniciales (PROVISIONALES — los define Cristian)
 - **3 compañías**, cada una con las 6 máquinas de la sección 6 y 2 técnicos internos, con semillas derivadas de la maestra.
 - **2 técnicos del fabricante**, compartidos. El overhaul dura **30 ticks**.
-- `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 2. Horizonte del historial: 2000 ticks.
+- `umbralOverhaul` = 12 puntos, `maximoOverhauls` = 3 (subido de 2 el 10 de noviembre). Horizonte del historial: 2000 ticks.
 - Todos estos valores van en `ConfiguracionPlanta` (o en una `ConfiguracionOrganizacion` si crece demasiado; se propone antes de crearla).
 
 ### Superficie de la API (borrador; el contrato final está en `docs/API.md`)

@@ -57,6 +57,22 @@ public final class ConfiguracionPlanta {
      */
     private static final int[] PESO_MAGNITUD = {80, 15, 5};
 
+    // ---------------------------------------------------------------------------------
+    // Puntaje de fallos y recomendación (Entrega 2). Valores PROVISIONALES.
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Puntaje de fallos a partir del cual se recomienda un overhaul. Con los pesos de
+     * {@link Prioridad#peso()}, equivale por ejemplo a cuatro fallos P1 o doce fallos P3.
+     */
+    public static final int UMBRAL_OVERHAUL = 12;
+
+    /**
+     * Número de overhauls a partir del cual, si la máquina vuelve a superar el umbral, se
+     * recomienda reemplazarla en vez de hacerle otro overhaul.
+     */
+    public static final int MAXIMO_OVERHAULS = 3;
+
     /** Nombres de los técnicos. Son menos que las máquinas, para que se formen filas. */
     private static final List<String> NOMBRES_TECNICOS = List.of("Ana", "Luis");
 

@@ -231,6 +231,16 @@ Convención de la columna **Autoría**:
 | `estructuras/package-info.java` | IA | Menciona la nueva estructura propia |
 | `test/.../ArbolSegmentosTest.java` | IA | 4 pruebas del plan sobre un árbol de tamaño 6 (con hojas de relleno) |
 
+### Entrega 2 — Commit 11: peso de fallo, puntaje y recomendación
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Prioridad.java` | IA | Campo `peso`: P1 = 3, P2 = 2, P3 = 1, P4 = 0 |
+| `modelo/Maquina.java` | IA | `puntajeFallos`, `numeroOverhauls` y `recomendacion()`; `sumarPuntaje` y `completarOverhaul` con visibilidad de paquete |
+| `modelo/Recomendacion.java` | IA | Enum `NINGUNA` / `OVERHAUL` / `REEMPLAZO` |
+| `modelo/ConfiguracionPlanta.java` | IA | `UMBRAL_OVERHAUL = 12`; `MAXIMO_OVERHAULS = 3`, valor que decidió el equipo |
+| `test/.../MaquinaTest.java` | IA | 4 pruebas de la recomendación |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

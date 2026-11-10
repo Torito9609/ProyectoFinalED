@@ -28,16 +28,16 @@ package edu.unal.planta.modelo;
 public enum Prioridad {
 
     /** Prioridad máxima: la lectura superó el umbral crítico y la máquina debe detenerse ya. */
-    P1(0, "CRÍTICA", "Paro inmediato de la máquina", 0xC62828),
+    P1(0, "CRÍTICA", "Paro inmediato de la máquina", 0xC62828, 3),
 
     /** La lectura superó el umbral alto: hay que atenderla dentro del turno. */
-    P2(1, "ALTA", "Atender en el turno", 0xEF6C00),
+    P2(1, "ALTA", "Atender en el turno", 0xEF6C00, 2),
 
     /** La lectura superó el umbral de advertencia: conviene ir a revisar. */
-    P3(2, "MEDIA", "Ir a revisar", 0xF9A825),
+    P3(2, "MEDIA", "Ir a revisar", 0xF9A825, 1),
 
-    /** No hay fallo: se cumplió el intervalo de mantenimiento preventivo. */
-    P4(3, "BAJA", "Mantenimiento programado", 0x1565C0);
+    /** No hay fallo: se cumplió el intervalo de mantenimiento preventivo. Por eso su peso es 0. */
+    P4(3, "BAJA", "Mantenimiento programado", 0x1565C0, 0);
 
     /** Cantidad de niveles de prioridad; es el tamaño del arreglo de colas. */
     public static final int NIVELES = values().length;
@@ -58,6 +58,7 @@ public enum Prioridad {
     private final String descripcion;
     private final String accion;
     private final int rgb;
+    private final int peso;
 
     /**
      * Crea una prioridad.
@@ -66,12 +67,14 @@ public enum Prioridad {
      * @param descripcion nombre legible del nivel
      * @param accion     qué debe hacer el operador ante una orden de esta prioridad
      * @param rgb        color asociado, en formato {@code 0xRRGGBB}
+     * @param peso       puntos de fallo que suma a la máquina; 0 si no es un fallo
      */
-    Prioridad(int nivel, String descripcion, String accion, int rgb) {
+    Prioridad(int nivel, String descripcion, String accion, int rgb, int peso) {
         this.nivel = nivel;
         this.descripcion = descripcion;
         this.accion = accion;
         this.rgb = rgb;
+        this.peso = peso;
     }
 
     /**
@@ -118,6 +121,21 @@ public enum Prioridad {
      */
     public int rgb() {
         return rgb;
+    }
+
+    /**
+     * Devuelve cuántos puntos de fallo suma una orden de esta prioridad al puntaje de la máquina.
+     *
+     * <p>El puntaje pondera los fallos por severidad: P1 = 3, P2 = 2, P3 = 1. Un preventivo (P4)
+     * vale 0, porque no es un fallo sino un trabajo programado. El peso es parte del significado de
+     * la prioridad, como su color; por eso vive aquí y no en {@link ConfiguracionPlanta}.</p>
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return peso del fallo, entre 0 y 3
+     */
+    public int peso() {
+        return peso;
     }
 
     /**

@@ -44,6 +44,16 @@ public final class Maquina {
     private boolean preventivaPendiente;
 
     /**
+     * Fallos ponderados por {@link Prioridad#peso()}, acumulados desde el último overhaul. Es la
+     * clave de orden del ranking de fallos: solo cambia con {@link #sumarPuntaje(int)}, que no es
+     * pública.
+     */
+    private int puntajeFallos;
+
+    /** Cuántos overhauls ha recibido la máquina desde que se instaló. */
+    private int numeroOverhauls;
+
+    /**
      * Crea una máquina lista para operar.
      *
      * @param etiqueta            identificador visible, por ejemplo {@code "PRENSA-01"}
@@ -83,6 +93,8 @@ public final class Maquina {
         this.anomalia = null;
         this.alarmaActiva = false;
         this.preventivaPendiente = false;
+        this.puntajeFallos = 0;
+        this.numeroOverhauls = 0;
     }
 
     /**
@@ -360,6 +372,90 @@ public final class Maquina {
     }
 
     /**
+     * Devuelve el puntaje de fallos acumulado desde el último overhaul.
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return puntaje ponderado, 0 o más
+     */
+    public int puntajeFallos() {
+        return puntajeFallos;
+    }
+
+    /**
+     * Devuelve cuántos overhauls ha recibido la máquina.
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return número de overhauls, 0 o más
+     */
+    public int numeroOverhauls() {
+        return numeroOverhauls;
+    }
+
+    /**
+     * Calcula qué se le recomienda a la máquina según su puntaje y sus overhauls.
+     *
+     * <p>Es un dato <strong>derivado</strong>: se calcula cada vez y no se guarda, así nunca queda
+     * desactualizado respecto al puntaje.</p>
+     * <ul>
+     *   <li>puntaje menor que {@link ConfiguracionPlanta#UMBRAL_OVERHAUL}: ninguna;</li>
+     *   <li>puntaje en el umbral o más, con {@link ConfiguracionPlanta#MAXIMO_OVERHAULS} overhauls
+     *   o más: reemplazo;</li>
+     *   <li>puntaje en el umbral o más, con menos overhauls: overhaul.</li>
+     * </ul>
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return la recomendación actual
+     */
+    public Recomendacion recomendacion() {
+        if (puntajeFallos < ConfiguracionPlanta.UMBRAL_OVERHAUL) {
+            return Recomendacion.NINGUNA;
+        }
+        if (numeroOverhauls >= ConfiguracionPlanta.MAXIMO_OVERHAULS) {
+            return Recomendacion.REEMPLAZO;
+        }
+        return Recomendacion.OVERHAUL;
+    }
+
+    /**
+     * Suma puntos de fallo a la máquina.
+     *
+     * <p><strong>Visibilidad de paquete a propósito.</strong> El puntaje es la clave de orden del
+     * ranking, que es un {@code TreeSet}. Si cambiara con la máquina dentro del árbol, el árbol
+     * quedaría desordenado y {@code remove} dejaría de encontrarla, sin lanzar ningún error. Por eso
+     * solo lo cambia el ranking, que primero saca la máquina, luego suma y luego la vuelve a
+     * insertar. Fuera del paquete {@code modelo}, el compilador impide llamar este método.</p>
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @param peso puntos a sumar, 0 o más (ver {@link Prioridad#peso()})
+     * @throws IllegalArgumentException si el peso es negativo
+     */
+    void sumarPuntaje(int peso) {
+        if (peso < 0) {
+            throw new IllegalArgumentException("El peso de un fallo no puede ser negativo: " + peso);
+        }
+        puntajeFallos += peso;
+    }
+
+    /**
+     * Registra que la máquina recibió un overhaul: el puntaje vuelve a 0 y el contador de
+     * overhauls sube en 1.
+     *
+     * <p>Solo cubre lo que le toca a la máquina. El resto del cierre del overhaul (el estado, el
+     * reloj del preventivo y la reinserción en los rankings) lo hace quien lo coordina. Tiene
+     * visibilidad de paquete por la misma razón que {@link #sumarPuntaje(int)}.</p>
+     *
+     * <p>Complejidad: O(1).</p>
+     */
+    void completarOverhaul() {
+        puntajeFallos = 0;
+        numeroOverhauls++;
+    }
+
+    /**
      * Devuelve la máquina a su estado inicial, para la acción "Reiniciar" de la simulación.
      */
     public void reiniciar() {
@@ -369,6 +465,8 @@ public final class Maquina {
         anomalia = null;
         alarmaActiva = false;
         preventivaPendiente = false;
+        puntajeFallos = 0;
+        numeroOverhauls = 0;
         lecturas.vaciar();
     }
 
