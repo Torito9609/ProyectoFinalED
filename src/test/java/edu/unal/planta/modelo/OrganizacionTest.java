@@ -58,6 +58,18 @@ class OrganizacionTest {
     }
 
     @Test
+    @DisplayName("el modo llega a todas las compañías, incluida una creada después del cambio")
+    void modoEnTodasLasCompanias() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+
+        organizacion.cambiarModo(ModoSimulacion.MANUAL);
+        Planta nueva = organizacion.crearCompania("Planta Oriente");
+
+        assertTrue(organizacion.companias().stream().allMatch(c -> c.modo() == ModoSimulacion.MANUAL));
+        assertEquals(ModoSimulacion.MANUAL, nueva.modo());
+    }
+
+    @Test
     @DisplayName("la consulta por puntaje mínimo coincide con filtrar el ranking completo")
     void rankingConPuntajeMinimo() {
         Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);

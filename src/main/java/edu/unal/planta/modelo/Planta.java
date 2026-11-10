@@ -92,6 +92,9 @@ public final class Planta {
     private int tick;
     private int siguienteIdOrden;
 
+    /** Quién dispara los pasos 1, 4 y 6 del tick: el reloj o el jugador. */
+    private ModoSimulacion modo;
+
     /**
      * Crea una planta suelta, sin organización: la planta única de la Entrega 1.
      *
@@ -141,6 +144,7 @@ public final class Planta {
         this.generador = new GeneradorFallos(semilla);
         this.tick = tickInicial;
         this.siguienteIdOrden = 1;
+        this.modo = ModoSimulacion.AUTOMATICO;
         registrar("Planta iniciada con semilla " + semilla);
     }
 
@@ -156,16 +160,26 @@ public final class Planta {
      * asignar nuevos, para que un técnico que acaba de terminar pueda recibir otra orden en el
      * mismo tick.</p>
      *
+     * <p>En {@linkplain ModoSimulacion#MANUAL modo manual} se saltan los pasos 1 (fallos
+     * aleatorios), 4 (clasificar) y 6 (asignar): el jugador los dispara con
+     * {@link #inyectarFallo}, {@link #clasificarSiguiente()} y {@link #asignarSiguiente()}.</p>
+     *
      * <p>Al final avisa a los observadores. No es segura para hilos: quien la use debe serializar
      * el acceso, como hace el servicio de simulación con sus métodos {@code synchronized}.</p>
      */
     public void tick() {
-        generarFallos();
+        if (modo == ModoSimulacion.AUTOMATICO) {
+            generarFallos();
+        }
         leerSensores();
         detectarAnomalias();
-        clasificarUnEvento();
+        if (modo == ModoSimulacion.AUTOMATICO) {
+            clasificarUnEvento();
+        }
         avanzarTrabajos();
-        asignarTrabajos();
+        if (modo == ModoSimulacion.AUTOMATICO) {
+            asignarTrabajos();
+        }
         revisarPreventivos();
         tick++;
         notificar();
@@ -268,11 +282,15 @@ public final class Planta {
      * <p>El fallo se suma al ranking aquí, cuando ocurre, y no cada cierto tiempo: reubicar una
      * máquina cuesta O(log n), mientras que reordenar todo en cada tick costaría O(n log n) aunque
      * no hubiera fallos nuevos.</p>
+     *
+     * <p>En modo manual lo dispara {@link #clasificarSiguiente()}.</p>
+     *
+     * @return {@code true} si había un evento y se clasificó; {@code false} si la cola estaba vacía
      */
-    private void clasificarUnEvento() {
+    private boolean clasificarUnEvento() {
         EventoFallo evento = eventos.poll();
         if (evento == null) {
-            return;
+            return false;
         }
         Maquina maquina = inventario.get(evento.indiceMaquina());
         Sensor sensor = maquina.sensor(evento.indiceSensor());
@@ -285,6 +303,7 @@ public final class Planta {
             maquina.cambiarEstado(EstadoMaquina.DETENIDA);
             registrar(maquina.etiqueta() + ": paro inmediato por alarma crítica");
         }
+        return true;
     }
 
     /**
@@ -331,15 +350,35 @@ public final class Planta {
      * esperando. Aquí se ven trabajando juntas la cola con prioridad y la cola FIFO.</p>
      */
     private void asignarTrabajos() {
-        while (!tecnicosLibres.isEmpty() && !ordenes.estaVacia()) {
-            OrdenTrabajo orden = ordenes.extraer().orElseThrow();
-            Tecnico tecnico = tecnicosLibres.poll();
-            tecnico.asignar(orden);
-            Maquina maquina = inventario.get(orden.indiceMaquina());
-            maquina.cambiarEstado(EstadoMaquina.EN_MANTENIMIENTO);
-            registrar(tecnico.nombre() + " atiende " + orden.etiquetaCorta()
-                    + " (" + orden.prioridad().name() + ", " + orden.duracionEstimadaTicks() + " ticks)");
+        while (asignarUna()) {
+            // Cada vuelta asigna una orden; el ciclo termina cuando falta técnico u orden.
         }
+    }
+
+    /**
+     * Asigna una sola orden: extrae la más prioritaria y desencola el primer técnico libre.
+     *
+     * <p>Es la misma operación en los dos modos: el paso 6 la repite mientras pueda, y en modo
+     * manual la dispara {@link #asignarSiguiente()} una vez. Las estructuras deciden qué sale; el
+     * modo solo decide cuándo.</p>
+     *
+     * <p>Complejidad: O(1). Extraer recorre los 4 niveles fijos de la cola con prioridad y
+     * desencolar es O(1).</p>
+     *
+     * @return {@code true} si se asignó; {@code false} si no había técnico libre u orden pendiente
+     */
+    private boolean asignarUna() {
+        if (tecnicosLibres.isEmpty() || ordenes.estaVacia()) {
+            return false;
+        }
+        OrdenTrabajo orden = ordenes.extraer().orElseThrow();
+        Tecnico tecnico = tecnicosLibres.poll();
+        tecnico.asignar(orden);
+        Maquina maquina = inventario.get(orden.indiceMaquina());
+        maquina.cambiarEstado(EstadoMaquina.EN_MANTENIMIENTO);
+        registrar(tecnico.nombre() + " atiende " + orden.etiquetaCorta()
+                + " (" + orden.prioridad().name() + ", " + orden.duracionEstimadaTicks() + " ticks)");
+        return true;
     }
 
     /**
@@ -391,7 +430,8 @@ public final class Planta {
         generador = new GeneradorFallos(semilla);
         tick = 0;
         siguienteIdOrden = 1;
-        registrar("Planta reiniciada con semilla " + semilla);
+        // El modo no se toca: reiniciar en medio de una demostración en manual sigue en manual.
+        registrar("Planta reiniciada con semilla " + semilla + " (modo " + modo.descripcion() + ")");
         notificar();
     }
 
@@ -434,6 +474,89 @@ public final class Planta {
             registrar("Descartado, la simulación ya cambió el estado: " + comando.descripcion());
         }
         notificar();
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Modo manual
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Cambia quién dispara los pasos 1, 4 y 6 del tick. Se puede hacer con la simulación en marcha.
+     *
+     * <p>No se apila en la pila de deshacer: es un interruptor de la simulación, no una acción
+     * sobre una máquina. Si el modo no cambia, no hace nada.</p>
+     *
+     * @param nuevo modo nuevo
+     * @throws NullPointerException si el modo es nulo
+     */
+    public void cambiarModo(ModoSimulacion nuevo) {
+        Objects.requireNonNull(nuevo, "El modo no puede ser nulo");
+        if (nuevo == modo) {
+            return;
+        }
+        modo = nuevo;
+        registrar("Modo " + modo.descripcion());
+        notificar();
+    }
+
+    /**
+     * Devuelve el modo actual.
+     *
+     * @return el modo de la simulación
+     */
+    public ModoSimulacion modo() {
+        return modo;
+    }
+
+    /**
+     * Botón del modo manual: clasifica el siguiente evento de la cola, el más antiguo.
+     *
+     * <p>Ejecuta el mismo paso 4 del tick automático. El jugador no elige el evento: la cola FIFO
+     * entrega su frente.</p>
+     *
+     * <p>Complejidad: O(log n) por la actualización del ranking; desencolar e insertar en la cola
+     * con prioridad son O(1).</p>
+     *
+     * @return {@code true} si se clasificó un evento; {@code false} si no había ninguno, y entonces
+     *         queda la razón en la bitácora
+     * @throws IllegalStateException si la simulación está en modo automático
+     */
+    public boolean clasificarSiguiente() {
+        exigirModoManual();
+        boolean clasificado = clasificarUnEvento();
+        if (!clasificado) {
+            registrar("No hay eventos por clasificar");
+        }
+        notificar();
+        return clasificado;
+    }
+
+    /**
+     * Botón del modo manual: asigna la orden más prioritaria al primer técnico libre.
+     *
+     * <p>Ejecuta una vuelta del mismo paso 6 del tick automático. El jugador no elige la orden ni
+     * el técnico: la cola con prioridad y la cola FIFO entregan su siguiente elemento.</p>
+     *
+     * <p>Complejidad: O(1).</p>
+     *
+     * @return {@code true} si se asignó; {@code false} si no había técnico libre u orden pendiente,
+     *         y entonces queda la razón en la bitácora
+     * @throws IllegalStateException si la simulación está en modo automático
+     */
+    public boolean asignarSiguiente() {
+        exigirModoManual();
+        boolean asignada = asignarUna();
+        if (!asignada) {
+            registrar(ordenes.estaVacia() ? "No hay órdenes por asignar" : "No hay técnicos libres");
+        }
+        notificar();
+        return asignada;
+    }
+
+    private void exigirModoManual() {
+        if (modo != ModoSimulacion.MANUAL) {
+            throw new IllegalStateException("La acción solo está disponible en modo manual");
+        }
     }
 
     /**

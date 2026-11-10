@@ -225,6 +225,70 @@ class PlantaTest {
         assertEquals(VIBRACION, anomalia.indiceSensor());
     }
 
+    @Test
+    @DisplayName("en modo manual no aparecen fallos solos, ni se clasifica ni se asigna nada solo")
+    void manualNoPasaNadaSolo() {
+        Planta planta = new Planta(SEMILLA);
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+
+        for (int i = 0; i < 200; i++) {
+            planta.tick();
+        }
+
+        assertTrue(planta.inventario().stream().noneMatch(Maquina::tieneAnomalia),
+                "en manual los fallos solo se inyectan");
+        assertTrue(planta.ordenes().tamano() > 0, "los preventivos siguen generándose solos");
+        assertEquals(planta.tecnicos().size(), planta.tecnicosLibres().size(),
+                "pero nadie los asigna: todos los técnicos siguen libres");
+
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
+        planta.tick();
+        assertEquals(1, planta.eventosPendientes().size(),
+                "el evento se detecta solo, pero se queda en la cola hasta que el jugador clasifique");
+    }
+
+    @Test
+    @DisplayName("en modo manual el jugador clasifica y asigna, y las estructuras deciden qué sale")
+    void manualClasificarYAsignar() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.SEVERA);
+        planta.tick();
+
+        assertTrue(planta.clasificarSiguiente());
+        assertTrue(planta.eventosPendientes().isEmpty());
+        assertEquals(1, planta.ordenes().tamanoNivel(Prioridad.P1));
+        assertEquals(EstadoMaquina.DETENIDA, planta.maquina(PRENSA).estado());
+
+        assertTrue(planta.asignarSiguiente());
+        assertEquals(EstadoMaquina.EN_MANTENIMIENTO, planta.maquina(PRENSA).estado());
+        assertEquals(PRENSA, ordenEnCurso(planta).orElseThrow().indiceMaquina());
+
+        assertFalse(planta.clasificarSiguiente(), "ya no quedan eventos");
+        assertEquals("Tick 1: No hay eventos por clasificar", planta.bitacora().getLast());
+    }
+
+    @Test
+    @DisplayName("los botones del modo manual se rechazan en modo automático")
+    void botonesRechazadosEnAutomatico() {
+        Planta planta = new Planta(SEMILLA);
+
+        assertThrows(IllegalStateException.class, planta::clasificarSiguiente);
+        assertThrows(IllegalStateException.class, planta::asignarSiguiente);
+    }
+
+    @Test
+    @DisplayName("reiniciar conserva el modo")
+    void reiniciarConservaElModo() {
+        Planta planta = new Planta(SEMILLA);
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+        planta.tick();
+
+        planta.reiniciar();
+
+        assertEquals(ModoSimulacion.MANUAL, planta.modo());
+    }
+
     /**
      * Crea una planta donde ninguna máquina falla por azar, poniendo su carga en cero.
      *

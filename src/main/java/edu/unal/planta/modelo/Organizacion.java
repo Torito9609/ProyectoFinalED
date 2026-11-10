@@ -62,6 +62,9 @@ public final class Organizacion {
 
     private int tick;
 
+    /** Modo de todas las compañías; una compañía creada después lo hereda. */
+    private ModoSimulacion modo;
+
     /**
      * Crea la organización con las compañías de la configuración, listas para el primer tick.
      *
@@ -76,6 +79,7 @@ public final class Organizacion {
         this.companias = new ArrayList<>();
         this.nombres = new TreeSet<>();
         this.tick = 0;
+        this.modo = ModoSimulacion.AUTOMATICO;
         for (String nombre : ConfiguracionPlanta.NOMBRES_COMPANIAS) {
             crearCompania(nombre);
         }
@@ -99,7 +103,7 @@ public final class Organizacion {
      *
      * <p>Su id es el número de compañías que ya había, y su semilla se deriva de la maestra y de ese
      * id. Arranca con las máquinas y los técnicos de la configuración, conectada al ranking global,
-     * y en el tick actual de la organización. No se puede eliminar.</p>
+     * en el tick actual de la organización y en su modo actual. No se puede eliminar.</p>
      *
      * <p>Complejidad: O(log c) por el conjunto de nombres, más crear la planta, que inserta sus
      * máquinas en el ranking global: O(m log N), con m sus máquinas y N el total.</p>
@@ -120,6 +124,7 @@ public final class Organizacion {
         int id = companias.size();
         Planta compania = new Planta(id, nombre.strip(), semillaCompania(semillaMaestra, id),
                 rankingGlobal, tick);
+        compania.cambiarModo(modo);
         companias.add(compania);
         nombres.add(clave);
         return compania;
@@ -159,10 +164,35 @@ public final class Organizacion {
     }
 
     /**
+     * Cambia el modo de todas las compañías, con la simulación en marcha o en pausa.
+     *
+     * <p>Complejidad: O(c), con c el número de compañías.</p>
+     *
+     * @param nuevo modo nuevo
+     * @throws NullPointerException si el modo es nulo
+     */
+    public void cambiarModo(ModoSimulacion nuevo) {
+        modo = Objects.requireNonNull(nuevo, "El modo no puede ser nulo");
+        for (Planta compania : companias) {
+            compania.cambiarModo(nuevo);
+        }
+    }
+
+    /**
+     * Devuelve el modo de la organización.
+     *
+     * @return el modo de todas las compañías
+     */
+    public ModoSimulacion modo() {
+        return modo;
+    }
+
+    /**
      * Devuelve todas las compañías a su estado inicial, con las mismas semillas.
      *
      * <p>Cada planta saca sus máquinas del ranking global antes de reiniciarlas y las vuelve a
-     * meter después, así que el ranking global queda consistente sin rearmarlo.</p>
+     * meter después, así que el ranking global queda consistente sin rearmarlo. El modo se
+     * conserva.</p>
      */
     public void reiniciar() {
         for (Planta compania : companias) {

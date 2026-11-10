@@ -321,6 +321,15 @@ Convención de la columna **Autoría**:
 |---|---|---|
 | `CLAUDE.md`, `docs/BITACORA_DESARROLLO.md` | Mixto | Las ideas (juego de gestión, presupuesto, especialidades, tipo de fallo, dificultad, conservar el historial de fallos) son del equipo; la IA propuso la regla central, las reglas de desgaste y la redacción |
 
+### Entrega 2 — Commit 14: modo manual
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ModoSimulacion.java` | IA | `AUTOMATICO` y `MANUAL` |
+| `modelo/Planta.java` | IA | El tick se salta los pasos 1, 4 y 6 en manual; `clasificarSiguiente` y `asignarSiguiente` reutilizan el paso 4 y `asignarUna` (el cuerpo del paso 6); reiniciar conserva el modo |
+| `modelo/Organizacion.java` | IA | `cambiarModo` aplica el modo a todas las compañías; una compañía creada después lo hereda |
+| `test/.../PlantaTest.java`, `OrganizacionTest.java` | IA | 5 pruebas: nada pasa solo en manual, el ciclo clasificar → asignar, los botones rechazados en automático, reiniciar conserva el modo y el modo llega a todas |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
