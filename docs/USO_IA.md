@@ -398,6 +398,17 @@ Convención de la columna **Autoría**:
 | `modelo/Contabilidad.java` | IA | El costo del tick se pone en 0 al registrar el historial (aprobado por el equipo) |
 | `test/.../OrganizacionTest.java`, `PlantaTest.java` | IA | 2 pruebas nuevas (ventana por compañía y global contra un cálculo directo; reemplazo entre ticks y reinicio) y 1 ajustada |
 
+### Entrega 2 — Commit 20: endpoints del modo manual y la partida
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `api/dto/ModoDto.java`, `AsignacionDto.java`, `ResumenPartidaDto.java` | IA | Cuerpos del modo y de la asignación; resumen de la partida |
+| `api/dto/EstadoSimulacionDto.java`, `EstadoPlantaDto.java`, `ResumenCompaniaDto.java` | IA | Modo, partida, caja, ingresos, costos, fallos, disponibilidad y quiebra |
+| `servicio/ServicioSimulacion.java` | IA | `cambiarModo`, `clasificarSiguiente`, `asignarSiguiente` (409 si el botón no tiene efecto), `resumenPartida` y un conversor de enumerados |
+| `api/ControladorSimulacion.java`, `ControladorOperador.java` | IA | `PUT /simulacion/modo`, `GET /partida/resumen`, `POST clasificar-siguiente` y `asignar-siguiente` |
+| `test/.../ControladorJuegoTest.java` | IA | 4 pruebas MockMvc: el modo, los botones en automático, el ciclo manual y la economía con el resumen |
+| `docs/API.md` | IA | Contrato de los endpoints nuevos |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

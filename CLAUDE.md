@@ -553,7 +553,7 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 
 **Numeración:** el 10 de noviembre se pospuso el árbol n-ario y se agregó crear compañías y máquinas. Para no romper las referencias de la bitácora, los números no se corren: el 9 queda pospuesto y los commits nuevos llevan letra (13a, 13b, 19a).
 
-**Orden de ejecución (decisión del 10 de noviembre):** los números identifican cada commit, pero no fijan el orden. Después del 13b se hace una **pausa de QA con el frontend** (el repositorio hermano `ProyectoFinalED-frontend`, que arranca contra la API de la Entrega 1), y luego se adelantan los commits de API que no dependen del resto del modelo: **19 → 19a → 21**, para que el frontend pueda correr en automático varias compañías, crear compañías y máquinas y ver el ranking. Después siguen **14 → 14a → 14b → 15 → 16 → 17 → 18 → 14c → 20 → 22 → 23** y la etapa F. La dificultad (14c) va después del historial porque se calibra con todo lo demás funcionando.
+**Orden de ejecución (decisión del 10 de noviembre):** los números identifican cada commit, pero no fijan el orden. Después del 13b se hace una **pausa de QA con el frontend** (el repositorio hermano `ProyectoFinalED-frontend`, que arranca contra la API de la Entrega 1), y luego se adelantan los commits de API que no dependen del resto del modelo: **19 → 19a → 21**, para que el frontend pueda correr en automático varias compañías, crear compañías y máquinas y ver el ranking. Después siguen **14 → 14a → 14b → 15 → 16 → 17 → 18 → 20 → 22 → 23 → 14c** y la etapa F. La dificultad (14c) va al final (decisión del 10 de noviembre, después del 18): se calibra mejor jugando, con toda la API del juego disponible en el frontend. Por eso la dificultad al reiniciar sale del commit 20 y entra con el 14c.
 
 ### Etapa C — Estructuras nuevas (`estructuras/`, genéricas y sin dominio)
 9. ~~`feat: árbol n-ario genérico`~~ **Pospuesto** a la opción B (etapa G).
@@ -577,7 +577,7 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 ### Etapa E — API de la Entrega 2
 19. `refactor: el servicio usa la organización y rutas por compañía`: `/api/companias` y `/api/companias/{id}/...`, con `docs/API.md` actualizado.
 19a. `feat: endpoints para crear compañías y máquinas`: `POST /api/companias` y `POST /api/companias/{id}/maquinas`, con 400 y 409. Pruebas MockMvc.
-20. `feat: endpoints del modo manual y la partida`: el modo, clasificar, asignar por especialidad, la caja y la quiebra en los DTOs, la dificultad al reiniciar y el resumen de la partida.
+20. `feat: endpoints del modo manual y la partida`: el modo, clasificar, asignar por especialidad, la caja y la quiebra en los DTOs y el resumen de la partida. La dificultad al reiniciar pasa al 14c.
 21. `feat: endpoints del ranking y las recomendaciones`.
 22. `feat: endpoints de overhaul y reemplazo`.
 23. `feat: endpoint del historial por ventana de ticks`: total y pico de las dos series.

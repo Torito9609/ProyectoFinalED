@@ -1,9 +1,13 @@
 package edu.unal.planta.api;
 
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
+import edu.unal.planta.api.dto.ModoDto;
+import edu.unal.planta.api.dto.ResumenPartidaDto;
 import edu.unal.planta.servicio.ServicioSimulacion;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,7 +38,8 @@ public class ControladorSimulacion {
     }
 
     /**
-     * {@code GET /api/simulacion}: tick, semilla maestra y si la simulación está en ejecución.
+     * {@code GET /api/simulacion}: tick, semilla maestra, si la simulación está en ejecución, el
+     * modo y si la partida terminó.
      *
      * @return el estado de la simulación
      */
@@ -81,5 +86,28 @@ public class ControladorSimulacion {
     @PostMapping("/simulacion/reiniciar")
     public EstadoSimulacionDto reiniciar() {
         return servicio.reiniciar();
+    }
+
+    /**
+     * {@code PUT /api/simulacion/modo}: cambia entre {@code AUTOMATICO} y {@code MANUAL} en todas
+     * las compañías, con la simulación en marcha o en pausa.
+     *
+     * @param cuerpo el modo nuevo
+     * @return el estado de la simulación después de la acción
+     */
+    @PutMapping("/simulacion/modo")
+    public EstadoSimulacionDto cambiarModo(@RequestBody ModoDto cuerpo) {
+        return servicio.cambiarModo(cuerpo.modo());
+    }
+
+    /**
+     * {@code GET /api/partida/resumen}: caja, producción, costos, fallos y disponibilidad de cada
+     * compañía, y si la partida terminó.
+     *
+     * @return el resumen de la partida
+     */
+    @GetMapping("/partida/resumen")
+    public ResumenPartidaDto resumenPartida() {
+        return servicio.resumenPartida();
     }
 }

@@ -21,6 +21,12 @@ import java.util.Map;
  * @param tick           tick actual
  * @param semilla        semilla de esta compañía, derivada de la maestra
  * @param enEjecucion    si el reloj está avanzando la simulación
+ * @param modo           {@code AUTOMATICO} o {@code MANUAL}; los botones de clasificar y asignar
+ *                       solo funcionan en manual
+ * @param caja           dinero disponible; negativo si está en quiebra
+ * @param ingresos       todo lo ingresado en la partida
+ * @param costos         todo lo gastado en la partida
+ * @param enQuiebra      si la compañía está en quiebra: no opera ni acepta acciones
  * @param maquinas       el inventario ({@code ArrayList}), en orden de índice
  * @param eventos        la cola FIFO de eventos, del primero al último en salir
  * @param tecnicos       todos los técnicos, libres u ocupados
@@ -38,6 +44,11 @@ public record EstadoPlantaDto(
         int tick,
         long semilla,
         boolean enEjecucion,
+        String modo,
+        long caja,
+        long ingresos,
+        long costos,
+        boolean enQuiebra,
         List<MaquinaDto> maquinas,
         List<EventoFalloDto> eventos,
         List<TecnicoDto> tecnicos,
@@ -69,6 +80,11 @@ public record EstadoPlantaDto(
                 planta.tickActual(),
                 planta.semilla(),
                 enEjecucion,
+                planta.modo().name(),
+                planta.caja(),
+                planta.ingresos(),
+                planta.costos(),
+                planta.enQuiebra(),
                 List.copyOf(maquinas),
                 planta.eventosPendientes().stream().map(EventoFalloDto::desde).toList(),
                 planta.tecnicos().stream().map(TecnicoDto::desde).toList(),

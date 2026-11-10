@@ -10,6 +10,9 @@ import java.util.Map;
 /**
  * Totales de una compañía, para la lista del dashboard del superusuario.
  *
+ * <p>Trae también la economía de la compañía, así que es además cada fila del resumen de la
+ * partida ({@link ResumenPartidaDto}).</p>
+ *
  * <p>Es una foto, como {@link EstadoPlantaDto}: se arma dentro de un método {@code synchronized} del
  * servicio y no cambia después.</p>
  *
@@ -21,6 +24,12 @@ import java.util.Map;
  * @param eventosPendientes tamaño de la cola de eventos por clasificar
  * @param ordenesPendientes tamaño de la cola con prioridad (los cuatro carriles)
  * @param tecnicosLibres    técnicos libres, sumando las dos colas de especialidad
+ * @param caja              dinero disponible; negativo si está en quiebra
+ * @param ingresos          todo lo ingresado en la partida: la producción
+ * @param costos            todo lo gastado en la partida
+ * @param numeroFallos      fallos clasificados en la partida (órdenes P1 a P3)
+ * @param disponibilidad    fracción del tiempo en que las máquinas produjeron, entre 0 y 1
+ * @param enQuiebra         si la compañía está en quiebra: no opera ni acepta acciones
  * @author Cristian Robayo
  * @author Kevin Toro
  */
@@ -31,7 +40,13 @@ public record ResumenCompaniaDto(
         Map<String, Integer> maquinasPorEstado,
         int eventosPendientes,
         int ordenesPendientes,
-        int tecnicosLibres) {
+        int tecnicosLibres,
+        long caja,
+        long ingresos,
+        long costos,
+        int numeroFallos,
+        double disponibilidad,
+        boolean enQuiebra) {
 
     /**
      * Calcula los totales de una compañía.
@@ -57,6 +72,12 @@ public record ResumenCompaniaDto(
                 Collections.unmodifiableMap(porEstado),
                 planta.eventosPendientes().size(),
                 planta.ordenes().tamano(),
-                planta.totalTecnicosLibres());
+                planta.totalTecnicosLibres(),
+                planta.caja(),
+                planta.ingresos(),
+                planta.costos(),
+                planta.numeroFallos(),
+                planta.disponibilidad(),
+                planta.enQuiebra());
     }
 }

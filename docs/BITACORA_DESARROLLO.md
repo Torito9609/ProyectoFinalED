@@ -36,6 +36,23 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 20 — 2026-11-10 — Endpoints del modo manual y la partida
+
+### Decisiones
+- **El 14c pasa al final** (decisión del equipo, después del 18): primero 20, 22 y 23, para que el
+  frontend tenga toda la API del juego; la calibración se juzga mejor jugando. Por eso la dificultad
+  al reiniciar sale del 20 y entra con el 14c.
+- **Un botón sin efecto responde `409`** (clasificar sin eventos, asignar sin órdenes o sin técnicos
+  de esa especialidad), como deshacer con la pila vacía. El modelo lo registra en la bitácora.
+- **El resumen de la partida reutiliza `ResumenCompaniaDto`**, que ganó la economía: es la misma fila
+  para el dashboard y para el resultado final, y evita otro DTO.
+- El resumen se puede pedir en cualquier momento; `terminada` dice si es el final.
+- Las pruebas del modo manual vuelven a automático al terminar, porque el contexto de Spring se
+  comparte entre las clases de prueba y reiniciar conserva el modo.
+
+### Verificación
+`./mvnw clean test`: **148 pruebas en verde** (4 nuevas). Javadoc sin advertencias.
+
 ## Entrega 2, commit 18 — 2026-11-10 — Historial con árbol de segmentos
 
 ### Hecho
@@ -756,8 +773,8 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b y 15–18 **terminados** (2026-11-10). Sigue el **14c** (calibración y dificultad) |
+| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b y 15–18 **terminados** (2026-11-10). Falta el **14c** (calibración y dificultad), que pasó al final, después del 23 |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
-| E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19, 19a y 21 **terminados** (2026-11-10). Faltan 20, 22 y 23 |
+| E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19, 19a, 20 y 21 **terminados** (2026-11-10). Faltan 22 y 23 |
 | F | 24–25 | Documentación | Pendiente |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |

@@ -1,5 +1,6 @@
 package edu.unal.planta.api;
 
+import edu.unal.planta.api.dto.AsignacionDto;
 import edu.unal.planta.api.dto.CargaDto;
 import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.api.dto.InyeccionFalloDto;
@@ -86,5 +87,30 @@ public class ControladorOperador {
     @PostMapping("/deshacer")
     public EstadoPlantaDto deshacer(@PathVariable int id) {
         return servicio.deshacer(id);
+    }
+
+    /**
+     * {@code POST /api/companias/{id}/clasificar-siguiente}: botón del modo manual; clasifica el
+     * evento del frente de la cola.
+     *
+     * @param id id de la compañía
+     * @return el estado de la compañía después de la acción
+     */
+    @PostMapping("/clasificar-siguiente")
+    public EstadoPlantaDto clasificarSiguiente(@PathVariable int id) {
+        return servicio.clasificarSiguiente(id);
+    }
+
+    /**
+     * {@code POST /api/companias/{id}/asignar-siguiente}: botón del modo manual; asigna la orden más
+     * prioritaria a la cola de técnicos que elige el jugador.
+     *
+     * @param id     id de la compañía
+     * @param cuerpo la especialidad: {@code MECANICO} o {@code ELECTRICO}
+     * @return el estado de la compañía después de la acción
+     */
+    @PostMapping("/asignar-siguiente")
+    public EstadoPlantaDto asignarSiguiente(@PathVariable int id, @RequestBody AsignacionDto cuerpo) {
+        return servicio.asignarSiguiente(id, cuerpo.especialidad());
     }
 }

@@ -39,17 +39,42 @@ El backend no empuja cambios (no hay WebSockets). El frontend pide el estado per
 | `POST` | `/api/simulacion/iniciar` | — | `EstadoSimulacion` |
 | `POST` | `/api/simulacion/pausar` | — | `EstadoSimulacion` |
 | `POST` | `/api/simulacion/paso` | — | `EstadoSimulacion`. Primero pausa y luego avanza **un** tick |
-| `POST` | `/api/simulacion/reiniciar` | — | `EstadoSimulacion`. Pausa y vuelve al tick 0 con la misma semilla. Las compañías y máquinas creadas se conservan |
+| `POST` | `/api/simulacion/reiniciar` | — | `EstadoSimulacion`. Pausa y vuelve al tick 0 con la misma semilla. Las compañías y máquinas creadas se conservan, y también el modo |
+| `PUT` | `/api/simulacion/modo` | `{ "modo": "MANUAL" }` | `EstadoSimulacion`. `AUTOMATICO` o `MANUAL`, sin distinguir mayúsculas. No pausa: el tiempo sigue corriendo |
+| `GET` | `/api/partida/resumen` | — | `ResumenPartida` |
 
 Estas acciones actúan sobre **todas** las compañías a la vez: todas tienen siempre el mismo tick.
 
 **`EstadoSimulacion`**
 
 ```json
-{ "tick": 14, "semilla": 7, "enEjecucion": false }
+{ "tick": 14, "semilla": 7, "enEjecucion": false, "modo": "AUTOMATICO",
+  "duracionPartida": 1000, "partidaTerminada": false }
 ```
 
 `semilla` es la **semilla maestra**. La de la compañía `i` se deriva de ella: `maestra × 1000 + i`.
+
+**Partida:** dura `duracionPartida` ticks. Al llegar, el reloj se pausa, `partidaTerminada` pasa a
+`true` y `paso` ya no avanza: solo `reiniciar` empieza otra partida (y devuelve las cajas al
+presupuesto inicial). Es el momento de mostrar el `ResumenPartida`.
+
+**`ResumenPartida`** (se puede pedir en cualquier momento; con `terminada` en `true` es el final):
+
+```json
+{
+  "tick": 1000, "duracionPartida": 1000, "terminada": true, "modo": "MANUAL",
+  "companias": [ { "id": 0, "nombre": "Planta Norte", "...": "...", "caja": 1840500,
+                   "ingresos": 3420000, "costos": 1879500, "numeroFallos": 186,
+                   "disponibilidad": 0.79, "enQuiebra": false }, "..." ]
+}
+```
+
+Cada elemento de `companias` es un `ResumenCompania` (sección 3). `ingresos` es la producción,
+`numeroFallos` cuenta las órdenes P1 a P3 y `disponibilidad` es la fracción del tiempo en que las
+máquinas produjeron (de 0 a 1).
+
+> **Pendiente (commit 14c):** elegir la dificultad al reiniciar. Hoy no existe: `reiniciar` no recibe
+> cuerpo.
 
 ---
 
@@ -74,13 +99,21 @@ con las 6 máquinas y 2 técnicos.
                          "EN_MANTENIMIENTO": 1, "PARADA_MANUAL": 0, "EN_OVERHAUL": 0 },
   "eventosPendientes": 1,
   "ordenesPendientes": 2,
-  "tecnicosLibres": 0
+  "tecnicosLibres": 0,
+  "caja": 312000,
+  "ingresos": 54000,
+  "costos": 42000,
+  "numeroFallos": 3,
+  "disponibilidad": 0.86,
+  "enQuiebra": false
 }
 ```
 
 `maquinasPorEstado` trae siempre todos los estados, incluso los que tienen 0. `eventosPendientes`,
 `ordenesPendientes` y `tecnicosLibres` son los tamaños de la cola de eventos, de la cola con
-prioridad (los 4 carriles) y de las dos colas de técnicos libres, sumadas.
+prioridad (los 4 carriles) y de las dos colas de técnicos libres, sumadas. `caja` es el dinero
+disponible: si baja de 0, la compañía queda **en quiebra** (`enQuiebra`): su tick sigue avanzando,
+pero no opera y todas sus acciones responden `409`.
 
 **`EstadoPlanta`** (ejemplo del tick 14, recortado con `"..."`):
 
@@ -91,6 +124,11 @@ prioridad (los 4 carriles) y de las dos colas de técnicos libres, sumadas.
   "tick": 14,
   "semilla": 7000,
   "enEjecucion": false,
+  "modo": "AUTOMATICO",
+  "caja": 312000,
+  "ingresos": 54000,
+  "costos": 42000,
+  "enQuiebra": false,
   "maquinas": [
     {
       "indice": 0,
@@ -161,6 +199,7 @@ prioridad (los 4 carriles) y de las dos colas de técnicos libres, sumadas.
 | Campo | Estructura | Cómo leerlo |
 |---|---|---|
 | `semilla` | — | La semilla de **esta** compañía, derivada de la maestra |
+| `modo`, `caja`, `ingresos`, `costos`, `enQuiebra` | — | El modo de la simulación y la economía de la compañía (la misma de `ResumenCompania`). Con `enQuiebra`, conviene mostrar el aviso y deshabilitar los botones |
 | `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO`, `PARADA_MANUAL` o `EN_OVERHAUL` (un técnico del fabricante le hace un overhaul de 30 ticks; no produce). `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
 | `maquinas[i].puntajeFallos` | Clave del ranking (árbol rojo-negro) | Suma de los pesos de sus fallos desde el último overhaul: P1 = 3, P2 = 2, P3 = 1 (un preventivo P4 no suma). `recomendacion` es `NINGUNA`, `OVERHAUL` o `REEMPLAZO` (sección 4b) |
 | `maquinas[i].lecturas` | Cola circular propia | `celdas` va en **orden físico** (índice 0 a 11), no en orden de llegada. Una celda vacía es `null`. `indiceFrente` es la lectura más antigua; `indiceFinal`, donde se escribirá la próxima. Cuando la cola está llena los dos coinciden, y la próxima lectura sobrescribe el frente. `valores[k]` corresponde a `sensores[k]` |
@@ -195,6 +234,28 @@ su propia pila de deshacer.
 - **Deshacer:** revierte la cima de la pila. Si la simulación ya cambió ese estado (por ejemplo, una
   alarma crítica detuvo la máquina), la acción se **descarta** sin revertirse, y la bitácora lo
   explica. Esa respuesta también es `200`.
+
+### Botones del modo manual (el juego de gestión)
+
+| Método | Ruta | Cuerpo | La estructura decide |
+|---|---|---|---|
+| `POST` | `/api/companias/{id}/clasificar-siguiente` | — | La cola FIFO de eventos entrega su frente |
+| `POST` | `/api/companias/{id}/asignar-siguiente` | `{ "especialidad": "MECANICO" }` | La cola con prioridad entrega la orden; la cola de esa especialidad, el técnico |
+
+- **Solo en modo manual.** En automático responden `409` (`La acción solo está disponible en modo
+  manual`). En manual, el reloj sigue leyendo sensores, detectando, avanzando los trabajos, emitiendo
+  preventivos y contabilizando, pero **no** genera fallos aleatorios (se inyectan), **no** clasifica y
+  **no** asigna.
+- **El jugador elige la cola, nunca el elemento.** `especialidad` es `MECANICO` o `ELECTRICO`, sin
+  distinguir mayúsculas. Si no coincide con el `tipoFallo` de la orden, la reparación **tarda el
+  doble** (y cuesta el doble de mano de obra). Para saber a qué cola mandar la orden, se mira el
+  `tipoFallo` de `colaPrioridad.siguiente`.
+- **Si el botón no tiene efecto, responde `409`** y la bitácora lo registra:
+  `No hay eventos por clasificar en Planta Norte`, `No hay órdenes por asignar en Planta Norte` o
+  `No hay técnicos eléctricos libres en Planta Norte`. Conviene deshabilitar el botón cuando
+  `eventos`, `colaPrioridad` o `tecnicosLibres.<especialidad>` están vacíos.
+- No se deshacen: deshacerlos obligaría a reinsertar por el frente de una cola FIFO o a sacar un
+  elemento que no es el siguiente.
 
 ---
 
@@ -287,9 +348,9 @@ Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para 
 
 | Código | Cuándo | Ejemplo de mensaje |
 |---|---|---|
-| `400` | Entrada inválida: carga fuera de rango, magnitud inexistente, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
+| `400` | Entrada inválida: carga fuera de rango, magnitud, modo o especialidad inexistentes, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
 | `404` | La compañía, la máquina o el sensor no existen | `No existe una compañía con id 99` |
-| `409` | La acción no se permite en el estado actual (también si la compañía está en quiebra), o el nombre o la etiqueta ya existen | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
+| `409` | La acción no se permite en el estado actual (también si la compañía está en quiebra, o un botón del modo manual en automático o sin nada que hacer), o el nombre o la etiqueta ya existen | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
 
 En los rechazos `409` de inyectar y deshacer, la bitácora también registra el rechazo.
 

@@ -5,13 +5,16 @@ import edu.unal.planta.api.dto.EntradaRankingDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
 import edu.unal.planta.api.dto.RankingDto;
 import edu.unal.planta.api.dto.ResumenCompaniaDto;
+import edu.unal.planta.api.dto.ResumenPartidaDto;
 import edu.unal.planta.api.dto.TipoMaquinaDto;
 import edu.unal.planta.modelo.ConfiguracionPlanta;
 import edu.unal.planta.modelo.EstadoMaquina;
 import edu.unal.planta.modelo.Magnitud;
 import edu.unal.planta.modelo.Maquina;
+import edu.unal.planta.modelo.ModoSimulacion;
 import edu.unal.planta.modelo.Organizacion;
 import edu.unal.planta.modelo.Planta;
+import edu.unal.planta.modelo.TipoFallo;
 import edu.unal.planta.modelo.TipoMaquina;
 import edu.unal.planta.modelo.comandos.CambiarCargaMaquina;
 import edu.unal.planta.modelo.comandos.PararOArrancarMaquina;
@@ -124,6 +127,72 @@ public class ServicioSimulacion {
         enEjecucion = false;
         organizacion.reiniciar();
         return estadoSimulacion();
+    }
+
+    /**
+     * Cambia el modo de todas las compañías, con la simulación en marcha o en pausa. No pausa ni
+     * reinicia nada: el tiempo sigue corriendo, como en un juego de gestión.
+     *
+     * @param modo {@code AUTOMATICO} o {@code MANUAL}, sin distinguir mayúsculas
+     * @return el estado de la simulación después de la acción
+     * @throws IllegalArgumentException si el modo falta o no existe
+     */
+    public synchronized EstadoSimulacionDto cambiarModo(String modo) {
+        organizacion.cambiarModo(convertir(ModoSimulacion.class, modo, "el modo"));
+        return estadoSimulacion();
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Botones del modo manual
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Botón del modo manual: clasifica el evento del frente de la cola FIFO de una compañía. El
+     * jugador no elige el evento.
+     *
+     * <p>Si la cola está vacía, el modelo lo anota en la bitácora y se responde {@code 409}, como
+     * al deshacer con la pila vacía: el botón no tuvo efecto.</p>
+     *
+     * @param idCompania id de la compañía
+     * @return el estado de la compañía después de la acción
+     * @throws NoEncontradoException      si la compañía no existe
+     * @throws IllegalStateException      si la simulación está en automático o la compañía en
+     *                                    quiebra
+     * @throws AccionNoPermitidaException si no hay eventos por clasificar
+     */
+    public synchronized EstadoPlantaDto clasificarSiguiente(int idCompania) {
+        Planta planta = buscarCompania(idCompania);
+        if (!planta.clasificarSiguiente()) {
+            throw new AccionNoPermitidaException("No hay eventos por clasificar en " + planta.nombre());
+        }
+        return EstadoPlantaDto.desde(planta, enEjecucion);
+    }
+
+    /**
+     * Botón del modo manual: asigna la orden más prioritaria al primer técnico libre de la
+     * especialidad que elige el jugador. La cola con prioridad entrega la orden y la cola FIFO de
+     * esa especialidad entrega el técnico; con la especialidad equivocada, la reparación tarda el
+     * doble.
+     *
+     * @param idCompania   id de la compañía
+     * @param especialidad {@code MECANICO} o {@code ELECTRICO}, sin distinguir mayúsculas
+     * @return el estado de la compañía después de la acción
+     * @throws NoEncontradoException      si la compañía no existe
+     * @throws IllegalArgumentException   si la especialidad falta o no existe
+     * @throws IllegalStateException      si la simulación está en automático o la compañía en
+     *                                    quiebra
+     * @throws AccionNoPermitidaException si no hay órdenes pendientes o técnicos libres de esa
+     *                                    especialidad
+     */
+    public synchronized EstadoPlantaDto asignarSiguiente(int idCompania, String especialidad) {
+        Planta planta = buscarCompania(idCompania);
+        TipoFallo cola = convertir(TipoFallo.class, especialidad, "la especialidad");
+        if (!planta.asignarSiguiente(cola)) {
+            throw new AccionNoPermitidaException(planta.ordenes().estaVacia()
+                    ? "No hay órdenes por asignar en " + planta.nombre()
+                    : "No hay técnicos " + cola.descripcion() + "s libres en " + planta.nombre());
+        }
+        return EstadoPlantaDto.desde(planta, enEjecucion);
     }
 
     // ---------------------------------------------------------------------------------
@@ -367,6 +436,24 @@ public class ServicioSimulacion {
         }
     }
 
+    /**
+     * Convierte un texto en una constante de un enumerado, sin distinguir mayúsculas. Si falta o no
+     * existe, el mensaje lista las opciones válidas.
+     */
+    private static <E extends Enum<E>> E convertir(Class<E> tipo, String texto, String nombre) {
+        String opciones = Arrays.stream(tipo.getEnumConstants()).map(Enum::name)
+                .collect(Collectors.joining(", "));
+        if (texto == null) {
+            throw new IllegalArgumentException("Falta " + nombre + ": " + opciones);
+        }
+        try {
+            return Enum.valueOf(tipo, texto.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("'" + texto + "' no es válido para " + nombre
+                    + ": use " + opciones);
+        }
+    }
+
     private static Magnitud convertirMagnitud(String texto) {
         if (texto == null) {
             throw new IllegalArgumentException("Falta la magnitud: LEVE, MODERADA o SEVERA");
@@ -440,7 +527,21 @@ public class ServicioSimulacion {
      */
     public synchronized EstadoSimulacionDto estadoSimulacion() {
         return new EstadoSimulacionDto(organizacion.tickActual(), organizacion.semillaMaestra(),
-                enEjecucion);
+                enEjecucion, organizacion.modo().name(), ConfiguracionPlanta.DURACION_PARTIDA,
+                organizacion.partidaTerminada());
+    }
+
+    /**
+     * Devuelve el resultado de la partida, compañía por compañía: caja, producción (ingresos),
+     * costos, fallos y disponibilidad. Se puede pedir antes de que termine.
+     *
+     * <p>Complejidad: O(N), con N el total de máquinas, como {@link #resumenCompanias()}.</p>
+     *
+     * @return el resumen, inmutable
+     */
+    public synchronized ResumenPartidaDto resumenPartida() {
+        return new ResumenPartidaDto(organizacion.tickActual(), ConfiguracionPlanta.DURACION_PARTIDA,
+                organizacion.partidaTerminada(), organizacion.modo().name(), resumenCompanias());
     }
 
     /**
