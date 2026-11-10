@@ -191,6 +191,49 @@ su propia pila de deshacer.
 
 ---
 
+## 4a. Crear compañías y máquinas
+
+| Método | Ruta | Cuerpo | Respuesta |
+|---|---|---|---|
+| `POST` | `/api/companias` | `{ "nombre": "Planta Oriente" }` | **`201`** con el `ResumenCompania` de la nueva (trae su `id`) |
+| `POST` | `/api/companias/{id}/maquinas` | `{ "tipo": "TORNO", "etiqueta": "torno-02" }` | **`201`** con el `EstadoPlanta` de la compañía |
+| `GET` | `/api/tipos-maquina` | — | El catálogo de tipos, para el formulario |
+
+- **Compañía:** el nombre debe ser único en la organización. Se compara sin espacios a los lados y sin
+  distinguir mayúsculas, pero se muestra como se escribió (sin los espacios). Entra al final de la
+  lista con el id siguiente, con las 6 máquinas por defecto y 2 técnicos, y en el **tick actual**:
+  todas las compañías tienen siempre el mismo tick. Su semilla es `maestra × 1000 + id`.
+- **Máquina:** `tipo` es un código del catálogo (no distingue mayúsculas). La etiqueta debe ser única
+  **dentro de su compañía** (en compañías distintas se puede repetir) y se guarda sin espacios a los
+  lados y en mayúsculas. La máquina entra al final del inventario: su `indice` es el siguiente.
+- **No se deshace ni se elimina.** Reiniciar la simulación conserva lo creado y lo devuelve a su
+  estado inicial.
+
+**Catálogo** (`GET /api/tipos-maquina`), en este orden:
+
+```json
+[
+  { "tipo": "PRENSA",    "descripcion": "Prensa hidráulica",            "prefijo": "PRENSA" },
+  { "tipo": "TORNO",     "descripcion": "Torno CNC",                    "prefijo": "TORNO" },
+  { "tipo": "ROBOT",     "descripcion": "Brazo robótico de soldadura",  "prefijo": "ROBOT" },
+  { "tipo": "COMPRESOR", "descripcion": "Compresor de tornillo",        "prefijo": "COMPRES" },
+  { "tipo": "HORNO",     "descripcion": "Horno de tratamiento térmico", "prefijo": "HORNO" },
+  { "tipo": "BOMBA",     "descripcion": "Bomba centrífuga",             "prefijo": "BOMBA" }
+]
+```
+
+El `prefijo` sirve para sugerir la etiqueta siguiente (`TORNO-02`).
+
+| Caso | Código | Ejemplo de mensaje |
+|---|---|---|
+| Nombre o etiqueta vacíos o que faltan | `400` | `El nombre de la compañía no puede estar vacío` |
+| Tipo que no existe | `400` | `El tipo 'GRUA' no existe: use PRENSA, TORNO, ROBOT, COMPRESOR, HORNO, BOMBA` |
+| Nombre de compañía repetido | `409` | `Ya existe una compañía llamada Planta Norte` |
+| Etiqueta repetida en la compañía | `409` | `Ya existe una máquina con etiqueta TORNO-01 en Planta Norte` |
+| La compañía no existe | `404` | `No existe una compañía con id 99` |
+
+---
+
 ## 5. Errores
 
 Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para mostrar:
@@ -203,7 +246,7 @@ Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para 
 |---|---|---|
 | `400` | Entrada inválida: carga fuera de rango, magnitud inexistente, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
 | `404` | La compañía, la máquina o el sensor no existen | `No existe una compañía con id 99` |
-| `409` | La acción no se permite en el estado actual | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
+| `409` | La acción no se permite en el estado actual, o el nombre o la etiqueta ya existen | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
 
 En los rechazos `409` de inyectar y deshacer, la bitácora también registra el rechazo.
 

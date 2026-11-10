@@ -3,15 +3,19 @@ package edu.unal.planta.servicio;
 import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
 import edu.unal.planta.api.dto.ResumenCompaniaDto;
+import edu.unal.planta.api.dto.TipoMaquinaDto;
 import edu.unal.planta.modelo.EstadoMaquina;
 import edu.unal.planta.modelo.Magnitud;
 import edu.unal.planta.modelo.Maquina;
 import edu.unal.planta.modelo.Organizacion;
 import edu.unal.planta.modelo.Planta;
+import edu.unal.planta.modelo.TipoMaquina;
 import edu.unal.planta.modelo.comandos.CambiarCargaMaquina;
 import edu.unal.planta.modelo.comandos.PararOArrancarMaquina;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -224,6 +228,75 @@ public class ServicioSimulacion {
         return EstadoPlantaDto.desde(planta, enEjecucion);
     }
 
+    // ---------------------------------------------------------------------------------
+    // Crear compañías y máquinas
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Crea una compañía nueva al final de la organización, con las máquinas y los técnicos de la
+     * configuración, en el tick actual.
+     *
+     * <p>El modelo rechaza con la misma excepción un nombre vacío y uno repetido, pero para la API
+     * son errores distintos: el vacío es una entrada inválida ({@code 400}) y el repetido choca con
+     * el estado actual ({@code 409}). Por eso aquí se pregunta antes si el nombre ya existe.</p>
+     *
+     * <p>Complejidad: O(log c) para validar el nombre en el conjunto, más crear la planta.</p>
+     *
+     * @param nombre nombre de la compañía
+     * @return los totales de la compañía creada, con su id
+     * @throws IllegalArgumentException   si el nombre falta o está vacío
+     * @throws AccionNoPermitidaException si ya existe una compañía con ese nombre
+     */
+    public synchronized ResumenCompaniaDto crearCompania(String nombre) {
+        if (nombre == null) {
+            throw new IllegalArgumentException("Falta el nombre de la compañía");
+        }
+        if (organizacion.existeCompania(nombre)) {
+            throw new AccionNoPermitidaException("Ya existe una compañía llamada " + nombre.strip());
+        }
+        return ResumenCompaniaDto.desde(organizacion.crearCompania(nombre));
+    }
+
+    /**
+     * Crea una máquina del catálogo al final del inventario de una compañía.
+     *
+     * <p>Como al crear una compañía, la etiqueta repetida se revisa aquí para responder
+     * {@code 409}, y la vacía la rechaza el modelo con {@code 400}.</p>
+     *
+     * <p>Complejidad: O(log n) para validar la etiqueta en el conjunto, más crear la máquina, que
+     * entra en los dos rankings en O(log n) cada uno.</p>
+     *
+     * @param idCompania id de la compañía
+     * @param tipo       código del tipo en el catálogo, por ejemplo {@code TORNO}
+     * @param etiqueta   etiqueta de la máquina; se guarda en mayúsculas
+     * @return el estado de la compañía con la máquina nueva
+     * @throws NoEncontradoException      si la compañía no existe
+     * @throws IllegalArgumentException   si el tipo no existe, o la etiqueta falta o está vacía
+     * @throws AccionNoPermitidaException si la compañía ya tiene una máquina con esa etiqueta
+     */
+    public synchronized EstadoPlantaDto crearMaquina(int idCompania, String tipo, String etiqueta) {
+        Planta planta = buscarCompania(idCompania);
+        TipoMaquina valor = convertirTipo(tipo);
+        if (etiqueta == null) {
+            throw new IllegalArgumentException("Falta la etiqueta de la máquina");
+        }
+        if (planta.existeEtiqueta(etiqueta)) {
+            throw new AccionNoPermitidaException("Ya existe una máquina con etiqueta "
+                    + etiqueta.strip().toUpperCase() + " en " + planta.nombre());
+        }
+        planta.crearMaquina(valor, etiqueta);
+        return EstadoPlantaDto.desde(planta, enEjecucion);
+    }
+
+    /**
+     * Devuelve el catálogo de tipos de máquina, para el formulario de crear máquina.
+     *
+     * @return un elemento por tipo, en el orden del catálogo
+     */
+    public synchronized List<TipoMaquinaDto> tiposMaquina() {
+        return TipoMaquinaDto.catalogo();
+    }
+
     private Planta buscarCompania(int id) {
         if (id < 0 || id >= organizacion.companias().size()) {
             throw new NoEncontradoException("No existe una compañía con id " + id);
@@ -236,6 +309,19 @@ public class ServicioSimulacion {
             throw new NoEncontradoException("No existe una máquina con índice " + indice);
         }
         return planta.maquina(indice);
+    }
+
+    private static TipoMaquina convertirTipo(String texto) {
+        String opciones = Arrays.stream(TipoMaquina.values()).map(Enum::name)
+                .collect(Collectors.joining(", "));
+        if (texto == null) {
+            throw new IllegalArgumentException("Falta el tipo de máquina: " + opciones);
+        }
+        try {
+            return TipoMaquina.valueOf(texto.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("El tipo '" + texto + "' no existe: use " + opciones);
+        }
     }
 
     private static Magnitud convertirMagnitud(String texto) {

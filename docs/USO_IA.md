@@ -293,6 +293,16 @@ Convención de la columna **Autoría**:
 | `test/.../ControladorCompaniasTest.java` y pruebas adaptadas | IA | 4 pruebas nuevas de compañías, 1 de independencia entre compañías y 2 del servicio |
 | `docs/API.md` | IA | Contrato con las rutas por compañía |
 
+### Entrega 2 — Commit 19a: endpoints para crear compañías y máquinas
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `servicio/ServicioSimulacion.java` | IA | `crearCompania`, `crearMaquina` y `tiposMaquina`; el repetido se revisa antes para responder 409 y no 400 |
+| `api/ControladorCompanias.java` | IA | `POST /api/companias`, `POST /api/companias/{id}/maquinas` (201) y `GET /api/tipos-maquina` (opción a del equipo) |
+| `api/dto/CrearCompaniaDto.java`, `CrearMaquinaDto.java`, `TipoMaquinaDto.java` | IA | Cuerpos de las peticiones y el catálogo |
+| `test/.../ControladorCreacionTest.java` | IA | 6 pruebas, con `@DirtiesContext` porque reiniciar conserva lo creado |
+| `docs/API.md` | IA | Sección "Crear compañías y máquinas" |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

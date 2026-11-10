@@ -637,6 +637,6 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
 | D | 11–18, 13a, 13b | Modelo de la Entrega 2, con la creación de compañías y máquinas | 11, 12, 13, 13a y 13b **terminados** (2026-11-10); faltan 14–18 |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
-| E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19 **terminado** (2026-11-10). Sigue el **19a** |
+| E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | 19 y 19a **terminados** (2026-11-10). Sigue el **21** |
 | F | 24–25 | Documentación | Pendiente |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |
