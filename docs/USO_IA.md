@@ -273,6 +273,14 @@ Convención de la columna **Autoría**:
 | `api/dto/MaquinaDto.java` | IA | Envía `tipo().descripcion()`: el JSON no cambia |
 | `test/.../PlantaTest.java`, `OrganizacionTest.java` | IA | 3 pruebas: crear, etiqueta repetida y misma etiqueta en otra compañía |
 
+### Entrega 2 — Commit 13b: crear compañías con nombre único
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Organizacion.java` | IA | `Set<String> nombres = new TreeSet<>()` con clave en minúsculas, `existeCompania` y `crearCompania`; la compañía nueva arranca con las 6 máquinas (opción A del equipo) |
+| `modelo/Planta.java` | IA | Parámetro `tickInicial`: todas las plantas tienen el tick de la organización |
+| `test/.../OrganizacionTest.java` | IA | 2 pruebas: crear a mitad de la simulación y reproducibilidad con creaciones |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

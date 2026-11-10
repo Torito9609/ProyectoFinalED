@@ -100,7 +100,7 @@ public final class Planta {
      * @param semilla semilla del generador aleatorio; la misma semilla repite la simulación
      */
     public Planta(long semilla) {
-        this(0, "Planta", semilla, null);
+        this(0, "Planta", semilla, null, 0);
     }
 
     /**
@@ -111,9 +111,17 @@ public final class Planta {
      * @param semilla       semilla del generador aleatorio; la misma semilla repite la simulación
      * @param rankingGlobal ranking de toda la organización, que esta planta mantiene al día con
      *                      sus máquinas; {@code null} si la planta está sola
-     * @throws NullPointerException si el nombre es nulo
+     * @param tickInicial   tick con que arranca. Una compañía creada a mitad de la simulación
+     *                      arranca en el tick actual de la organización, para que todas las
+     *                      plantas tengan siempre el mismo tick
+     * @throws NullPointerException     si el nombre es nulo
+     * @throws IllegalArgumentException si el tick inicial es negativo
      */
-    public Planta(int idCompania, String nombre, long semilla, RankingFallos rankingGlobal) {
+    public Planta(int idCompania, String nombre, long semilla, RankingFallos rankingGlobal,
+                  int tickInicial) {
+        if (tickInicial < 0) {
+            throw new IllegalArgumentException("El tick inicial no puede ser negativo: " + tickInicial);
+        }
         this.idCompania = idCompania;
         this.nombre = Objects.requireNonNull(nombre, "La compañía debe tener nombre");
         this.semilla = semilla;
@@ -131,7 +139,7 @@ public final class Planta {
         this.bitacora = new ArrayDeque<>();
         this.observadores = new ArrayList<>();
         this.generador = new GeneradorFallos(semilla);
-        this.tick = 0;
+        this.tick = tickInicial;
         this.siguienteIdOrden = 1;
         registrar("Planta iniciada con semilla " + semilla);
     }

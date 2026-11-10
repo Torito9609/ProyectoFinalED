@@ -2,6 +2,7 @@ package edu.unal.planta.modelo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -78,5 +79,47 @@ class OrganizacionTest {
         organizacion.reiniciar();
         assertEquals(todas.size(), organizacion.rankingGlobal().size());
         assertTrue(organizacion.rankingGlobal().stream().allMatch(m -> m.puntajeFallos() == 0));
+    }
+
+    @Test
+    @DisplayName("una compañía creada a mitad de la simulación toma el siguiente id y el tick actual")
+    void crearCompania() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        for (int i = 0; i < 50; i++) {
+            organizacion.tick();
+        }
+
+        Planta oriente = organizacion.crearCompania("Planta Oriente");
+
+        assertEquals(3, oriente.idCompania());
+        assertEquals(Organizacion.semillaCompania(SEMILLA_MAESTRA, 3), oriente.semilla());
+        assertEquals(50, oriente.tickActual());
+        assertEquals(24, organizacion.rankingGlobal().size());
+        assertThrows(IllegalArgumentException.class, () -> organizacion.crearCompania("  planta norte "));
+        assertEquals(4, organizacion.companias().size());
+    }
+
+    @Test
+    @DisplayName("la misma secuencia de ticks y creaciones repite la misma simulación")
+    void creacionesReproducibles() {
+        Organizacion primera = simularConCreacion();
+        Organizacion segunda = simularConCreacion();
+
+        for (int id = 0; id < primera.companias().size(); id++) {
+            assertEquals(primera.compania(id).bitacora(), segunda.compania(id).bitacora());
+        }
+    }
+
+    /** 50 ticks, crear "Planta Oriente" y 100 ticks más. */
+    private static Organizacion simularConCreacion() {
+        Organizacion organizacion = new Organizacion(SEMILLA_MAESTRA);
+        for (int i = 0; i < 50; i++) {
+            organizacion.tick();
+        }
+        organizacion.crearCompania("Planta Oriente");
+        for (int i = 0; i < 100; i++) {
+            organizacion.tick();
+        }
+        return organizacion;
     }
 }

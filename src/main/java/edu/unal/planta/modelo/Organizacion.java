@@ -3,6 +3,9 @@ package edu.unal.planta.modelo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * La organización: varias compañías, cada una con su propia {@link Planta}, y el ranking global
@@ -15,7 +18,12 @@ import java.util.List;
  *   orden, O(número de compañías). Las compañías no se eliminan, así que los ids no se corren.</li>
  *   <li><strong>Árbol rojo-negro</strong> ({@link RankingFallos}): el ranking global, con las
  *   máquinas de todas las compañías. Cada compañía lo mantiene al día con las suyas.</li>
+ *   <li><strong>Conjunto</strong> ({@code TreeSet} declarado como {@code Set}): los nombres de las
+ *   compañías, para que no se repitan. Responde "¿ya existe?" en O(log c).</li>
  * </ul>
+ *
+ * <p>Todas las plantas tienen siempre el mismo tick que la organización: las iniciales arrancan
+ * juntas en 0, y una compañía creada después arranca en el tick actual.</p>
  *
  * <p>La jerarquía organización → compañías → máquinas tiene profundidad fija, por eso basta una
  * lista y no hace falta un árbol n-ario (ver la "Opción B" del documento de diseño).</p>
@@ -46,6 +54,12 @@ public final class Organizacion {
     /** Árbol rojo-negro: las máquinas de todas las compañías, por puntaje de fallos. */
     private final RankingFallos rankingGlobal;
 
+    /**
+     * Conjunto: nombres de las compañías, normalizados (sin espacios a los lados y en minúsculas),
+     * para que "planta norte" y "Planta Norte" cuenten como el mismo.
+     */
+    private final Set<String> nombres;
+
     private int tick;
 
     /**
@@ -60,11 +74,60 @@ public final class Organizacion {
         this.semillaMaestra = semillaMaestra;
         this.rankingGlobal = new RankingFallos(List.of(), null);
         this.companias = new ArrayList<>();
-        for (String nombre : ConfiguracionPlanta.NOMBRES_COMPANIAS) {
-            int id = companias.size();
-            companias.add(new Planta(id, nombre, semillaCompania(semillaMaestra, id), rankingGlobal));
-        }
+        this.nombres = new TreeSet<>();
         this.tick = 0;
+        for (String nombre : ConfiguracionPlanta.NOMBRES_COMPANIAS) {
+            crearCompania(nombre);
+        }
+    }
+
+    /**
+     * Indica si ya existe una compañía con ese nombre, sin distinguir mayúsculas.
+     *
+     * <p>Complejidad: O(log c), con c el número de compañías: una búsqueda en el conjunto.</p>
+     *
+     * @param nombre nombre a buscar
+     * @return {@code true} si ya hay una compañía con ese nombre
+     * @throws NullPointerException si el nombre es nulo
+     */
+    public boolean existeCompania(String nombre) {
+        return nombres.contains(claveNombre(nombre));
+    }
+
+    /**
+     * Crea una compañía nueva y la agrega al final de la lista.
+     *
+     * <p>Su id es el número de compañías que ya había, y su semilla se deriva de la maestra y de ese
+     * id. Arranca con las máquinas y los técnicos de la configuración, conectada al ranking global,
+     * y en el tick actual de la organización. No se puede eliminar.</p>
+     *
+     * <p>Complejidad: O(log c) por el conjunto de nombres, más crear la planta, que inserta sus
+     * máquinas en el ranking global: O(m log N), con m sus máquinas y N el total.</p>
+     *
+     * @param nombre nombre visible; se guarda sin espacios a los lados
+     * @return la compañía creada
+     * @throws IllegalArgumentException si el nombre está vacío o ya existe
+     * @throws NullPointerException     si el nombre es nulo
+     */
+    public Planta crearCompania(String nombre) {
+        String clave = claveNombre(nombre);
+        if (clave.isEmpty()) {
+            throw new IllegalArgumentException("El nombre de la compañía no puede estar vacío");
+        }
+        if (nombres.contains(clave)) {
+            throw new IllegalArgumentException("Ya existe una compañía llamada " + nombre.strip());
+        }
+        int id = companias.size();
+        Planta compania = new Planta(id, nombre.strip(), semillaCompania(semillaMaestra, id),
+                rankingGlobal, tick);
+        companias.add(compania);
+        nombres.add(clave);
+        return compania;
+    }
+
+    /** Clave con que se compara un nombre: sin espacios a los lados y en minúsculas. */
+    private static String claveNombre(String nombre) {
+        return Objects.requireNonNull(nombre, "El nombre no puede ser nulo").strip().toLowerCase();
     }
 
     /**
