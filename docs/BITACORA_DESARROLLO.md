@@ -36,6 +36,38 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, decisión — 2026-11-10 — Se pospone el árbol n-ario y se pueden crear compañías y máquinas
+**Responsable:** Kevin (decisión del equipo), redacción con Claude Code
+
+### Decisiones
+- **El árbol n-ario se pospone (opción A).** La jerarquía organización → compañías → máquinas tiene profundidad
+  fija de 2. Un `ArrayList<Planta>`, donde cada planta tiene su inventario, ya es ese árbol de forma implícita, y
+  los totales por compañía son un ciclo. Con 3 a 5 compañías, ante la pregunta "¿por qué no una lista?", la
+  respuesta honesta era "daría lo mismo". Una estructura difícil de defender resta más de lo que suma.
+- **Sin el árbol n-ario, la Entrega 2 conserva tres estructuras no lineales bien justificadas:** el `TreeSet` del
+  ranking, la `PriorityQueue` de los overhauls y el `ArbolSegmentos` del historial.
+- **Se pueden crear compañías y máquinas, pero no eliminarlas.** Crear agrega hermanos, no niveles, así que no
+  justifica el árbol n-ario. Lo que sí aparece es la necesidad de nombres únicos, y eso se resuelve con un
+  **conjunto** (`TreeSet<String>`): uno para los nombres de las compañías y uno por compañía para las etiquetas.
+  Cuesta O(log n), contra O(n) de recorrer la lista. Eliminar se descarta porque `ArrayList.remove` corre los
+  índices, que son los ids de la API, y porque sacar una solicitud del montículo que no está en la cima viola el
+  tipo abstracto de datos.
+- **Se usa `TreeSet` y no `TreeMap`:** la API identifica las máquinas por índice (O(1) en el `ArrayList`), así que
+  no hace falta buscar por etiqueta; solo hay que verificar que no se repita.
+- **Opción B para la entrega final:** el árbol n-ario vuelve si la jerarquía gana niveles variables (sedes y líneas
+  de producción). Ahí sí cada operación tiene un uso real: postorden para los totales por rama y preorden para el
+  tick y el dibujo. Al equipo le interesa porque es una estructura que no se suele ver en el curso.
+
+### Hecho
+- Se actualizaron las secciones 1, 4, 10, 16 y 17 de `CLAUDE.md`. El plan de commits no se renumeró: el 9 queda
+  pospuesto, se agregan 13a, 13b y 19a, y la opción B es la etapa G.
+
+### Pendiente
+- **Siguiente paso: commit 10**, el árbol de segmentos. Primero se propone su API.
+- Commit 13b: decidir si una compañía nueva arranca con las 6 máquinas por defecto o vacía.
+
+---
+
 ## Entrega 2, commit 2 — 2026-11-05 — El proyecto ya es Spring Boot
 **Responsable:** Kevin, con Claude Code
 
@@ -573,6 +605,7 @@ todavía no se han aprobado.
 | 2026-11-05 | 3 y 4 (stack y arquitectura) | Migrar de Swing a Spring Boot; el frontend pasa a otro repositorio; las dependencias permitidas pasan a ser los starters web MVC y de pruebas | Una interfaz web hace más atractivo el proyecto, y eso suma en la evaluación; el framework es neutral. El modelo no cambia | **Aprobada** por el equipo; `CLAUDE.md` ya actualizado |
 | 2026-11-05 | 4, regla 4 (reloj en el EDT) | El reloj pasa a ser `@Scheduled`, y todo acceso al modelo se serializa en `ServicioSimulacion` con métodos `synchronized` | Con Tomcat hay varios hilos; el EDT ya no existe | **Aprobada**; `CLAUDE.md` ya actualizado |
 | 2026-11-05 | 5 y 15 (`PriorityQueue` prohibida) | Permitir `PriorityQueue` solo para las solicitudes de overhaul, con número de secuencia como desempate | Los montículos ya se vieron en el curso, y la secuencia resuelve el orden de llegada entre empates | **Aprobada**; `CLAUDE.md` ya actualizado |
+| 2026-11-10 | 10, 16 y 17 (árbol n-ario) | Posponer el árbol n-ario a una opción B opcional; las compañías van en un `ArrayList`; se pueden crear compañías y máquinas con nombres únicos en un `TreeSet`; no se eliminan | Con profundidad fija de 2, una lista hace lo mismo que el árbol y no se puede defender. El árbol se justifica con niveles variables | **Aprobada** por Kevin; `CLAUDE.md` ya actualizado |
 | 2026-10-18 | 6, campo «color» de `Prioridad` | El color se guarda como entero `0xRRGGBB`, no como `java.awt.Color` | La sección 4 prohíbe que el modelo importe `java.awt`. El modelo define el color y la vista lo convierte | **Implementada**; resuelve una contradicción entre las secciones 4 y 6 |
 
 ---
@@ -598,7 +631,8 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 |---|---|---|---|
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
-| C | 9–10 | `ArbolNario` y `ArbolSegmentos` | **Siguiente: commit 9** |
-| D | 11–18 | Modelo de la Entrega 2 | Pendiente |
-| E | 19–23 | API de la Entrega 2 | Pendiente |
+| C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Siguiente: commit 10** |
+| D | 11–18, 13a, 13b | Modelo de la Entrega 2, con la creación de compañías y máquinas | Pendiente |
+| E | 19–23, 19a | API de la Entrega 2 | Pendiente |
 | F | 24–25 | Documentación | Pendiente |
+| G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |

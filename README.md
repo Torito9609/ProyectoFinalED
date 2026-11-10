@@ -183,7 +183,7 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 |---|---|
 | Migración a Spring Boot, con paridad de la Entrega 1 en la API | Listo |
 | Contrato de la API (`docs/API.md`) | Listo |
-| Árbol n-ario y árbol de segmentos | Pendiente |
-| Compañías, ranking de fallos, overhaul y reemplazo, modo manual, historial | Pendiente |
+| Árbol de segmentos | Pendiente |
+| Compañías (crear compañías y máquinas), ranking de fallos, overhaul y reemplazo, modo manual, historial | Pendiente |
 | Endpoints de la Entrega 2 | Pendiente |
 | Documento explicativo de la Entrega 2 | Pendiente |

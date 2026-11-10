@@ -34,6 +34,7 @@ El proyecto es incremental: las entregas 2 y 3 añadirán estructuras sobre esta
 - Temas vistos en el curso que se pueden usar: árboles (n-arios, de búsqueda, balanceados, B), montículos, conjuntos y árboles de segmentos. Se siguen permitiendo las estructuras de la librería de Java.
 - Lo que evalúa el profesor: que **las estructuras de datos queden muy claras**, es decir por qué se eligió cada una, cómo se usa y cómo está implementada. El framework no suma ni resta. Que el proyecto se vea atractivo **sí suma**.
 - Decisión del 5 de noviembre de 2026: **migrar a Spring Boot** y separar el frontend en otro repositorio. Así la interfaz puede ser web, más visual e interactiva, y el modelo y las estructuras no cambian. Ver la sección 16 y `docs/BITACORA_DESARROLLO.md`.
+- Decisión del 10 de noviembre de 2026: **el árbol n-ario se pospone** (opción A). Con una jerarquía de profundidad fija (organización → compañías → máquinas), una lista de compañías hace lo mismo. A cambio, se pueden **crear compañías y máquinas**, con nombres únicos garantizados por un conjunto (`TreeSet`). El árbol n-ario vuelve como **opción B** para la entrega final, con una jerarquía de niveles variables (sedes y líneas). Ver la sección 16, "Crear compañías y máquinas" y "Opción B".
 
 ---
 
@@ -69,7 +70,7 @@ Paquete raíz: `edu.unal.planta`
 edu.unal.planta
 ├── AplicacionPlanta         → punto de entrada de Spring Boot
 ├── estructuras/             → estructuras propias, genéricas y sin dependencias del dominio
-│                              (ColaCircular; en la Entrega 2, ArbolNario y ArbolSegmentos)
+│                              (ColaCircular; en la Entrega 2, ArbolSegmentos; ArbolNario en la opción B)
 ├── modelo/                  → dominio y simulación. Java puro: NO importa Spring, javax.swing ni java.awt
 │   └── comandos/            → acciones del operador que se pueden deshacer
 ├── servicio/                → ServicioSimulacion: dueño único del modelo, reloj y acceso serializado
@@ -274,14 +275,17 @@ Qué muestra cada panel:
 
 **Mínimo obligatorio (Entrega 2, backend):**
 - Paridad con la Entrega 1 a través de la API REST: control de la simulación, estado de cada estructura y acciones del operador.
-- Varias compañías en un árbol n-ario, con totales por rama.
+- Varias compañías, con totales por compañía.
+- Crear compañías y máquinas desde la API, con nombres únicos (conjunto `TreeSet`).
 - Ranking de máquinas por puntaje de fallos, por compañía y global, con su recomendación (overhaul o reemplazo).
 - Solicitudes de overhaul atendidas por técnicos del fabricante, y reemplazo de máquinas.
 - Historial de fallos consultable por ventana de ticks (árbol de segmentos).
 - Modo manual que se puede activar y desactivar con la simulación en marcha.
 - Pruebas JUnit de cada estructura nueva y del modelo; pruebas MockMvc de los endpoints.
 
-**Fuera de alcance (Entrega 2):** autenticación de usuarios (el "superusuario" es una vista, no un login), persistencia, WebSockets, despliegue en la nube.
+**Fuera de alcance (Entrega 2):** autenticación de usuarios (el "superusuario" es una vista, no un login), persistencia, WebSockets, despliegue en la nube, **eliminar compañías o máquinas** (ver la sección 16).
+
+**Opcional para la entrega final:** la opción B, una jerarquía con niveles variables en un árbol n-ario (sección 16).
 
 ---
 
@@ -368,7 +372,8 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 
 | Estructura | Implementación | Uso en el proyecto | Justificación |
 |---|---|---|---|
-| Árbol n-ario | **`ArbolNario<T>` propio** (cada nodo guarda sus hijos en un `ArrayList`) | Jerarquía organización → compañías → máquinas | Es una jerarquía real. El tick global es un **preorden**, y los totales por rama del dashboard son un **postorden**: cada nodo suma lo de sus hijos. Agregar un hijo cuesta O(1) amortizado y los recorridos O(n). Java no trae un árbol n-ario genérico; por eso es propio, igual que `ColaCircular` en la Entrega 1. |
+| Arreglo dinámico | `ArrayList<Planta>` en `Organizacion` | Compañías; el id de una compañía es su índice | Mismo argumento que el inventario de la Entrega 1: se recorren todas en cada tick y se accede por id en O(1). Las compañías se agregan al final (O(1) amortizado) y no se eliminan. |
+| Conjunto (árbol de búsqueda) | `TreeSet<String>` (árbol rojo-negro) | Nombres de compañías (uno en la organización) y etiquetas de máquinas (uno por compañía) | Al crear una compañía o una máquina, el nombre debe ser único. El conjunto responde "¿ya existe?" y agrega en O(log n); con la lista habría que recorrerla toda, O(n). Es el tipo abstracto que corresponde: un conjunto **es** una colección sin repetidos. |
 | Árbol de búsqueda balanceado | `TreeSet<Maquina>` (árbol rojo-negro) envuelto en `RankingFallos` | Ranking por puntaje de fallos: uno por compañía y uno global | El orden siempre está listo. Insertar y eliminar cuestan O(log n), y el recorrido en orden da el ranking en O(n). `tailSet`/`headSet` dan la consulta por rango "puntaje ≥ umbral", que son las candidatas a overhaul. La altura queda acotada a 2·log2(n+1) aunque las máquinas lleguen ordenadas. |
 | Montículo | `PriorityQueue<SolicitudOverhaul>` (montículo binario) | Solicitudes de overhaul aprobadas, de todas las compañías | Los técnicos del fabricante son pocos y compartidos, así que cuando se acumulan solicitudes debe salir la máquina en peor estado. Insertar y extraer cuestan O(log n). El comparador desempata por **número de secuencia**, y eso garantiza el orden de llegada entre empates, que era la razón para descartarlo en la Entrega 1. |
 | Cola FIFO | `ArrayDeque<TecnicoExterno>` | Técnicos del fabricante libres | Mismo patrón que los técnicos internos: al terminar, el técnico se encola al final. |
@@ -380,6 +385,9 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 - **Montículo para el ranking:** da la peor máquina en O(1), pero no da la lista ordenada, y `PriorityQueue` no permite cambiar una clave en su lugar.
 - **Sumas prefijas en vez del árbol de segmentos:** los fallos siempre se agregan en el tick actual, nunca en el pasado. Para **sumas** en un rango bastaría un arreglo de sumas prefijas: agregar O(1) y consultar O(1). **El árbol de segmentos se justifica por el máximo en un rango arbitrario**, que las sumas prefijas no pueden responder. Si alguna vez solo se pidieran totales, sobraría.
 - **Árbol B:** está pensado para minimizar los accesos a disco con nodos grandes. Aquí todo está en memoria y hay pocas máquinas.
+- **Árbol n-ario para la jerarquía actual** (pospuesto el 10 de noviembre): la jerarquía tiene profundidad fija de 2 (organización → compañías → máquinas), y un `ArrayList` de plantas, cada una con su inventario, ya es ese árbol de forma implícita. Crear compañías o máquinas agrega hermanos, no niveles. El árbol n-ario se justifica cuando la profundidad es variable: ver "Opción B".
+- **Recorrer la lista para validar nombres únicos:** O(n) en cada creación, contra O(log n) del conjunto.
+- **`HashSet` para los nombres:** también sirve (O(1) esperado), pero las tablas hash no están en los temas del curso, y el `TreeSet` además da los nombres en orden alfabético.
 - **Técnicos del fabricante creados bajo demanda:** si siempre hay un técnico disponible, la cola nunca se forma y el montículo no tiene nada que decidir. Un número fijo de técnicos, compartidos entre compañías, es lo realista.
 
 ### Puntaje de fallos y recomendación
@@ -405,8 +413,24 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 5. **Reemplazo:** se aprueba sobre una máquina con recomendación REEMPLAZO que no esté `EN_OVERHAUL`. La máquina nueva usa el mismo tipo y la misma etiqueta, con `numeroOverhauls` y puntaje en 0. Entra en el **mismo índice** del `ArrayList` del inventario (`set`, O(1)), así se respeta la regla de que las máquinas no se eliminan, y se actualizan la jerarquía y los dos rankings. Es inmediato: no usa técnicos.
 - **Pendiente de definir en el commit 16:** qué pasa con una orden P4 pendiente de una máquina que entra en overhaul. Se propone antes de implementarlo.
 
+### Crear compañías y máquinas (decisión del 10 de noviembre)
+- **Crear una compañía:** se da un nombre, que debe ser único en la organización (`TreeSet`, O(log n)). Entra al final del `ArrayList` de compañías y su id es su índice. Su semilla se deriva de la maestra y de su índice, así que la misma secuencia de acciones produce la misma simulación. Arranca con su propio ranking, su propio árbol de segmentos y los técnicos internos de la configuración. Si arranca con las 6 máquinas por defecto o vacía, se propone en el commit 13b.
+- **Crear una máquina:** se da la compañía, un tipo del catálogo de la sección 6 (los sensores y parámetros salen del tipo) y una etiqueta, que debe ser única **dentro de su compañía** (un `TreeSet` por compañía; entre compañías las etiquetas se pueden repetir, como dice "Puntaje de fallos"). Se agrega al final del inventario (O(1) amortizado), con puntaje 0, y entra en el ranking de su compañía y en el global (O(log n) cada uno).
+- **Crear no se deshace.** Una máquina nueva puede fallar y entrar en las colas en el siguiente tick; deshacerla obligaría a sacarla de estructuras donde no es el siguiente elemento (sección 8).
+- **No se eliminan compañías ni máquinas.** `ArrayList.remove` cuesta O(n) y corre los índices, que son los ids de la API. Además, una máquina eliminada podría tener una solicitud en el montículo, y sacarla con `PriorityQueue.remove(objeto)` cuesta O(n) y extrae un elemento que no es la cima, lo que viola el tipo abstracto de datos. Las máquinas se **reemplazan**, no se eliminan.
+- Un nombre o etiqueta repetido responde `409`; un tipo inexistente o un nombre vacío, `400`.
+
+### Opción B: jerarquía con árbol n-ario (para la entrega final, si hay tiempo)
+El árbol n-ario se justifica cuando **la forma** de la jerarquía cambia, no solo la cantidad de elementos: compañía → sede → línea de producción → máquina, con niveles que el usuario crea y profundidad variable (una sede puede no tener líneas).
+- **`ArbolNario<T>` propio**, en `estructuras/`: cada nodo guarda su valor y sus hijos en un `ArrayList`. Java no trae un árbol n-ario genérico; por eso es propio, igual que `ColaCircular`.
+- Agregar un hijo (crear una sede, una línea o una máquina): O(1) amortizado. Las máquinas siempre son hojas.
+- **Postorden:** los totales de fallos por rama (sede, línea, compañía): cada nodo suma lo de sus hijos. O(n).
+- **Preorden:** el tick global y el dibujo del árbol en el frontend. O(n).
+- La API que se propuso el 7 de noviembre (con `reducirPostorden`) está en `docs/sesiones/2026-11-07.md` y es el punto de partida.
+- Si se retoma, el `ArrayList<Planta>` de la opción A pasa a ser los hijos de la raíz. El diseño detallado se registra aquí antes de implementarlo.
+
 ### Orden de un tick de la organización (`Organizacion.tick()`)
-1. Recorrer las compañías en **preorden** y ejecutar `Planta.tick()` en cada una (pasos 1–7 de la sección 7; el paso 4 actualiza los rankings).
+1. Recorrer las compañías en el orden del `ArrayList` y ejecutar `Planta.tick()` en cada una (pasos 1–7 de la sección 7; el paso 4 actualiza los rankings).
 2. **Avanzar overhauls:** a cada técnico del fabricante ocupado se le resta un tick, y se cierran los que terminan.
 3. **Asignar overhauls** con la regla de la cima (solo en modo automático).
 4. Registrar en los árboles de segmentos (el de la compañía y el global) el puntaje sumado en este tick.
@@ -429,7 +453,8 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 
 ### Superficie de la API (borrador; el contrato final está en `docs/API.md`)
 - **Simulación:** `GET /api/simulacion`; `POST /api/simulacion/iniciar | pausar | paso | reiniciar`; `PUT /api/simulacion/modo`.
-- **Organización:** `GET /api/companias` (árbol con totales por rama); `GET /api/companias/{id}`, con el estado completo de una planta: inventario, cola circular, eventos, técnicos, cola con prioridad, pila y bitácora.
+- **Organización:** `GET /api/companias` (lista con totales por compañía); `GET /api/companias/{id}`, con el estado completo de una planta: inventario, cola circular, eventos, técnicos, cola con prioridad, pila y bitácora.
+- **Creación:** `POST /api/companias` (nombre) y `POST /api/companias/{id}/maquinas` (tipo y etiqueta).
 - **Operador (por compañía):** inyectar un fallo, parar o arrancar, cambiar la carga, deshacer, clasificar el siguiente evento y asignar la siguiente orden.
 - **Superusuario:** `GET /api/ranking` (global o por compañía); `POST /api/overhauls` (aprobar), `GET /api/overhauls` (montículo y técnicos del fabricante), `POST /api/overhauls/asignar-siguiente`; `POST .../reemplazo`; `GET /api/historial?desde=&hasta=&compania=`.
 - **Errores:** `400` si la entrada es inválida, `404` si la compañía o la máquina no existe, y `409` si la acción no se permite en el estado actual (por ejemplo, inyectar un fallo en una máquina con alarma). El cuerpo lleva el mensaje en español.
@@ -437,7 +462,7 @@ Varias **compañías** con la misma lógica que la `Planta` de la Entrega 1, y u
 ### Vistas que el frontend debe ofrecer (requisito para el otro repositorio)
 - **Vista de compañía:** los paneles de la sección 9 para una compañía.
 - **Vista de superusuario (dashboard):**
-  - el árbol de compañías con los totales por rama;
+  - las compañías con sus totales, y formularios para crear compañías y máquinas;
   - el ranking global con sus recomendaciones;
   - el montículo de solicitudes y los técnicos del fabricante;
   - una gráfica del historial con una ventana [a, b] seleccionable, que muestre el total y el pico;
@@ -466,14 +491,18 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 7. `feat: endpoints de acciones del operador`: inyectar un fallo, parar o arrancar, cambiar la carga y deshacer, más el manejador de errores 400/404/409. Pruebas MockMvc.
 8. `feat: CORS para el frontend local y contrato de la API`: configuración de CORS para `localhost`, `docs/API.md` y el README con cómo ejecutar el backend.
 
+**Numeración:** el 10 de noviembre se pospuso el árbol n-ario y se agregó crear compañías y máquinas. Para no romper las referencias de la bitácora, los números no se corren: el 9 queda pospuesto y los commits nuevos llevan letra (13a, 13b, 19a).
+
 ### Etapa C — Estructuras nuevas (`estructuras/`, genéricas y sin dominio)
-9. `feat: árbol n-ario genérico`: agregar un hijo, eliminar un hijo, preorden y postorden. Pruebas: un árbol de un solo nodo, los dos recorridos y la eliminación.
+9. ~~`feat: árbol n-ario genérico`~~ **Pospuesto** a la opción B (etapa G).
 10. `feat: árbol de segmentos de suma y máximo`: actualizar una posición y consultar un rango. Pruebas: el rango completo, un rango de un elemento, un máximo a mitad del rango y una actualización.
 
 ### Etapa D — Modelo de la Entrega 2 (sin HTTP, todo probado)
 11. `feat: peso de fallo, puntaje y recomendación`: `Prioridad.peso`, los campos nuevos de `Maquina`, `Recomendacion` y los umbrales. Pruebas de la recomendación.
 12. `feat: ranking de fallos por compañía`: `RankingFallos`, conectado al paso 4. Prueba: tras N ticks, el recorrido del ranking coincide con ordenar el inventario.
-13. `feat: organización con varias compañías`: `Organizacion`, la jerarquía con `ArbolNario`, las semillas derivadas, el tick en preorden y el ranking global. Prueba: misma semilla, mismo resultado.
+13. `feat: organización con varias compañías`: `Organizacion` con el `ArrayList<Planta>`, las semillas derivadas, el tick que recorre las compañías en orden y el ranking global. Prueba: misma semilla, mismo resultado.
+13a. `feat: crear máquinas con etiqueta única`: el `TreeSet` de etiquetas de cada compañía, la creación desde un tipo del catálogo y la entrada en los dos rankings. Pruebas: la máquina queda al final del inventario y en los rankings, y una etiqueta repetida se rechaza.
+13b. `feat: crear compañías con nombre único`: el `TreeSet` de nombres, la semilla derivada del índice y el ranking y el historial propios. Pruebas: el nombre repetido se rechaza, y la misma secuencia de creaciones da la misma simulación.
 14. `feat: modo manual`: el modo en `Planta` y `Organizacion`, `clasificarSiguiente` y `asignarSiguiente`. Pruebas: en manual no se generan fallos aleatorios ni se asigna nada solo.
 15. `feat: solicitudes de overhaul y técnicos del fabricante`: `SolicitudOverhaul`, `TecnicoExterno`, aprobar (con rechazo de duplicadas), el montículo con secuencia y la cola FIFO. Pruebas: el mayor puntaje sale primero y los empates salen por orden de llegada.
 16. `feat: ejecutar overhauls en el tick`: `EN_OVERHAUL`, la regla de la cima y el cierre del overhaul. **Se propone primero la regla pendiente sobre la P4.** Pruebas: no consume técnicos internos y vuelve con puntaje 0 y reinsertada.
@@ -482,6 +511,7 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 
 ### Etapa E — API de la Entrega 2
 19. `refactor: el servicio usa la organización y rutas por compañía`: `/api/companias` y `/api/companias/{id}/...`, con `docs/API.md` actualizado.
+19a. `feat: endpoints para crear compañías y máquinas`: `POST /api/companias` y `POST /api/companias/{id}/maquinas`, con 400 y 409. Pruebas MockMvc.
 20. `feat: endpoints del modo manual`.
 21. `feat: endpoints del ranking y las recomendaciones`.
 22. `feat: endpoints de overhaul y reemplazo`.
@@ -490,3 +520,9 @@ Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las prueba
 ### Etapa F — Documentación
 24. `docs: documento explicativo de la Entrega 2`: el por qué y el cómo de cada estructura de la sección 16, con sus complejidades, la trampa de la clave que cambia y la justificación del árbol de segmentos frente a las sumas prefijas.
 25. `docs: README, USO_IA y cierre de la bitácora de la Entrega 2`.
+
+### Etapa G — Opción B, para la entrega final (opcional)
+Solo si hay tiempo y el equipo lo aprueba. El diseño detallado se registra en la sección 16 antes de empezar.
+- G1. `feat: árbol n-ario genérico`: la API propuesta el 7 de noviembre. Pruebas: un árbol de un solo nodo, preorden, postorden, totales por rama y eliminación.
+- G2. `feat: jerarquía con sedes y líneas`: la organización guarda las compañías en el árbol; el tick en preorden y los totales por rama en postorden.
+- G3. `feat: endpoints de la jerarquía`: crear sedes y líneas, y el árbol con los totales por rama.
