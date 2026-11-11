@@ -36,6 +36,46 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 14d — 2026-11-10 — Dos técnicos por especialidad y más fallos
+
+### Por qué
+Al jugar con el frontend, Kevin notó dos cosas: el juego era aburrido, y la cola FIFO de técnicos no
+se veía como cola, porque con 1 técnico por especialidad cada banca tenía a lo sumo una persona.
+Propuso 2 técnicos de cada especialidad y que las máquinas fallen más. Es lo mismo que pedía el
+hallazgo del 14c: quitar la saturación.
+
+### Mediciones (5 semillas × 3 compañías, 1000 ticks, en automático salvo que se diga)
+| Configuración | Caja | Quiebras | Fallos | En alarma | Órdenes en cola | Técnicos libres |
+|---|---|---|---|---|---|---|
+| Antes: 2 técnicos | 854 mil | 0/15 | 198 | 40 % | 7,5 | 0,7 |
+| 4 técnicos, tasa × 1, mano de obra 1.500 | 64 mil | 8/15 | 258 | 7 % | 1,0 | 1,9 |
+| 4 técnicos, tasa × 1, mano de obra 1.000 | 1,0 M | 0/15 | 283 | 7 % | 0,9 | 2,0 |
+| **4 técnicos, tasa × 1,5, mano de obra 1.000 (lo elegido)** | **215 mil** | **0/15** | **346** | **15 %** | **2,1** | **1,6** |
+| 4 técnicos, tasa × 1,5, mano de obra 900 | 453 mil | 0/15 | 346 | 15 % | 2,1 | 1,6 |
+| 4 técnicos, tasa × 2, mano de obra 1.000 | ≈ 0 | 15/15 | 261 | 20 % | 3,9 | 1,2 |
+
+Con lo elegido, el jugador simulado:
+
+| Política | Caja |
+|---|---|
+| Automático | 215 mil |
+| Carga al 70 % | **268 mil** (le gana) |
+| Aprobar cada overhaul recomendado | −6 mil (14 quiebras) |
+| Lo mismo, con el overhaul a 30.000 y mano de obra 900 | 190 mil (contra 453 mil del automático) |
+| Lo mismo, además sin la regla de +25 % por overhaul | 328 mil (contra 453 mil) |
+
+### Decisiones
+- **2 mecánicos y 2 eléctricos, tasas × 1,5 y mano de obra 1.000** (Kevin eligió 1.000 sobre 900:
+  la partida es más tensa).
+- **El overhaul queda documentado, sin cambios**: no paga en ninguna variante medida, porque los
+  fallos solo bajan un 10 % y no compensan el costo ni los 30 ticks sin producir. Rediseñar el
+  desgaste queda pendiente. El montículo se sigue viendo y usando igual.
+- La prueba "la orden espera a su especialidad" pasó a 3 fallos eléctricos: con 2 eléctricos, dos
+  fallos ya no dejaban ninguna orden esperando.
+
+### Verificación
+- `./mvnw clean test`: 156 pruebas en verde.
+
 ## Entrega 2, cierre del backend — 2026-11-10 — Etapas D, E y F terminadas
 
 ### Hecho
@@ -837,7 +877,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | **Terminada** (2026-11-10). El 14c quedó en la media capacidad en alarma; **la dificultad se pospuso** |
+| D | 11–18, 13a, 13b, 14a–14d | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | **Terminada** (2026-11-10). El 14c quedó en la media capacidad en alarma; **la dificultad se pospuso**. El 14d recalibró el juego |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | **Terminada** (2026-11-10): 19, 19a y 20–23 |
 | F | 24–25 | Documentación | **Terminada** (2026-11-10) |

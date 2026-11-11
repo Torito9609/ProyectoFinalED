@@ -86,7 +86,7 @@ máquinas produjeron (de 0 a 1).
 | `GET` | `/api/companias/{id}` | `EstadoPlanta` de esa compañía |
 
 Al arrancar hay 3 compañías: `0` "Planta Norte", `1` "Planta Centro" y `2` "Planta Sur", cada una
-con las 6 máquinas y 2 técnicos.
+con las 6 máquinas y 4 técnicos (2 mecánicos y 2 eléctricos).
 
 **`ResumenCompania`** (los totales para el dashboard):
 
@@ -270,7 +270,7 @@ su propia pila de deshacer.
 
 - **Compañía:** el nombre debe ser único en la organización. Se compara sin espacios a los lados y sin
   distinguir mayúsculas, pero se muestra como se escribió (sin los espacios). Entra al final de la
-  lista con el id siguiente, con las 6 máquinas por defecto y 2 técnicos, y en el **tick actual**:
+  lista con el id siguiente, con las 6 máquinas por defecto y 4 técnicos, y en el **tick actual**:
   todas las compañías tienen siempre el mismo tick. Su semilla es `maestra × 1000 + id`.
 - **Máquina:** `tipo` es un código del catálogo (no distingue mayúsculas). La etiqueta debe ser única
   **dentro de su compañía** (en compañías distintas se puede repetir) y se guarda sin espacios a los

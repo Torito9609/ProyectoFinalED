@@ -104,9 +104,9 @@ public final class ConfiguracionPlanta {
     public static final long COSTO_REEMPLAZO = 300_000L;
 
     // ---------------------------------------------------------------------------------
-    // Economía y partida (Entrega 2). Valores PROVISIONALES, medidos con 1000 ticks en automático:
-    // una compañía produce unos 3.400 ticks a carga completa (≈ 3,4 millones) y sus técnicos
-    // trabajan unos 1.260 ticks (≈ 1,9 millones).
+    // Economía y partida (Entrega 2). Valores PROVISIONALES, recalibrados en el commit 14d con 4
+    // técnicos y las tasas × 1,5: en automático una compañía termina con unos 215 mil de caja, cerca
+    // de 350 fallos y las máquinas un 15 % del tiempo en alarma (5 semillas × 3 compañías).
     // ---------------------------------------------------------------------------------
 
     /** Dinero con que arranca cada compañía: unos 100 ticks de ingreso de la planta. */
@@ -122,8 +122,11 @@ public final class ConfiguracionPlanta {
      */
     public static final int PRODUCCION_EN_ALARMA = 50;
 
-    /** Lo que cuesta un técnico por cada tick que pasa trabajando. */
-    public static final long MANO_DE_OBRA_POR_TICK = 1_500L;
+    /**
+     * Lo que cuesta un técnico por cada tick que pasa trabajando. Era 1.500 con 2 técnicos; con 4
+     * (commit 14d) ese valor llevaba a la quiebra a casi todas las compañías.
+     */
+    public static final long MANO_DE_OBRA_POR_TICK = 1_000L;
 
     /** Ticks que dura una partida. Al llegar, la simulación se pausa. */
     public static final int DURACION_PARTIDA = 1000;
@@ -235,7 +238,7 @@ public final class ConfiguracionPlanta {
                             new Sensor("Presión", "bar", 180.0, 4.0, 210.0, 230.0, 250.0, TipoFallo.MECANICO),
                             new Sensor("Vibración", "mm/s", 2.5, 0.4, 4.5, 7.1, 11.0, TipoFallo.MECANICO)),
                     60,     // intervalo preventivo en ticks
-                    0.06,   // tasa base de fallo: es la máquina más crítica, falla más
+                    0.09,   // tasa base de fallo: es la máquina más crítica, falla más (× 1,5 en el 14d)
                     80,     // carga inicial
                     CAPACIDAD_LECTURAS);
             case TORNO -> new Maquina(idCompania, indice, etiqueta, tipo,
@@ -244,7 +247,7 @@ public final class ConfiguracionPlanta {
                             new Sensor("Corriente motor", "A", 12.0, 0.8, 16.0, 19.0, 22.0, TipoFallo.ELECTRICO),
                             new Sensor("Vibración", "mm/s", 1.8, 0.3, 2.8, 4.5, 7.1, TipoFallo.MECANICO)),
                     80,
-                    0.04,
+                    0.06,
                     70,
                     CAPACIDAD_LECTURAS);
             case ROBOT -> new Maquina(idCompania, indice, etiqueta, tipo,
@@ -253,7 +256,7 @@ public final class ConfiguracionPlanta {
                             new Sensor("Corriente", "A", 8.0, 0.6, 11.0, 13.0, 16.0, TipoFallo.ELECTRICO),
                             new Sensor("Vibración", "mm/s", 1.4, 0.25, 2.8, 4.5, 7.1, TipoFallo.MECANICO)),
                     100,
-                    0.03,
+                    0.045,
                     60,
                     CAPACIDAD_LECTURAS);
             case COMPRESOR -> new Maquina(idCompania, indice, etiqueta, tipo,
@@ -262,7 +265,7 @@ public final class ConfiguracionPlanta {
                             new Sensor("Presión", "bar", 7.5, 0.2, 9.0, 9.8, 11.0, TipoFallo.MECANICO),
                             new Sensor("Vibración", "mm/s", 2.0, 0.3, 4.5, 7.1, 11.0, TipoFallo.MECANICO)),
                     70,
-                    0.05,
+                    0.075,
                     75,
                     CAPACIDAD_LECTURAS);
             case HORNO -> new Maquina(idCompania, indice, etiqueta, tipo,
@@ -271,7 +274,7 @@ public final class ConfiguracionPlanta {
                             new Sensor("Temperatura carcasa", "°C", 60.0, 3.0, 80.0, 95.0, 110.0, TipoFallo.MECANICO),
                             new Sensor("Consumo de gas", "m³/h", 42.0, 2.0, 52.0, 58.0, 68.0, TipoFallo.ELECTRICO)),
                     90,
-                    0.035,
+                    0.0525,
                     65,
                     CAPACIDAD_LECTURAS);
             case BOMBA -> new Maquina(idCompania, indice, etiqueta, tipo,
@@ -280,7 +283,7 @@ public final class ConfiguracionPlanta {
                             new Sensor("Presión descarga", "bar", 6.0, 0.25, 8.0, 9.0, 10.5, TipoFallo.MECANICO),
                             new Sensor("Vibración", "mm/s", 2.2, 0.35, 4.5, 7.1, 11.0, TipoFallo.MECANICO)),
                     55,
-                    0.055,
+                    0.0825,
                     85,
                     CAPACIDAD_LECTURAS);
         };
@@ -296,8 +299,14 @@ public final class ConfiguracionPlanta {
     }
 
     /**
-     * Crea los técnicos de mantenimiento, todos libres: un mecánico y un eléctrico. Son menos que
+     * Crea los técnicos de mantenimiento, todos libres: dos mecánicos y dos eléctricos. Son menos que
      * las máquinas, para que se formen filas.
+     *
+     * <p>Eran uno de cada especialidad hasta el commit 14d. Con uno solo, cada cola FIFO de técnicos
+     * libres tenía a lo sumo un elemento (no se veía el orden de llegada) y las máquinas pasaban el
+     * 40 % del tiempo esperando en alarma, así que ninguna decisión del jugador cambiaba el resultado.
+     * El orden de la lista es el orden inicial de cada cola: Ana antes que Rosa, Luis antes que
+     * Pedro.</p>
      *
      * @return lista de técnicos recién creados
      */
@@ -305,6 +314,8 @@ public final class ConfiguracionPlanta {
         List<Tecnico> tecnicos = new ArrayList<>();
         tecnicos.add(new Tecnico("Ana", TipoFallo.MECANICO));
         tecnicos.add(new Tecnico("Luis", TipoFallo.ELECTRICO));
+        tecnicos.add(new Tecnico("Rosa", TipoFallo.MECANICO));
+        tecnicos.add(new Tecnico("Pedro", TipoFallo.ELECTRICO));
         return tecnicos;
     }
 

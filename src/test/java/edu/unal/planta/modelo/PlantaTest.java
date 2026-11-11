@@ -30,6 +30,9 @@ class PlantaTest {
     private static final int PRENSA = 0;
     private static final int TORNO = 1;
     private static final int ROBOT = 2;
+    private static final int HORNO = 4;
+    /** Temperatura de la cámara del horno: un sensor eléctrico. */
+    private static final int CAMARA = 0;
     private static final int PRESION = 1;
     private static final int CORRIENTE = 1;
     private static final int VIBRACION = 2;
@@ -315,24 +318,27 @@ class PlantaTest {
     @DisplayName("en automático la orden espera a un técnico de su especialidad, aunque haya otro libre")
     void automaticoEsperaASuEspecialidad() {
         Planta planta = plantaSinFallosAleatorios();
+        // Tres fallos eléctricos y dos eléctricos: el tercero no tiene técnico de su especialidad.
         planta.inyectarFallo(TORNO, CORRIENTE, Magnitud.SEVERA);
         planta.inyectarFallo(ROBOT, CORRIENTE, Magnitud.SEVERA);
+        planta.inyectarFallo(HORNO, CAMARA, Magnitud.SEVERA);
 
+        planta.tick();
         planta.tick();
         planta.tick();
 
         assertEquals(TORNO, ordenEnCurso(planta).orElseThrow().indiceMaquina(),
-                "la primera orden eléctrica la toma el eléctrico");
-        assertEquals(1, planta.ordenes().tamano(), "la segunda espera en la cola con prioridad");
-        assertEquals("Ana", planta.tecnicosLibres(TipoFallo.MECANICO).get(0).nombre(),
-                "aunque la mecánica está libre");
+                "la primera orden eléctrica la toma el primer eléctrico");
+        assertEquals(1, planta.ordenes().tamano(), "la tercera espera en la cola con prioridad");
+        assertEquals(2, planta.tecnicosLibres(TipoFallo.MECANICO).size(),
+                "aunque los dos mecánicos están libres");
 
         for (int i = 0; i < 20 && !planta.ordenes().estaVacia(); i++) {
             planta.tick();
         }
         Tecnico luis = planta.tecnicos().get(1);
-        assertEquals(ROBOT, luis.ordenActual().orElseThrow().indiceMaquina(),
-                "al terminar, el eléctrico vuelve a su cola y toma la orden que esperaba");
+        assertEquals(HORNO, luis.ordenActual().orElseThrow().indiceMaquina(),
+                "al terminar, el primer eléctrico vuelve a su cola y toma la orden que esperaba");
     }
 
     @Test

@@ -445,6 +445,14 @@ Convención de la columna **Autoría**:
 |---|---|---|
 | `docs/DOCUMENTO_EXPLICATIVO.md` | IA | Segunda parte (secciones 10 a 19): por qué y cómo de cada estructura nueva, la trampa de la clave que cambia, el descarte perezoso, el árbol de segmentos frente a las sumas prefijas y la tabla de complejidades. **Pendiente: revisión del equipo para defenderlo en clase** |
 
+### Entrega 2 — Commit 14d: dos técnicos por especialidad y más fallos
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ConfiguracionPlanta.java` | IA | 4 técnicos, tasas × 1,5 y mano de obra 1.000, elegidos por el equipo tras las mediciones |
+| `test/.../PlantaTest.java`, `ControladorCompaniasTest.java` | IA | Ajustadas a 4 técnicos; la de espera por especialidad pasó a 3 fallos eléctricos |
+| `CLAUDE.md`, `docs/BITACORA_DESARROLLO.md`, `docs/API.md` | IA | Mediciones y decisión |
+
 ### Entrega 2 — Commit 25: cierre de la documentación
 
 | Archivo | Autoría | Revisión del equipo |

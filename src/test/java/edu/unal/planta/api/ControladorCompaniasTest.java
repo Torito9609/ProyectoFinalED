@@ -48,7 +48,7 @@ class ControladorCompaniasTest {
                 .andExpect(jsonPath("$[0].maquinasPorEstado.OPERANDO").value(6))
                 .andExpect(jsonPath("$[0].maquinasPorEstado.EN_ALARMA").value(0))
                 .andExpect(jsonPath("$[0].ordenesPendientes").value(0))
-                .andExpect(jsonPath("$[0].tecnicosLibres").value(2));
+                .andExpect(jsonPath("$[0].tecnicosLibres").value(4));
     }
 
     @Test
