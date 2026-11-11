@@ -405,6 +405,42 @@ y la misma etiqueta, puntaje 0 y sin overhauls. No se deshace.
 
 ---
 
+## 4d. Historial por ventana de ticks
+
+| Método | Ruta | Respuesta |
+|---|---|---|
+| `GET` | `/api/historial` | `Historial` global, del tick 0 al último registrado |
+| `GET` | `/api/historial?desde={a}&hasta={b}` | `Historial` global de la ventana [a, b], los dos incluidos |
+| `GET` | `/api/historial?compania={id}` | `Historial` de esa compañía (`404` si no existe). Se combina con `desde` y `hasta` |
+
+Hay dos series por tick: el **puntaje de fallos** (P1 = 3, P2 = 2, P3 = 1) y el **costo** (mano de
+obra, overhauls y reemplazos). Cada una vive en un **árbol de segmentos** propio que guarda en cada
+nodo la suma y el máximo de su rango: el total y el pico de cualquier ventana salen en O(log n), sin
+recorrer los ticks. El global guarda en cada tick la suma de todas las compañías, así que su pico es
+el del peor tick de la organización.
+
+- `desde` es 0 si no viene; `hasta` es el último tick registrado (el anterior al tick actual). Los
+  ticks que todavía no ocurren valen 0.
+- La ventana debe cumplir `0 ≤ desde ≤ hasta ≤ duracionPartida - 1`; si no, `400`.
+
+**`Historial`** (ejemplo recortado):
+
+```json
+{
+  "alcance": "Global", "desde": 100, "hasta": 199,
+  "totalFallos": 142, "picoFallos": 7, "totalCosto": 412500, "picoCosto": 123000,
+  "fallosPorTick": [0, 3, 0, 1, "..."],
+  "costoPorTick": [3000, 4500, 3000, "..."]
+}
+```
+
+- `alcance` es `"Global"` o el nombre de la compañía.
+- `fallosPorTick[i]` y `costoPorTick[i]` son los del tick `desde + i`: sirven para dibujar la
+  gráfica. El total y el pico **no** se calculan en el frontend con estas listas: el backend los da
+  ya hechos por el árbol, y la gráfica debe mostrarlos (por ejemplo, una línea horizontal en el pico).
+
+---
+
 ## 5. Errores
 
 Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para mostrar:
@@ -415,7 +451,7 @@ Todos los errores tienen el mismo cuerpo, con el mensaje en español listo para 
 
 | Código | Cuándo | Ejemplo de mensaje |
 |---|---|---|
-| `400` | Entrada inválida: carga fuera de rango, magnitud, modo o especialidad inexistentes, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
+| `400` | Entrada inválida: carga fuera de rango, magnitud, modo o especialidad inexistentes, ventana del historial inválida, JSON mal formado, índice que no es un número | `La carga debe estar entre 0 y 100: 150` |
 | `404` | La compañía, la máquina o el sensor no existen | `No existe una compañía con id 99` |
 | `409` | La acción no se permite en el estado actual (también si la compañía está en quiebra, o un botón del modo manual en automático o sin nada que hacer), o el nombre o la etiqueta ya existen | `No se puede inyectar un fallo en PRENSA-01: ya tiene un fallo activo` |
 

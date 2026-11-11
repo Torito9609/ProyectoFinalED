@@ -256,6 +256,45 @@ public final class Organizacion {
     }
 
     /**
+     * Devuelve el puntaje de fallos de toda la organización en cada tick de una ventana, para dibujar la
+     * gráfica.
+     *
+     * <p>Complejidad: O(k), con k los ticks de la ventana: cada valor se lee directo en su hoja del
+     * árbol de segmentos, en O(1).</p>
+     *
+     * @param desde primer tick de la ventana
+     * @param hasta último tick de la ventana
+     * @return lista no modificable, un valor por tick
+     * @throws IndexOutOfBoundsException si la ventana se sale de la partida
+     */
+    public List<Integer> serieFallos(int desde, int hasta) {
+        return serie(historialFallos, desde, hasta);
+    }
+
+    /**
+     * Devuelve el costo de toda la organización en cada tick de una ventana, para dibujar la gráfica.
+     *
+     * <p>Complejidad: O(k), con k los ticks de la ventana.</p>
+     *
+     * @param desde primer tick de la ventana
+     * @param hasta último tick de la ventana
+     * @return lista no modificable, un valor por tick
+     * @throws IndexOutOfBoundsException si la ventana se sale de la partida
+     */
+    public List<Integer> serieCostos(int desde, int hasta) {
+        return serie(historialCostos, desde, hasta);
+    }
+
+    /** Lee las hojas de un árbol de segmentos entre dos posiciones, ambas incluidas. */
+    private static List<Integer> serie(ArbolSegmentos arbol, int desde, int hasta) {
+        List<Integer> valores = new ArrayList<>();
+        for (int posicion = desde; posicion <= hasta; posicion++) {
+            valores.add(arbol.valor(posicion));
+        }
+        return Collections.unmodifiableList(valores);
+    }
+
+    /**
      * Cambia el modo de todas las compañías, con la simulación en marcha o en pausa.
      *
      * <p>Complejidad: O(c), con c el número de compañías.</p>

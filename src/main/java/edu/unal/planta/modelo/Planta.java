@@ -1203,6 +1203,45 @@ public final class Planta {
     }
 
     /**
+     * Devuelve el puntaje de fallos de la compañía en cada tick de una ventana, para dibujar la
+     * gráfica.
+     *
+     * <p>Complejidad: O(k), con k los ticks de la ventana: cada valor se lee directo en su hoja del
+     * árbol de segmentos, en O(1).</p>
+     *
+     * @param desde primer tick de la ventana
+     * @param hasta último tick de la ventana
+     * @return lista no modificable, un valor por tick
+     * @throws IndexOutOfBoundsException si la ventana se sale de la partida
+     */
+    public List<Integer> serieFallos(int desde, int hasta) {
+        return serie(historialFallos, desde, hasta);
+    }
+
+    /**
+     * Devuelve el costo de la compañía en cada tick de una ventana, para dibujar la gráfica.
+     *
+     * <p>Complejidad: O(k), con k los ticks de la ventana.</p>
+     *
+     * @param desde primer tick de la ventana
+     * @param hasta último tick de la ventana
+     * @return lista no modificable, un valor por tick
+     * @throws IndexOutOfBoundsException si la ventana se sale de la partida
+     */
+    public List<Integer> serieCostos(int desde, int hasta) {
+        return serie(historialCostos, desde, hasta);
+    }
+
+    /** Lee las hojas de un árbol de segmentos entre dos posiciones, ambas incluidas. */
+    private static List<Integer> serie(ArbolSegmentos arbol, int desde, int hasta) {
+        List<Integer> valores = new ArrayList<>();
+        for (int posicion = desde; posicion <= hasta; posicion++) {
+            valores.add(arbol.valor(posicion));
+        }
+        return Collections.unmodifiableList(valores);
+    }
+
+    /**
      * Devuelve la fracción del tiempo en que las máquinas produjeron en la partida.
      *
      * @return disponibilidad entre 0 y 1

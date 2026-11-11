@@ -4,6 +4,7 @@ import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.api.dto.EntradaRankingDto;
 import edu.unal.planta.api.dto.EstadoOverhaulsDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
+import edu.unal.planta.api.dto.HistorialDto;
 import edu.unal.planta.api.dto.RankingDto;
 import edu.unal.planta.api.dto.ResumenCompaniaDto;
 import edu.unal.planta.api.dto.ResumenPartidaDto;
@@ -17,6 +18,7 @@ import edu.unal.planta.modelo.Maquina;
 import edu.unal.planta.modelo.ModoSimulacion;
 import edu.unal.planta.modelo.Organizacion;
 import edu.unal.planta.modelo.Planta;
+import edu.unal.planta.modelo.ResumenHistorial;
 import edu.unal.planta.modelo.SolicitudOverhaul;
 import edu.unal.planta.modelo.TecnicoExterno;
 import edu.unal.planta.modelo.TipoFallo;
@@ -512,6 +514,48 @@ public class ServicioSimulacion {
         buscarMaquina(planta, indiceMaquina);
         planta.reemplazarMaquina(indiceMaquina);
         return EstadoPlantaDto.desde(planta, enEjecucion);
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Historial
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Consulta el historial de una ventana de ticks, global o de una compañía: el total y el pico
+     * del puntaje de fallos y del costo, y el valor de cada tick.
+     *
+     * <p>Si no se da la ventana, va del tick 0 al último tick registrado. Un tick se registra al
+     * terminar, así que el último es el anterior al actual.</p>
+     *
+     * <p>Complejidad: O(log n) para los totales y los picos, con n la duración de la partida, más
+     * O(k) para las series, con k los ticks de la ventana.</p>
+     *
+     * @param idCompania id de la compañía, o {@code null} para el historial global
+     * @param desde      primer tick de la ventana, o {@code null} para empezar en 0
+     * @param hasta      último tick de la ventana, o {@code null} para el último registrado
+     * @return el historial de la ventana, inmutable
+     * @throws NoEncontradoException    si la compañía no existe
+     * @throws IllegalArgumentException si la ventana se sale de la partida o {@code desde > hasta}
+     */
+    public synchronized HistorialDto historial(Integer idCompania, Integer desde, Integer hasta) {
+        int inicio = desde == null ? 0 : desde;
+        int fin = hasta == null ? Math.max(0, organizacion.tickActual() - 1) : hasta;
+        int ultimo = ConfiguracionPlanta.DURACION_PARTIDA - 1;
+        if (inicio < 0 || fin > ultimo || inicio > fin) {
+            throw new IllegalArgumentException("La ventana [" + inicio + ", " + fin
+                    + "] no es válida: debe cumplir 0 ≤ desde ≤ hasta ≤ " + ultimo);
+        }
+        if (idCompania == null) {
+            ResumenHistorial resumen = organizacion.historial(inicio, fin);
+            return new HistorialDto("Global", inicio, fin, resumen.totalFallos(), resumen.picoFallos(),
+                    resumen.totalCosto(), resumen.picoCosto(),
+                    organizacion.serieFallos(inicio, fin), organizacion.serieCostos(inicio, fin));
+        }
+        Planta planta = buscarCompania(idCompania);
+        ResumenHistorial resumen = planta.historial(inicio, fin);
+        return new HistorialDto(planta.nombre(), inicio, fin, resumen.totalFallos(), resumen.picoFallos(),
+                resumen.totalCosto(), resumen.picoCosto(),
+                planta.serieFallos(inicio, fin), planta.serieCostos(inicio, fin));
     }
 
     private SolicitudOverhaulDto copiar(SolicitudOverhaul solicitud) {

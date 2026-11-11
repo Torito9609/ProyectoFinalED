@@ -2,6 +2,7 @@ package edu.unal.planta.api;
 
 import edu.unal.planta.api.dto.AprobarOverhaulDto;
 import edu.unal.planta.api.dto.EstadoOverhaulsDto;
+import edu.unal.planta.api.dto.HistorialDto;
 import edu.unal.planta.api.dto.RankingDto;
 import edu.unal.planta.servicio.ServicioSimulacion;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Endpoints de la vista del superusuario: el ranking de fallos con sus recomendaciones y las
- * solicitudes de overhaul con los técnicos del fabricante. Aquí entrará también el historial.
+ * solicitudes de overhaul con los técnicos del fabricante, y el historial por ventana de ticks.
  *
  * <p>Como los demás controladores, cada método llama una sola vez al servicio y devuelve el DTO
  * que este arma.</p>
@@ -80,5 +81,21 @@ public class ControladorSuperusuario {
     @PostMapping("/overhauls/asignar-siguiente")
     public EstadoOverhaulsDto asignarSiguienteOverhaul() {
         return servicio.asignarSiguienteOverhaul();
+    }
+
+    /**
+     * {@code GET /api/historial}: total, pico y serie por tick del puntaje de fallos y del costo en
+     * una ventana de ticks, global o de una compañía.
+     *
+     * @param desde    primer tick de la ventana; si no viene, 0
+     * @param hasta    último tick de la ventana; si no viene, el último registrado
+     * @param compania id de la compañía; si no viene, el historial global
+     * @return el historial de la ventana
+     */
+    @GetMapping("/historial")
+    public HistorialDto historial(@RequestParam(required = false) Integer desde,
+                                  @RequestParam(required = false) Integer hasta,
+                                  @RequestParam(required = false) Integer compania) {
+        return servicio.historial(compania, desde, hasta);
     }
 }

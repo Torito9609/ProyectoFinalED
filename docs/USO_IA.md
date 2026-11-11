@@ -420,6 +420,17 @@ Convención de la columna **Autoría**:
 | `test/.../ControladorOverhaulTest.java` | IA | 4 pruebas MockMvc: el montículo vacío, aprobar (400, 404, 409 y éxito), despachar el camión y reemplazar |
 | `docs/API.md` | IA | Sección 4c: contrato del overhaul y el reemplazo |
 
+### Entrega 2 — Commit 23: endpoint del historial por ventana de ticks
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/Planta.java`, `Organizacion.java` | IA | `serieFallos` y `serieCostos`: el valor de cada tick de una ventana, leído hoja por hoja con `ArbolSegmentos.valor` (aprobado por el equipo) |
+| `api/dto/HistorialDto.java` | IA | Total, pico y serie por tick de las dos series |
+| `servicio/ServicioSimulacion.java` | IA | `historial`: ventana por defecto y validación (400) |
+| `api/ControladorSuperusuario.java` | IA | `GET /api/historial` |
+| `test/.../ControladorHistorialTest.java` | IA | 3 pruebas: el total y el pico contra la serie, el global contra la suma de las compañías, la ventana de una compañía y los errores |
+| `docs/API.md` | IA | Sección 4d: contrato del historial |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
