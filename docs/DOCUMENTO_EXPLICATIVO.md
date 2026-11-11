@@ -1,6 +1,6 @@
 # Por qué y cómo se usó cada estructura de datos
 
-**Simulador de Monitoreo y Mantenimiento de Planta** — Entrega 1.
+**Simulador de Monitoreo y Mantenimiento de Planta** — Entregas 1 y 2.
 Curso Estructuras de Datos — Universidad Nacional de Colombia.
 Equipo: Cristian Robayo y Kevin Toro.
 
@@ -22,6 +22,19 @@ la sección 8 lista las pruebas que lo respaldan.
 7. [Cómo interactúan las estructuras en un tick](#7-cómo-interactúan-las-estructuras-en-un-tick)
 8. [Pruebas](#8-pruebas)
 9. [Tabla resumen de complejidades](#9-tabla-resumen-de-complejidades)
+
+**Segunda parte — Entrega 2**
+
+10. [Introducción a la Entrega 2](#10-introducción-a-la-entrega-2)
+11. [Arreglo dinámico — las compañías](#11-arreglo-dinámico--las-compañías)
+12. [Conjunto — nombres que no se repiten](#12-conjunto--nombres-que-no-se-repiten)
+13. [Árbol de búsqueda balanceado — el ranking de fallos](#13-árbol-de-búsqueda-balanceado--el-ranking-de-fallos)
+14. [Montículo — las solicitudes de overhaul](#14-montículo--las-solicitudes-de-overhaul)
+15. [Colas FIFO — técnicos por especialidad y técnicos del fabricante](#15-colas-fifo--técnicos-por-especialidad-y-técnicos-del-fabricante)
+16. [Árbol de segmentos — el historial por ventana de ticks](#16-árbol-de-segmentos--el-historial-por-ventana-de-ticks)
+17. [Cómo interactúan las estructuras en un tick de la organización](#17-cómo-interactúan-las-estructuras-en-un-tick-de-la-organización)
+18. [Pruebas de la Entrega 2](#18-pruebas-de-la-entrega-2)
+19. [Tabla resumen de complejidades de la Entrega 2](#19-tabla-resumen-de-complejidades-de-la-entrega-2)
 
 ---
 
@@ -776,3 +789,500 @@ entre todas las inserciones da O(1) en promedio.
 **La excepción es la `ColaCircular`.** Su arreglo **nunca crece**, así que encolar es O(1) siempre,
 sin promedios. Es la consecuencia directa de tener memoria fija.
 
+---
+
+# Segunda parte — Entrega 2
+
+> En la Entrega 2 el proyecto pasó a **Spring Boot**: este repositorio es el backend y la interfaz es
+> un frontend web en otro repositorio (`ProyectoFinalED-frontend`). Las capturas de la primera parte
+> son de la interfaz Swing de la Entrega 1, que se conserva en la etiqueta de Git `entrega-1`. **Las
+> estructuras de la primera parte no cambiaron**: el modelo es el mismo y sus pruebas siguen pasando.
+> Lo que sigue son las estructuras **nuevas**, con el mismo formato: qué problema resuelven, por qué
+> son las adecuadas, qué alternativas se descartaron y cuánto cuesta cada operación.
+
+---
+
+## 10. Introducción a la Entrega 2
+
+### Qué se agregó
+
+La planta de la Entrega 1 pasa a ser **una compañía** dentro de una **organización** con varias. Un
+**superusuario** las ve todas, y el modo manual se convirtió en un **juego de gestión**:
+
+- Se pueden **crear compañías y máquinas**, con nombres que no se repiten.
+- Un **ranking** ordena las máquinas por un **puntaje de fallos** y recomienda **overhaul** (una
+  reparación mayor, hecha por técnicos del fabricante) o **reemplazo**.
+- Las **solicitudes de overhaul** aprobadas esperan a unos pocos técnicos del fabricante compartidos
+  por todas las compañías.
+- Cada fallo es **mecánico** o **eléctrico**, y cada técnico tiene esa especialidad.
+- Un **historial** responde cuántos fallos y cuánto gasto hubo entre dos ticks, y cuál fue el pico.
+
+### Resumen
+
+| Estructura | Implementación | Uso | Dónde está |
+|---|---|---|---|
+| Arreglo dinámico | `ArrayList<Planta>` | Compañías; el id es el índice | `Organizacion.companias` |
+| Conjunto (árbol de búsqueda) | `TreeSet<String>`, declarado como `Set` | Nombres de compañías y etiquetas de máquinas, sin repetir | `Organizacion.nombres`, `Planta.etiquetas` |
+| Árbol de búsqueda balanceado | `TreeSet<Maquina>` (rojo-negro) | Ranking por puntaje de fallos, por compañía y global | `RankingFallos.arbol` |
+| Montículo | `PriorityQueue<SolicitudOverhaul>` (binario) | Solicitudes de overhaul, la peor máquina primero | `Organizacion.solicitudes` |
+| Dos colas FIFO | `ArrayDeque<Tecnico>` en un `EnumMap` | Técnicos internos libres, una cola por especialidad | `Planta.tecnicosLibres` |
+| Cola FIFO | `ArrayDeque<TecnicoExterno>` | Técnicos del fabricante libres | `Organizacion.externosLibres` |
+| Árbol de segmentos | **`ArbolSegmentos`, propio** | Historial por tick de fallos y de costo | `Planta` y `Organizacion`, dos cada una |
+
+### El mismo criterio de la primera parte
+
+El criterio de la sección 1 se volvió la regla del juego: **el jugador decide _qué_ hacer, _cuándo_
+y _con qué recurso_; la estructura decide _cuál_ elemento sale.** El jugador puede elegir a qué cola
+de técnicos mandar una orden, pero no elegir la orden ni el técnico: eso sería sacar del medio de una
+cola con prioridad o saltarse una FIFO. Cada botón ejecuta la operación del tipo abstracto
+(`extraer`, `poll`) y nada más.
+
+---
+
+## 11. Arreglo dinámico — las compañías
+
+**Implementación:** `ArrayList<Planta>`, en el campo `Organizacion.companias`.
+
+Es el mismo argumento del inventario (sección 2), un nivel más arriba:
+
+| Operación | Costo | Cuándo |
+|---|---|---|
+| `get(id)` | **O(1)** | Cada petición de la API trae el id de la compañía: `/api/companias/{id}` |
+| Recorrer todas | O(c) | En cada tick, para ejecutar el tick de cada compañía en orden |
+| `add` al final | **O(1) amortizado** | Al crear una compañía; su id es el índice que le tocó |
+| Eliminar | O(c) | **Nunca** |
+
+**Por qué no se eliminan compañías ni máquinas.** `remove` en un `ArrayList` cuesta O(n) y, peor,
+**corre los índices** de los que vienen después. Los índices son los ids de la API y la clave de las
+máquinas en los rankings, así que cambiarían bajo los pies del frontend y de los árboles. Además, una
+máquina eliminada podría tener una solicitud en el montículo, y sacarla con
+`PriorityQueue.remove(objeto)` cuesta O(n) y extrae un elemento que no es la cima.
+
+**El reemplazo usa `set`.** Cuando una máquina se reemplaza, la nueva entra en **el mismo índice** del
+inventario con `inventario.set(indice, nueva)`, O(1). Así se cumple "no se elimina nada" y la clave
+`(idCompania, indice)` sigue siendo la misma.
+
+**Por qué no un árbol n-ario.** La jerarquía organización → compañías → máquinas tiene profundidad
+fija: crear una compañía o una máquina agrega hermanos, no niveles. Una lista de compañías, cada una
+con su lista de máquinas, ya es ese árbol de forma implícita. El árbol n-ario se justificaría si el
+usuario pudiera crear niveles (sedes, líneas de producción) con profundidad variable; quedó como
+opción para la entrega final.
+
+---
+
+## 12. Conjunto — nombres que no se repiten
+
+**Implementación:** `TreeSet<String>`, declarado como `Set<String>`. Hay uno en la organización
+(`Organizacion.nombres`, los nombres de las compañías) y uno por compañía (`Planta.etiquetas`, las
+etiquetas de sus máquinas).
+
+### El problema que resuelve
+
+Al crear una compañía o una máquina hay que responder **"¿ya existe este nombre?"**. Un conjunto es
+exactamente el tipo abstracto para eso: una colección **sin repetidos** cuya operación principal es
+preguntar si un elemento pertenece.
+
+### Cómo funciona
+
+`TreeSet` es un **árbol rojo-negro**: un árbol binario de búsqueda que se rebalancea solo, así que su
+altura nunca pasa de 2·log₂(n+1). Buscar es bajar desde la raíz comparando: a la izquierda si el
+nombre buscado es menor, a la derecha si es mayor.
+
+| Operación | Costo |
+|---|---|
+| `contains(nombre)` | **O(log n)** |
+| `add(nombre)` | **O(log n)** |
+
+Antes de guardar, el nombre se **normaliza**: sin espacios a los lados, y en minúsculas para las
+compañías o en mayúsculas para las etiquetas. Así "planta norte" y "Planta Norte " cuentan como el
+mismo. La compañía se muestra como la escribió el usuario; el conjunto guarda solo la clave.
+
+### Por qué una etiqueta es única solo dentro de su compañía
+
+Cada compañía tiene su propio conjunto de etiquetas, así que `PRENSA-01` puede existir en todas. La
+identidad de una máquina no es su etiqueta sino su **clave compuesta** `(idCompania, indice)`, como
+la clave primaria de una tabla. Que las etiquetas no se repitan dentro de una compañía es una regla
+del negocio (para que el operador no se confunda), no algo que necesite una estructura.
+
+### Alternativas descartadas
+
+- **Recorrer la lista de compañías o el inventario:** O(n) en cada creación, contra O(log n).
+- **`HashSet`:** también sirve, con O(1) esperado. No lo usamos porque las tablas hash no están en
+  los temas del curso, y `TreeSet` da O(log n) garantizado. Con 3 a 20 nombres la diferencia no se
+  nota: el argumento no es la velocidad sino usar el tipo abstracto correcto. Como el campo se
+  declara `Set<String>`, cambiar a `HashSet` sería una sola palabra.
+
+---
+
+## 13. Árbol de búsqueda balanceado — el ranking de fallos
+
+**Implementación:** `TreeSet<Maquina>` (árbol rojo-negro), envuelto en la clase `RankingFallos`. Cada
+compañía tiene el suyo y hay uno **global** con las máquinas de todas.
+
+### El problema que resuelve
+
+Cada vez que una máquina falla, su **puntaje de fallos** sube según la prioridad: P1 suma 3, P2 suma
+2, P3 suma 1 (un preventivo P4 no es un fallo y suma 0). El superusuario quiere ver **las máquinas
+ordenadas de peor a mejor**, y el frontend lo consulta **en cada sondeo**, cada medio segundo.
+
+### Cómo funciona
+
+El árbol ordena las máquinas con un solo comparador:
+
+```java
+Comparator.comparingInt(Maquina::puntajeFallos).reversed()   // mayor puntaje primero
+        .thenComparingInt(Maquina::idCompania)               // desempate 1
+        .thenComparingInt(Maquina::indice);                  // desempate 2
+```
+
+El desempate no es un detalle: un `TreeSet` considera **iguales** a dos elementos que el comparador
+dice que son iguales, y guarda solo uno. Sin desempate, dos máquinas con el mismo puntaje se
+"fundirían" y una desaparecería del ranking. La clave usa solo números que **nunca cambian** (el id
+de la compañía y el índice), y no las etiquetas.
+
+| Operación | Costo | Cuándo |
+|---|---|---|
+| Insertar o eliminar una máquina | **O(log n)** | En cada fallo, overhaul o reemplazo |
+| Recorrer en orden (el ranking completo) | **O(n)** | En cada consulta del ranking |
+| Las máquinas con puntaje ≥ k | **O(log n + k)** | Las candidatas a overhaul |
+
+El recorrido **en orden** de un árbol de búsqueda sale ya ordenado: la consulta no ordena nada.
+
+### La trampa de la clave que cambia
+
+Es el error más importante de entender en esta entrega, porque **no lanza ninguna excepción**.
+
+El árbol ubica cada máquina según su puntaje **en el momento en que se insertó**. Si el puntaje
+cambia con la máquina adentro, el árbol no se entera: la máquina queda en una posición que ya no le
+corresponde. Por ejemplo:
+
+1. B (puntaje 3) está en la raíz y A (puntaje 5) es su hijo izquierdo: en orden descendente, el
+   mayor puntaje va antes.
+2. Se hace `A.puntaje = 1` **sin sacarla**. A sigue a la izquierda de B, pero con puntaje 1 debería
+   estar a la derecha. El ranking ya está mal ordenado.
+3. Se intenta `remove(A)`. El árbol compara A (ahora 1) con la raíz B (3), concluye que A va
+   **después** y la busca en el subárbol **derecho**... pero A está en el izquierdo. **No la
+   encuentra y `remove` devuelve `false`.** A queda para siempre en el árbol con una clave falsa.
+
+Por eso **el puntaje solo cambia en un lugar**, `RankingFallos.sumarFallo`, y siempre en tres pasos:
+
+```java
+public void sumarFallo(Maquina maquina, int peso) {
+    quitar(maquina);            // 1. sacarla con la clave vieja, que es la que el árbol conoce
+    maquina.sumarPuntaje(peso); // 2. cambiar la clave afuera del árbol
+    agregar(maquina);           // 3. volverla a meter con la clave nueva
+}
+```
+
+Y `quitar` **no tolera** que la máquina no esté: si `remove` devuelve `false`, lanza una excepción
+que dice que el puntaje cambió por fuera del ranking. Así la trampa, si alguna vez ocurre, se ve.
+
+La misma regla aplica al cerrar un overhaul (el puntaje vuelve a 0) y al reemplazar una máquina (la
+vieja sale, la nueva entra).
+
+### Una máquina vive en dos árboles
+
+Cada máquina está en el ranking de su compañía **y** en el global. El ranking de cada compañía
+guarda una referencia al global, y `agregar`, `quitar` y `sumarFallo` actúan sobre los dos. Así no
+hay forma de actualizar uno y olvidar el otro. Un fallo cuesta O(log n) en cada árbol: O(log n) en
+total.
+
+### La consulta por rango
+
+Las candidatas a overhaul son las máquinas con puntaje ≥ `umbralOverhaul`. Como el árbol está
+ordenado de mayor a menor, son **un prefijo** del recorrido: `conPuntajeMinimo` recorre en orden y
+**se detiene en la primera máquina por debajo del umbral**. Cuesta O(log n) llegar a la primera, más
+O(k) por las k que devuelve: no toca el resto del árbol.
+
+`TreeSet` también ofrece `headSet` y `tailSet`, pero reciben un **elemento** del árbol, no un
+puntaje: habría que fabricar una máquina ficticia con el puntaje del umbral solo para usarla de
+límite. El recorrido con corte da lo mismo y se explica solo.
+
+### Alternativas descartadas
+
+- **Ordenar el inventario en cada consulta:** O(n log n) por consulta, y el frontend consulta en
+  cada sondeo. El árbol cambia eso por O(log n) **por fallo**. Es un argumento de **lecturas contra
+  escrituras**: hay muchas más consultas que fallos, así que conviene pagar al escribir.
+- **Montículo:** da la peor máquina en O(1), pero no la lista ordenada, y `PriorityQueue` no permite
+  cambiar la clave de un elemento sin sacarlo (sacar uno que no es la cima cuesta O(n)).
+- **AVL propio:** daría las mismas complejidades. Como la librería está permitida, el rojo-negro de
+  `TreeSet` es suficiente; escribir un AVL no agregaría nada al proyecto.
+- **Árbol B:** pensado para minimizar los accesos a disco con nodos grandes. Aquí todo está en
+  memoria y hay pocas máquinas.
+
+---
+
+## 14. Montículo — las solicitudes de overhaul
+
+**Implementación:** `PriorityQueue<SolicitudOverhaul>`, que es un **montículo binario**, en el campo
+`Organizacion.solicitudes`. Es uno solo para todas las compañías.
+
+### El problema que resuelve
+
+Cuando el superusuario **aprueba** un overhaul, la solicitud espera a un técnico del fabricante. Hay
+solo **2**, compartidos por todas las compañías, así que las solicitudes se acumulan. Cuando un
+técnico se libera, debe atender **la máquina en peor estado**, no la que se aprobó primero.
+
+### Cómo funciona
+
+Un montículo binario es un árbol binario **completo** guardado en un arreglo, sin nodos ni
+referencias: los hijos de la posición i están en 2i+1 y 2i+2, y su padre en (i−1)/2. La única regla
+es que **cada padre es mejor que sus hijos**, así que el mejor de todos está en la raíz. No está
+ordenado de izquierda a derecha: solo de arriba abajo.
+
+| Operación | Cómo | Costo |
+|---|---|---|
+| `add` (aprobar) | Se pone al final y **sube** mientras sea mejor que su padre | **O(log s)** |
+| `peek` (ver la cima) | La posición 0 | **O(1)** |
+| `poll` (despachar) | El último pasa a la raíz y **baja** cambiando con su mejor hijo | **O(log s)** |
+
+### Por qué ahora sí, si en la Entrega 1 se descartó
+
+En la Entrega 1 se descartó `PriorityQueue` para las órdenes P1–P4 por dos razones (sección 5): era
+un montículo, que no se había visto en el curso, y **no garantiza el orden de llegada** entre
+elementos con la misma prioridad. Ahora el montículo ya es tema del curso, y la segunda razón se
+resuelve con un **número de secuencia**:
+
+```java
+Comparator.comparingInt(SolicitudOverhaul::puntajeCongelado).reversed() // peor máquina primero
+        .thenComparingLong(SolicitudOverhaul::secuencia);               // en un empate, la que llegó antes
+```
+
+Cada aprobación recibe la siguiente secuencia (1, 2, 3...), así que **no hay dos solicitudes
+iguales** para el comparador, y entre dos con el mismo puntaje sale primero la más antigua.
+
+Y la razón para no cambiar la cola P1–P4 de la Entrega 1 sigue en pie: allí la clave tiene **solo 4
+valores**, y un arreglo de 4 colas da insertar O(1) y extraer O(4), mejor que O(log n). Aquí la clave
+es un puntaje que puede tomar muchos valores, y el arreglo de colas no sirve.
+
+### El puntaje se congela
+
+La clave del montículo es el puntaje **en el momento de aprobar**, copiado dentro de la solicitud
+(`puntajeCongelado`). Mientras espera, la máquina sigue operando y puede fallar más. Si el montículo
+leyera el puntaje vivo de la máquina, la clave cambiaría con la solicitud adentro: es la **misma
+trampa** del ranking (sección 13), y `PriorityQueue` tampoco se reordena sola.
+
+### Una solicitud por máquina, sin buscar en el montículo
+
+Una máquina con una solicitud pendiente no puede tener otra. Preguntar `solicitudes.contains(...)`
+recorrería todo el arreglo, O(s). En cambio, la máquina guarda una **marca** `overhaulPendiente`: se
+pone al aprobar y se quita al despachar. Consultarla es O(1). La API la expone para que el frontend
+deshabilite el botón de aprobar.
+
+### La regla de la cima
+
+En cada tick, mientras haya técnicos del fabricante libres, se **mira la cima** (`peek`). Si su
+máquina está libre (sin alarma, sin orden pendiente, fuera de mantenimiento), se extrae y se le
+asigna un técnico. Si **no** está libre, el camión **espera** al tick siguiente: **no se salta a la
+segunda solicitud**, porque sacar un elemento que no es la cima viola el tipo abstracto.
+
+### Cómo se muestra
+
+`PriorityQueue` no expone su arreglo interno: el orden de `toArray()` no está garantizado y
+cambia con la historia de inserciones. Por eso el frontend **no dibuja el árbol**; dibujarlo sería
+inventar una memoria que no conocemos (el mismo criterio de la sección 2). La API entrega:
+
+- la **cima**, con `peek`, O(1);
+- el **orden de salida**: se copia el montículo y se extrae de la copia hasta vaciarla,
+  O(s log s). El montículo real no se toca. Con s pequeño (unas pocas solicitudes), es barato.
+
+---
+
+## 15. Colas FIFO — técnicos por especialidad y técnicos del fabricante
+
+### 15.1 Dos colas de técnicos internos
+
+**Implementación:** un `EnumMap<TipoFallo, Queue<Tecnico>>` con un `ArrayDeque` por especialidad
+(`MECANICO` y `ELECTRICO`), en el campo `Planta.tecnicosLibres`. Reemplaza la cola única de la
+Entrega 1.
+
+Cada sensor declara su **tipo de fallo**, y cada orden hereda el de su sensor: la orden **pide** una
+especialidad. Al asignar:
+
+1. Se mira la orden más prioritaria (`verSiguiente`), sin sacarla.
+2. Se elige **la cola de su especialidad**: O(1), porque el `EnumMap` es un arreglo indexado por el
+   enum.
+3. Si esa cola tiene a alguien, se extrae la orden y se desencola su **frente**, O(1).
+
+Al terminar el trabajo, el técnico vuelve **al final de la cola de su especialidad**.
+
+**En automático, la orden espera a su especialidad**, aunque haya técnicos libres de la otra. No se
+salta a la siguiente orden, por la misma razón de la regla de la cima.
+
+**En manual, el jugador elige la cola.** Si elige la otra especialidad, la reparación **tarda el
+doble**. Es una decisión real: atender ya y pagar más, o esperar.
+
+**Alternativa descartada: una sola cola, buscando un técnico de la especialidad.** Habría que
+recorrerla, O(n), y sacar un elemento que **no es el frente**, lo que viola el tipo abstracto. Con
+una cola por especialidad la búsqueda desaparece: se elige la cola y se desencola su frente.
+
+### 15.2 Técnicos del fabricante
+
+**Implementación:** `ArrayDeque<TecnicoExterno>`, declarado como `Queue`, en
+`Organizacion.externosLibres`. Mismo patrón que los internos: el primero de la fila recibe el
+siguiente overhaul y, al terminar, vuelve al final.
+
+**Por qué un número fijo de técnicos.** Si se creara un técnico cada vez que llega una solicitud,
+nunca habría fila, y el montículo **no tendría nada que decidir**. Con 2 técnicos fijos y
+compartidos, las solicitudes se acumulan y el montículo decide cuál sale. Es también lo realista: el
+fabricante tiene pocos especialistas.
+
+---
+
+## 16. Árbol de segmentos — el historial por ventana de ticks
+
+**Implementación: propia**, la clase `estructuras/ArbolSegmentos`. Java no trae un árbol de
+segmentos. Cada compañía tiene **dos** (puntaje de fallos y costo por tick), y la organización otros
+dos con la suma de todas las compañías.
+
+### El problema que resuelve
+
+El superusuario elige una ventana de ticks [a, b] y pregunta:
+
+- **¿Cuántos** fallos (o cuánto gasto) hubo en la ventana? → la **suma** del rango.
+- **¿Cuál fue el peor tick** de la ventana? → el **máximo** del rango.
+
+La partida dura 1000 ticks. Recorrer la ventana cuesta O(b − a), hasta 1000 operaciones por consulta,
+y el frontend consulta seguido mientras el usuario mueve la ventana.
+
+### Cómo funciona
+
+Es un árbol binario donde **cada nodo resume un rango** de ticks: guarda la suma y el máximo de ese
+rango. La raíz cubre todos los ticks, sus dos hijos cubren cada mitad, y así hasta las hojas, que
+cubren un tick cada una.
+
+**Representación:** como el montículo, vive en arreglos y no en nodos con referencias. Se toma
+**m = la menor potencia de 2 ≥ n** (con n = 1000, m = 1024) y dos arreglos de tamaño 2m, uno para las
+sumas y otro para los máximos:
+
+- el nodo 1 es la raíz; los hijos del nodo i son 2i y 2i+1, y su padre es i/2;
+- el tick p está en la hoja m + p.
+
+**Ejemplo con 8 ticks** (m = 8). Los fallos por tick son `[0, 3, 0, 1, 2, 0, 6, 1]`:
+
+```
+                      nodo 1  [0..7]  suma 13  máx 6
+               /                                      \
+     nodo 2 [0..3] s 4 m 3                    nodo 3 [4..7] s 9 m 6
+       /              \                         /              \
+ nodo 4 [0..1]   nodo 5 [2..3]           nodo 6 [4..5]    nodo 7 [6..7]
+   s 3  m 3        s 1  m 1                s 2  m 2         s 7  m 6
+  /     \         /     \                 /     \          /      \
+ 0       3       0       1               2       0        6        1     ← hojas (nodos 8 a 15)
+```
+
+**Actualizar el tick p** (al terminar cada tick): se escribe la hoja m + p y se sube hasta la raíz
+recalculando cada padre: `suma = izquierdo + derecho`, `máx = max(izquierdo, derecho)`. Un paso por
+nivel: **O(log n)**.
+
+**Consultar [a, b]**: se baja desde la raíz con tres casos por nodo:
+
+1. el nodo queda **fuera** del rango → aporta 0 a la suma (y nada al máximo);
+2. el nodo queda **dentro** del rango → se usa su valor guardado, **sin bajar más**;
+3. el rango **corta** el nodo → se baja a los dos hijos y se combinan sus resultados.
+
+Para la ventana [2, 6] del ejemplo solo se usan tres nodos guardados: el nodo 5 ([2..3], suma 1), el
+nodo 6 ([4..5], suma 2) y la hoja del tick 6 (suma 6). **Total 9 y pico 6**, sin leer los ticks uno
+por uno. En cada nivel, a lo sumo dos nodos caen en el caso 3, así que la consulta visita
+**O(log n)** nodos: con 1000 ticks y 10 niveles, unas decenas de nodos en vez de 1000 ticks.
+
+**Leer un tick** es leer su hoja: O(1). Así sale la serie que dibuja la gráfica.
+
+### Por qué guarda el máximo: el árbol frente a las sumas prefijas
+
+Este es el punto que hay que saber defender. Los fallos **siempre** se registran en el tick actual,
+nunca en el pasado. Si solo se pidieran **totales**, bastaría un arreglo de **sumas prefijas**
+(`prefijo[i]` = suma de los ticks 0 a i−1): agregar el tick actual es O(1), y la suma de [a, b] es
+`prefijo[b+1] − prefijo[a]`, también O(1). Sería **mejor** que el árbol.
+
+Lo que las sumas prefijas no pueden responder es el **máximo** de un rango arbitrario: el máximo no
+se puede "restar". Saber el pico de [0, b] y el de [0, a−1] no dice nada del pico de [a, b]. **El
+árbol de segmentos se justifica por el pico.** Si algún día el historial solo diera totales, sobraría.
+
+### Detalles de implementación
+
+- Las sumas son `long`: 1000 ticks de gasto pueden pasar el límite de un `int`.
+- Las hojas de relleno (ticks 1000 a 1023) quedan en 0, y ninguna consulta válida las incluye.
+- El valor de un tick incluye todo lo que pasó desde el registro anterior, también lo que el jugador
+  hizo entre dos ticks (un reemplazo, un overhaul despachado a mano). Por eso el acumulador se pone
+  en 0 **al registrar**, no al empezar el tick.
+- El global guarda en cada tick **la suma** de las compañías: su pico es el peor tick de toda la
+  organización, no el peor de una sola.
+
+---
+
+## 17. Cómo interactúan las estructuras en un tick de la organización
+
+`Organizacion.tick()`:
+
+1. **Recorre las compañías** en el orden del `ArrayList` y ejecuta el tick de cada una (los pasos de
+   la sección 7). Cuando una compañía clasifica un fallo P1–P3, `RankingFallos.sumarFallo` lo saca y
+   lo vuelve a meter en **sus dos árboles**.
+2. **Avanza los overhauls:** a cada técnico del fabricante ocupado se le resta un tick. Al terminar,
+   la máquina vuelve con puntaje 0 (sale y vuelve a entrar a los dos rankings) y el técnico vuelve
+   al final de su **cola FIFO**.
+3. **Asigna overhauls** en automático, con la **regla de la cima** del **montículo**.
+4. **Registra el tick** en los **árboles de segmentos** de cada compañía y en los globales.
+5. Incrementa el tick. A los 1000 ticks la partida termina.
+
+### El descarte perezoso
+
+Hay situaciones en las que un elemento que espera en una estructura **deja de tener sentido**, pero
+no es el siguiente en salir:
+
+- una orden **P4** (preventivo) de una máquina que ya recibió un overhaul, que es un servicio
+  completo;
+- una **solicitud de overhaul** de una compañía en quiebra, o de una máquina que fue reemplazada;
+- un **comando de la pila** de deshacer sobre una máquina que ya fue reemplazada.
+
+Sacarlos del medio violaría el tipo abstracto (y costaría O(n)). En cambio, **se quedan donde están**
+y se descartan **cuando llegan a la salida**: la P4 cuando sale de la cola con prioridad, la
+solicitud cuando llega a la cima del montículo, el comando cuando se intenta deshacer. La bitácora
+registra cada descarte ("OT-12 PRENSA-01 descartada: PRENSA-01 ya recibió overhaul o fue
+reemplazada").
+
+Es una técnica conocida con colas de prioridad: el algoritmo de Dijkstra la usa con los vértices que
+ya se procesaron. Para reconocer lo obsoleto no se busca nada: se miran **marcas** de la máquina en
+O(1) (la P4 pendiente, la solicitud pendiente). Una máquina reemplazada no tiene las marcas de la
+vieja, y así se reconoce lo que era de la anterior.
+
+---
+
+## 18. Pruebas de la Entrega 2
+
+El proyecto tiene **156 pruebas** en verde (`./mvnw test`): las de la Entrega 1 que siguen vigentes
+(se retiraron las de la interfaz Swing), las del modelo nuevo y las de la API.
+
+| Clase de prueba | Qué respalda |
+|---|---|
+| `ArbolSegmentosTest` | Los cuatro casos exigidos: el rango completo, un rango de un elemento, un máximo a mitad del rango y una actualización |
+| `RankingFallosTest` | Un fallo lleva la máquina al primer lugar; dos máquinas con el mismo puntaje se quedan las dos (el desempate); la consulta por umbral |
+| `SolicitudOverhaulTest` | El mayor puntaje sale primero y, en un empate, la que llegó antes |
+| `OrganizacionTest` | La misma semilla repite la simulación; el ranking global coincide con **ordenar todas las máquinas a mano** después de cientos de ticks; las solicitudes salen por puntaje aunque se aprueben al revés; la regla de la cima; el ciclo del overhaul; el reemplazo y sus descartes; el historial contra un cálculo directo |
+| `PlantaTest` | Además de las de la Entrega 1: cada fallo pide la especialidad de su sensor, la orden espera a su especialidad, la penalidad duplica la duración, la economía y la quiebra |
+| `Controlador...Test` (MockMvc) | Cada endpoint, con sus errores `400`, `404` y `409` |
+
+La prueba del ranking contra el ordenamiento a mano es la que demuestra que **la trampa de la clave
+que cambia no ocurre**: si un puntaje cambiara con la máquina adentro, el recorrido del árbol dejaría
+de coincidir con la lista ordenada.
+
+---
+
+## 19. Tabla resumen de complejidades de la Entrega 2
+
+n = máquinas, c = compañías, s = solicitudes de overhaul, T = ticks de la partida (1000),
+k = elementos devueltos.
+
+| Estructura | Insertar | Extraer o eliminar | Consultar | Recorrer |
+|---|---|---|---|---|
+| `ArrayList` (compañías) | `add`: **O(1) amortizado** | No se usa | `get(id)`: **O(1)** | O(c) |
+| `TreeSet<String>` (nombres) | `add`: **O(log n)** | No se usa | `contains`: **O(log n)** | — |
+| `TreeSet<Maquina>` (ranking) | **O(log n)** | `remove`: **O(log n)** | Puntaje ≥ umbral: **O(log n + k)** | En orden: **O(n)** |
+| `PriorityQueue` (overhauls) | `add`: **O(log s)** | `poll`: **O(log s)** | `peek`: **O(1)**; orden de salida: O(s log s) sobre una copia | — |
+| Colas por especialidad | `add`: **O(1) amortizado** | `poll`: **O(1)** | Elegir la cola: **O(1)** | O(n) |
+| `ArbolSegmentos` (historial) | Actualizar un tick: **O(log T)** | — | Suma o máximo de [a, b]: **O(log T)**; un tick: **O(1)** | Serie de la ventana: O(k) |
+
+**Lo que cambió respecto a la primera parte.** En la Entrega 1 casi todo era O(1), porque las
+estructuras lineales solo tocan sus extremos. Los árboles cambian O(1) por **O(log n)** a cambio de
+algo que una estructura lineal no da: **el orden siempre listo** (ranking), **el mejor elemento sin
+ordenar todo** (montículo) y **resúmenes de cualquier rango sin recorrerlo** (árbol de segmentos).

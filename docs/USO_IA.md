@@ -439,6 +439,12 @@ Convención de la columna **Autoría**:
 | `test/.../PlantaTest.java` | IA | 1 prueba: una máquina en alarma produce la mitad |
 | `CLAUDE.md`, `docs/BITACORA_DESARROLLO.md` | IA | Mediciones de calibración y la decisión de posponer la dificultad |
 
+### Entrega 2 — Commit 24: documento explicativo de la Entrega 2
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `docs/DOCUMENTO_EXPLICATIVO.md` | IA | Segunda parte (secciones 10 a 19): por qué y cómo de cada estructura nueva, la trampa de la clave que cambia, el descarte perezoso, el árbol de segmentos frente a las sumas prefijas y la tabla de complejidades. **Pendiente: revisión del equipo para defenderlo en clase** |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
