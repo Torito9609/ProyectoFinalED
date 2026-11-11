@@ -36,6 +36,30 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, cierre del backend — 2026-11-10 — Etapas D, E y F terminadas
+
+### Hecho
+- **Etapa E (API):** commits 22 (overhaul y reemplazo) y 23 (historial por ventana de ticks, con la
+  serie por tick para la gráfica). Toda la API del juego está en `docs/API.md`.
+- **Etapa D (modelo):** el 14c quedó en la media capacidad en alarma; la dificultad se pospuso (ver
+  la entrada del commit 14c).
+- **Etapa F (documentación):** la segunda parte de `docs/DOCUMENTO_EXPLICATIVO.md` (secciones 10 a
+  19), el README con el enlace al frontend y las estructuras de la Entrega 2, y el porcentaje de IA
+  medido con `git blame` en `docs/USO_IA.md`.
+
+### Verificación
+- `./mvnw clean test`: **156 pruebas** en verde. Javadoc sin advertencias.
+
+### Pendiente
+- **Revisión del equipo** del documento explicativo de la Entrega 2, para defenderlo en clase.
+- **Frontend:** ponerse al día con la API (modo manual, overhaul, reemplazo e historial). El manual
+  de usuario y el video de la Entrega 2 dependen de él.
+- **Dificultad:** solo si se retoma la calibración (quitar primero la saturación de técnicos).
+- **Opcional para la entrega final:** la opción B (árbol n-ario), C (recursos) y D (partidas
+  guardadas), en la sección 16 de `CLAUDE.md`.
+- Integrar `entrega-2` en `main` cuando el equipo lo apruebe.
+- Confirmar la fecha de presentación de la Entrega 2.
+
 ## Entrega 2, commit 14c — 2026-11-10 — Media capacidad en alarma; la dificultad se pospone
 
 ### Hecho
@@ -816,5 +840,5 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | **Terminada** (2026-11-10). El 14c quedó en la media capacidad en alarma; **la dificultad se pospuso** |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | **Terminada** (2026-11-10): 19, 19a y 20–23 |
-| F | 24–25 | Documentación | Pendiente |
+| F | 24–25 | Documentación | **Terminada** (2026-11-10) |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |

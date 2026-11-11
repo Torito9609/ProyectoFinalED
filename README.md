@@ -22,15 +22,19 @@ cima de la pila de deshacer.
 API REST, y la interfaz es un frontend web en otro repositorio. La captura es de la Entrega 1, la
 versión de escritorio en Swing, que se conserva en la etiqueta `entrega-1`.
 
-- **Frontend:** *(pendiente: enlace al repositorio)*
+- **Frontend:** [`ProyectoFinalED-frontend`](https://github.com/Torito9609/ProyectoFinalED-frontend)
+  (React + Vite + TypeScript + React Three Fiber)
 - **Contrato de la API:** [`docs/API.md`](docs/API.md)
 
 ![La ventana del simulador (Entrega 1)](docs/img/ventana.png)
 
 ## Estructuras de datos utilizadas
 
-El proyecto usa las **cinco** estructuras lineales del enunciado. La justificación completa de cada
-decisión está en [`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.md).
+La justificación completa de cada decisión está en
+[`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.md): la primera parte cubre la Entrega 1
+y la segunda la Entrega 2.
+
+**Entrega 1:** las **cinco** estructuras lineales del enunciado.
 
 | Estructura | Implementación | Para qué se usa |
 |---|---|---|
@@ -40,8 +44,19 @@ decisión está en [`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.
 | Cola con prioridad | Arreglo de 4 `ArrayDeque` | Órdenes de trabajo P1–P4 |
 | Pila | `ArrayDeque` | Deshacer acciones del operador |
 
-La cola circular es la única estructura implementada a mano, porque la librería estándar de Java no
-ofrece ninguna que **sobrescriba** el elemento más antiguo al llenarse.
+**Entrega 2:** varias compañías, un ranking de fallos, overhauls y un historial por ventana de ticks.
+
+| Estructura | Implementación | Para qué se usa |
+|---|---|---|
+| Arreglo dinámico | `ArrayList<Planta>` | Compañías; el id es el índice |
+| Conjunto | `TreeSet<String>` | Nombres de compañías y etiquetas de máquinas, sin repetir |
+| Árbol de búsqueda balanceado | `TreeSet<Maquina>` (rojo-negro) | Ranking de máquinas por puntaje de fallos, por compañía y global |
+| Montículo | `PriorityQueue` | Solicitudes de overhaul: la máquina en peor estado primero |
+| Colas FIFO | `ArrayDeque` | Técnicos libres por especialidad y técnicos del fabricante |
+| Árbol de segmentos | **Propio** (`ArbolSegmentos`) | Total y pico de fallos y de costo entre dos ticks |
+
+Hay dos estructuras implementadas a mano, porque la librería estándar de Java no las ofrece: la
+**cola circular** que sobrescribe el elemento más antiguo al llenarse, y el **árbol de segmentos**.
 
 ## Requisitos
 
@@ -99,7 +114,7 @@ src/main/java/edu/unal/planta/
 ├── api/                 controladores REST (rutas /api/...)
 │   └── dto/             records inmutables que viajan como JSON (copias del estado)
 ├── servicio/             dueño único del modelo y reloj de la simulación
-├── estructuras/          estructuras propias y genéricas (ColaCircular)
+├── estructuras/          estructuras propias y genéricas (ColaCircular, ArbolSegmentos)
 └── modelo/               dominio y simulación; Java puro, no conoce la vista ni el framework
     └── comandos/         acciones del operador que se pueden deshacer
 ```
@@ -183,7 +198,9 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 |---|---|
 | Migración a Spring Boot, con paridad de la Entrega 1 en la API | Listo |
 | Contrato de la API (`docs/API.md`) | Listo |
-| Árbol de segmentos | Pendiente |
-| Compañías (crear compañías y máquinas), ranking de fallos, overhaul y reemplazo, modo manual, historial | Pendiente |
-| Endpoints de la Entrega 2 | Pendiente |
-| Documento explicativo de la Entrega 2 | Pendiente |
+| Árbol de segmentos | Listo |
+| Compañías (crear compañías y máquinas), ranking de fallos, overhaul y reemplazo, modo manual, historial | Listo |
+| Endpoints de la Entrega 2 | Listo |
+| Documento explicativo de la Entrega 2 | Listo |
+| Niveles de dificultad | Pospuesto (ver `CLAUDE.md`, sección 16) |
+| Manual de usuario y video de la Entrega 2 | Pendiente, con el frontend |

@@ -12,7 +12,7 @@ cada etapa de trabajo.
 
 | Herramienta | Modelo | Para qué se usó |
 |---|---|---|
-| Claude Code (CLI) | Claude Opus 5 | Generación de código Java, pruebas JUnit, Javadoc y documentación del repositorio, siempre a partir del diseño definido por el equipo en `CLAUDE.md` |
+| Claude Code (CLI) | Claude Opus 5 (Entrega 1) y Claude Opus 5.5 (Entrega 2) | Generación de código Java, pruebas JUnit, Javadoc y documentación del repositorio, siempre a partir del diseño definido por el equipo en `CLAUDE.md` |
 
 No se usaron generadores de código adicionales ni plantillas de terceros, más allá del esqueleto
 inicial de proyecto Maven que crea IntelliJ IDEA (que fue reemplazado por completo).
@@ -445,9 +445,12 @@ Convención de la columna **Autoría**:
 |---|---|---|
 | `docs/DOCUMENTO_EXPLICATIVO.md` | IA | Segunda parte (secciones 10 a 19): por qué y cómo de cada estructura nueva, la trampa de la clave que cambia, el descarte perezoso, el árbol de segmentos frente a las sumas prefijas y la tabla de complejidades. **Pendiente: revisión del equipo para defenderlo en clase** |
 
-### Etapas siguientes
+### Entrega 2 — Commit 25: cierre de la documentación
 
-*(se completa al cerrar cada etapa)*
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `README.md` | IA | Enlace al frontend, estructuras y estado de la Entrega 2 |
+| `docs/USO_IA.md`, `docs/BITACORA_DESARROLLO.md`, `CLAUDE.md` | IA | Porcentajes, cierre de la bitácora y lista de entregables |
 
 ## 4. Porcentaje estimado
 
@@ -457,5 +460,25 @@ Convención de la columna **Autoría**:
 | Esqueleto del proyecto (etapa 0) | ~95 % | Configuración de Maven y documentación de paquetes |
 | Estructuras de datos y sus pruebas (etapa 1) | ~95 % | Generadas contra una especificación escrita por el equipo, que define capacidad, punteros, complejidades y casos de prueba obligatorios |
 
-**Estimación global del proyecto:** *(se calcula al cerrar la última etapa, sobre el total de líneas
-de código fuente)*
+| Modelo, servicio y API de la Entrega 2 | ~100 % | Generados contra el diseño de las secciones 16 y 17 de `CLAUDE.md`; cada commit lo revisó el equipo antes de aprobarlo |
+| Pruebas de la Entrega 2 | ~100 % | Los casos obligatorios los fija `CLAUDE.md` |
+| Documentación (`docs/`, `README.md`) | ~100 % | Redactada sobre las decisiones del equipo; el documento explicativo está pendiente de revisión del equipo |
+
+**Estimación global del proyecto, medida al cerrar la Entrega 2 (10 de noviembre de 2026).** Se
+contó con `git blame` a qué commit pertenece cada línea de Java que existe hoy en el repositorio:
+
+| Código | Líneas | De commits con `Co-Authored-By` |
+|---|---|---|
+| `src/main/java` | 8.244 | 8.244 (100 %) |
+| `src/test/java` | 3.185 | 3.185 (100 %) |
+
+Es decir, **el código fuente es 100 % generado con IA** según la trazabilidad de Git: 61 de los 71
+commits llevan la línea `Co-Authored-By` al momento de medir. Los otros 10 son 7 merges, 2 ediciones
+del README hechas desde GitHub y el documento de diseño inicial (`CLAUDE.md`), escrito por el equipo. Las líneas que el equipo ajustó a mano durante la revisión quedaron dentro de esos
+mismos commits, así que no se pueden separar.
+
+**Lo que aportó el equipo** no son líneas de código sino las decisiones que el código implementa:
+el problema y su dominio, la elección y justificación de cada estructura, las reglas de la
+simulación, los valores de las máquinas y los sensores (Cristian), el diseño del juego de gestión
+(Kevin), la aprobación o el rechazo de cada propuesta antes de implementarla y la revisión de cada
+commit. Todo eso está registrado, con fecha, en `CLAUDE.md` y en `docs/BITACORA_DESARROLLO.md`.

@@ -319,11 +319,11 @@ Qué muestra cada panel:
 - [ ] Video de máximo 5 minutos (enlace en el README)
 
 **Entrega 2 (este repositorio):**
-- [ ] Javadoc en todas las clases y métodos públicos nuevos, con la complejidad de cada operación en las estructuras
-- [ ] `docs/API.md`: el contrato de la API para el frontend
-- [ ] `docs/DOCUMENTO_EXPLICATIVO.md`: una sección nueva con el por qué y el cómo de cada estructura de la Entrega 2. **Es lo que más evalúa el profesor**
-- [ ] `README.md`: cómo ejecutar el backend y el enlace al repositorio del frontend
-- [ ] `docs/USO_IA.md` actualizado
+- [x] Javadoc en todas las clases y métodos públicos nuevos, con la complejidad de cada operación en las estructuras
+- [x] `docs/API.md`: el contrato de la API para el frontend
+- [x] `docs/DOCUMENTO_EXPLICATIVO.md`: una sección nueva con el por qué y el cómo de cada estructura de la Entrega 2. **Es lo que más evalúa el profesor**
+- [x] `README.md`: cómo ejecutar el backend y el enlace al repositorio del frontend
+- [x] `docs/USO_IA.md` actualizado
 - [ ] El manual de usuario y el video dependen del frontend: se coordinan con ese repositorio
 
 ---
