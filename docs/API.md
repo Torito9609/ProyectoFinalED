@@ -69,12 +69,12 @@ presupuesto inicial). Es el momento de mostrar el `ResumenPartida`.
 }
 ```
 
-Cada elemento de `companias` es un `ResumenCompania` (sección 3). `ingresos` es la producción,
+Cada elemento de `companias` es un `ResumenCompania` (sección 3). `ingresos` es la producción
+(cada máquina operando produce en proporción a su carga; **en alarma, a media capacidad**),
 `numeroFallos` cuenta las órdenes P1 a P3 y `disponibilidad` es la fracción del tiempo en que las
 máquinas produjeron (de 0 a 1).
 
-> **Pendiente (commit 14c):** elegir la dificultad al reiniciar. Hoy no existe: `reiniciar` no recibe
-> cuerpo.
+> **Dificultad: pospuesta.** No hay niveles de dificultad: `reiniciar` no recibe cuerpo.
 
 ---
 

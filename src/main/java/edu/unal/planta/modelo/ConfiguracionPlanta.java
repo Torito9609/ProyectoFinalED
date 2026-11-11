@@ -115,6 +115,13 @@ public final class ConfiguracionPlanta {
     /** Lo que produce una máquina en un tick a carga 100; a otra carga, en proporción. */
     public static final long INGRESO_POR_TICK = 1_000L;
 
+    /**
+     * Porcentaje de su producción que da una máquina en alarma (commit 14c). Con el fallo en curso
+     * trabaja degradada: sin este castigo, un fallo casi solo costaba mano de obra, y en una partida
+     * automática las máquinas pasan cerca del 40 % del tiempo esperando técnico en alarma.
+     */
+    public static final int PRODUCCION_EN_ALARMA = 50;
+
     /** Lo que cuesta un técnico por cada tick que pasa trabajando. */
     public static final long MANO_DE_OBRA_POR_TICK = 1_500L;
 

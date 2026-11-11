@@ -373,6 +373,20 @@ class PlantaTest {
     }
 
     @Test
+    @DisplayName("una máquina en alarma produce a media capacidad")
+    void maquinaEnAlarmaProduceLaMitad() {
+        Planta planta = plantaSinFallosAleatorios();
+        planta.cambiarModo(ModoSimulacion.MANUAL);
+        planta.maquina(PRENSA).cambiarCarga(100);
+        planta.inyectarFallo(PRENSA, VIBRACION, Magnitud.LEVE);
+
+        planta.tick();
+        assertEquals(EstadoMaquina.EN_ALARMA, planta.maquina(PRENSA).estado());
+        assertEquals(ConfiguracionPlanta.INGRESO_POR_TICK * ConfiguracionPlanta.PRODUCCION_EN_ALARMA / 100,
+                planta.ingresos(), "en alarma la prensa produce la mitad");
+    }
+
+    @Test
     @DisplayName("cada tick de trabajo de un técnico se cobra como mano de obra")
     void manoDeObra() {
         Planta planta = plantaSinFallosAleatorios();

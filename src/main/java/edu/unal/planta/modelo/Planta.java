@@ -548,8 +548,9 @@ public final class Planta {
     /**
      * Paso 7b: la economía del tick.
      *
-     * <p>Cada máquina que produce (operando o en alarma) ingresa en proporción a su carga, y cada
-     * técnico ocupado cobra su mano de obra. Una máquina detenida no tiene un costo aparte: el
+     * <p>Cada máquina que produce (operando o en alarma) ingresa en proporción a su carga; en alarma,
+     * solo el {@link ConfiguracionPlanta#PRODUCCION_EN_ALARMA} por ciento, porque trabaja con el
+     * fallo en curso. Cada técnico ocupado cobra su mano de obra. Una máquina detenida no tiene un costo aparte: el
      * castigo es que no produce. Si la caja baja de 0, la compañía entra en quiebra.</p>
      *
      * <p>Complejidad: O(n + t), con n las máquinas y t los técnicos.</p>
@@ -561,7 +562,11 @@ public final class Planta {
                     || maquina.estado() == EstadoMaquina.EN_ALARMA;
             contabilidad.registrarMaquina(produce);
             if (produce) {
-                contabilidad.ingresar(ConfiguracionPlanta.INGRESO_POR_TICK * maquina.carga() / 100);
+                long ingreso = ConfiguracionPlanta.INGRESO_POR_TICK * maquina.carga() / 100;
+                if (maquina.estado() == EstadoMaquina.EN_ALARMA) {
+                    ingreso = ingreso * ConfiguracionPlanta.PRODUCCION_EN_ALARMA / 100;
+                }
+                contabilidad.ingresar(ingreso);
             }
         }
         for (Tecnico tecnico : tecnicos) {

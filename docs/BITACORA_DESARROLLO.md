@@ -36,6 +36,46 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Entrega 2, commit 14c — 2026-11-10 — Media capacidad en alarma; la dificultad se pospone
+
+### Hecho
+- Una máquina **en alarma produce a media capacidad** (`ConfiguracionPlanta.PRODUCCION_EN_ALARMA` = 50),
+  en el paso 7b. Prueba nueva en `PlantaTest`.
+
+### Mediciones (5 semillas × 3 compañías, partidas de 1000 ticks)
+Los programas se escribieron fuera del repositorio, contra `target/classes`, con los valores
+cambiados de forma temporal (revertidos antes de implementar).
+
+| Escenario | Caja media final | Quiebras |
+|---|---|---|
+| Antes del 14c (en alarma produce al 100 %) | 1,75 M | 0/15 |
+| En alarma produce al 50 % (**lo implementado**) | 0,85 M | 0/15 |
+| Igual, con tasa × 1,5, pesos 65/25/10 e ingreso × 0,75 (un posible `DIFICIL`) | ≈ 0 | 13/15 |
+| Igual, con tasa × 0,7 y pesos 90/8/2 (un posible `FACIL`) | 1,38 M | 0/15 |
+
+Un "jugador" simulado contra el automático, en `NORMAL` con la media capacidad:
+
+| Política | Caja media final |
+|---|---|
+| Automático ingenuo | 0,85 M |
+| Aprobar overhaul cada vez que se recomienda | 0,19 M (4 quiebras) |
+| Lo mismo con el overhaul a 40.000 | 0,64 M |
+| Carga al 70 % | 0,81 M |
+
+### Decisiones
+- **La dificultad se pospone** (decisión de Kevin, entre tres opciones: recalibrar primero, hacerla
+  igual o posponerla). Escalar el resultado del automático es fácil; lo que falla es la premisa de
+  la sección 16 de que un buen jugador supera al automático.
+- **Causa:** con 2 técnicos, las máquinas pasan el **40 %** del tiempo en alarma esperando técnico.
+  El límite son las reparaciones, no los fallos: una máquina que falla menos igual espera en la
+  fila, así que ni el overhaul ni bajar la carga mejoran el resultado. Con 3 técnicos la espera baja
+  al 9 %, pero la mano de obra (1.500 por tick) lleva a 7 de 15 compañías a la quiebra.
+- **Para retomarla:** quitar primero la saturación (más técnicos, mano de obra más barata) y medir
+  hasta que las palancas le ganen al automático en `NORMAL`; después, los multiplicadores.
+
+### Verificación
+- `./mvnw clean test`: 156 pruebas en verde.
+
 ## Entrega 2, commit 20 — 2026-11-10 — Endpoints del modo manual y la partida
 
 ### Decisiones
@@ -773,7 +813,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | A | 1 | Decisión y diseño | **Terminada** (2026-11-05) |
 | B | 2–8 | Migración a Spring Boot con paridad de la Entrega 1 | **Terminada** (2026-11-07) |
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
-| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | 11, 12, 13, 13a, 13b, 14, 14a, 14b y 15–18 **terminados** (2026-11-10). Falta el **14c** (calibración y dificultad), que pasó al final, después del 23 |
+| D | 11–18, 13a, 13b, 14a–14c | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | **Terminada** (2026-11-10). El 14c quedó en la media capacidad en alarma; **la dificultad se pospuso** |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | **Terminada** (2026-11-10): 19, 19a y 20–23 |
 | F | 24–25 | Documentación | Pendiente |

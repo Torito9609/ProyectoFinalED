@@ -431,6 +431,14 @@ Convención de la columna **Autoría**:
 | `test/.../ControladorHistorialTest.java` | IA | 3 pruebas: el total y el pico contra la serie, el global contra la suma de las compañías, la ventana de una compañía y los errores |
 | `docs/API.md` | IA | Sección 4d: contrato del historial |
 
+### Entrega 2 — Commit 14c: media capacidad en alarma (la dificultad se pospuso)
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `modelo/ConfiguracionPlanta.java`, `Planta.java` | IA | `PRODUCCION_EN_ALARMA` = 50 y su uso en el paso 7b (aprobado por el equipo tras las mediciones) |
+| `test/.../PlantaTest.java` | IA | 1 prueba: una máquina en alarma produce la mitad |
+| `CLAUDE.md`, `docs/BITACORA_DESARROLLO.md` | IA | Mediciones de calibración y la decisión de posponer la dificultad |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*
