@@ -113,4 +113,17 @@ public class ControladorOperador {
     public EstadoPlantaDto asignarSiguiente(@PathVariable int id, @RequestBody AsignacionDto cuerpo) {
         return servicio.asignarSiguiente(id, cuerpo.especialidad());
     }
+
+    /**
+     * {@code POST /api/companias/{id}/maquinas/{indice}/reemplazo}: reemplaza la máquina por una
+     * nueva en el mismo índice. No se puede deshacer.
+     *
+     * @param id     id de la compañía
+     * @param indice posición de la máquina en el inventario
+     * @return el estado de la compañía con la máquina nueva
+     */
+    @PostMapping("/maquinas/{indice}/reemplazo")
+    public EstadoPlantaDto reemplazar(@PathVariable int id, @PathVariable int indice) {
+        return servicio.reemplazarMaquina(id, indice);
+    }
 }

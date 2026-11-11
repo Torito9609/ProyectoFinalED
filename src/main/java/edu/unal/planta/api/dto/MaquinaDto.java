@@ -22,6 +22,8 @@ import java.util.List;
  *                                del ranking
  * @param numeroOverhauls         cuántos overhauls ha recibido
  * @param recomendacion           {@code NINGUNA}, {@code OVERHAUL} o {@code REEMPLAZO}
+ * @param overhaulPendiente       si tiene una solicitud de overhaul esperando en el montículo; con
+ *                                ella no se puede aprobar otra
  * @param sensores                definición de sus sensores
  * @param lecturas                su cola circular de lecturas
  * @author Cristian Robayo
@@ -41,6 +43,7 @@ public record MaquinaDto(
         int puntajeFallos,
         int numeroOverhauls,
         String recomendacion,
+        boolean overhaulPendiente,
         List<SensorDto> sensores,
         ColaCircularDto lecturas) {
 
@@ -57,6 +60,7 @@ public record MaquinaDto(
                 maquina.carga(), maquina.ticksDesdeMantenimiento(), maquina.intervaloPreventivo(),
                 maquina.tieneAnomalia(), maquina.alarmaActiva(),
                 maquina.puntajeFallos(), maquina.numeroOverhauls(), maquina.recomendacion().name(),
+                maquina.overhaulPendiente(),
                 maquina.sensores().stream().map(SensorDto::desde).toList(),
                 ColaCircularDto.desde(maquina.lecturas()));
     }

@@ -2,10 +2,13 @@ package edu.unal.planta.servicio;
 
 import edu.unal.planta.api.dto.EstadoPlantaDto;
 import edu.unal.planta.api.dto.EntradaRankingDto;
+import edu.unal.planta.api.dto.EstadoOverhaulsDto;
 import edu.unal.planta.api.dto.EstadoSimulacionDto;
 import edu.unal.planta.api.dto.RankingDto;
 import edu.unal.planta.api.dto.ResumenCompaniaDto;
 import edu.unal.planta.api.dto.ResumenPartidaDto;
+import edu.unal.planta.api.dto.SolicitudOverhaulDto;
+import edu.unal.planta.api.dto.TecnicoExternoDto;
 import edu.unal.planta.api.dto.TipoMaquinaDto;
 import edu.unal.planta.modelo.ConfiguracionPlanta;
 import edu.unal.planta.modelo.EstadoMaquina;
@@ -14,6 +17,8 @@ import edu.unal.planta.modelo.Maquina;
 import edu.unal.planta.modelo.ModoSimulacion;
 import edu.unal.planta.modelo.Organizacion;
 import edu.unal.planta.modelo.Planta;
+import edu.unal.planta.modelo.SolicitudOverhaul;
+import edu.unal.planta.modelo.TecnicoExterno;
 import edu.unal.planta.modelo.TipoFallo;
 import edu.unal.planta.modelo.TipoMaquina;
 import edu.unal.planta.modelo.comandos.CambiarCargaMaquina;
@@ -407,6 +412,111 @@ public class ServicioSimulacion {
         }
         return new RankingDto(alcance, ConfiguracionPlanta.UMBRAL_OVERHAUL,
                 ConfiguracionPlanta.MAXIMO_OVERHAULS, List.copyOf(entradas));
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Overhaul y reemplazo
+    // ---------------------------------------------------------------------------------
+
+    /**
+     * Aprueba un overhaul: la solicitud entra al montículo con el puntaje actual de la máquina
+     * congelado como clave. Se puede aprobar en los dos modos; en automático el tick despacha el
+     * camión solo, y en manual lo despacha el botón {@link #asignarSiguienteOverhaul()}.
+     *
+     * <p>Complejidad: O(log s), con s las solicitudes en el montículo.</p>
+     *
+     * @param idCompania    id de la compañía
+     * @param indiceMaquina índice de la máquina en el inventario de la compañía
+     * @return el estado del montículo y de los técnicos del fabricante después de la acción
+     * @throws IllegalArgumentException si falta la compañía o la máquina
+     * @throws NoEncontradoException    si la compañía o la máquina no existen
+     * @throws IllegalStateException    si la compañía está en quiebra, si la máquina ya tiene una
+     *                                  solicitud pendiente o si no tiene recomendación de overhaul
+     */
+    public synchronized EstadoOverhaulsDto aprobarOverhaul(Integer idCompania, Integer indiceMaquina) {
+        if (idCompania == null || indiceMaquina == null) {
+            throw new IllegalArgumentException("Faltan idCompania e indiceMaquina");
+        }
+        buscarMaquina(buscarCompania(idCompania), indiceMaquina);
+        organizacion.aprobarOverhaul(idCompania, indiceMaquina);
+        return estadoOverhauls();
+    }
+
+    /**
+     * Botón del modo manual: despacha el camión del fabricante para la solicitud de la cima del
+     * montículo. El jugador no elige la solicitud.
+     *
+     * <p>Si no se puede (no hay solicitudes, no hay técnicos del fabricante libres o la máquina de
+     * la cima no está libre), se responde {@code 409}: con la regla de la cima no se salta a la
+     * segunda solicitud.</p>
+     *
+     * <p>Complejidad: O(log s).</p>
+     *
+     * @return el estado del montículo y de los técnicos del fabricante después de la acción
+     * @throws IllegalStateException      si la simulación está en automático
+     * @throws AccionNoPermitidaException si no se despachó ningún overhaul
+     */
+    public synchronized EstadoOverhaulsDto asignarSiguienteOverhaul() {
+        if (!organizacion.asignarSiguienteOverhaul()) {
+            String razon;
+            if (organizacion.siguienteOverhaul().isEmpty()) {
+                razon = "no hay solicitudes de overhaul";
+            } else if (organizacion.tecnicosExternosLibres().isEmpty()) {
+                razon = "no hay técnicos del fabricante libres";
+            } else {
+                razon = organizacion.siguienteOverhaul().get().etiqueta() + " no está libre";
+            }
+            throw new AccionNoPermitidaException("El camión espera: " + razon);
+        }
+        return estadoOverhauls();
+    }
+
+    /**
+     * Toma una foto del montículo de solicitudes de overhaul y de los técnicos del fabricante.
+     *
+     * <p>Complejidad: O(s log s) por el orden de salida, calculado sobre una copia del montículo.</p>
+     *
+     * @return la foto, inmutable
+     */
+    public synchronized EstadoOverhaulsDto estadoOverhauls() {
+        SolicitudOverhaulDto cima = organizacion.siguienteOverhaul().map(this::copiar).orElse(null);
+        List<SolicitudOverhaulDto> orden = organizacion.solicitudesEnOrdenDeSalida().stream()
+                .map(this::copiar).toList();
+        List<TecnicoExternoDto> tecnicos = organizacion.tecnicosExternos().stream()
+                .map(tecnico -> new TecnicoExternoDto(tecnico.nombre(), tecnico.estaLibre(),
+                        tecnico.solicitudActual().map(this::copiar).orElse(null),
+                        tecnico.ticksRestantes()))
+                .toList();
+        List<String> libres = organizacion.tecnicosExternosLibres().stream()
+                .map(TecnicoExterno::nombre).toList();
+        return new EstadoOverhaulsDto(organizacion.modo().name(), cima, orden, tecnicos, libres,
+                ConfiguracionPlanta.DURACION_OVERHAUL, ConfiguracionPlanta.COSTO_OVERHAUL,
+                ConfiguracionPlanta.COSTO_REEMPLAZO);
+    }
+
+    /**
+     * Reemplaza una máquina por una nueva del mismo tipo y la misma etiqueta, en el mismo índice
+     * del inventario. Es inmediato y no usa técnicos.
+     *
+     * <p>Complejidad: O(log N) por los dos rankings; el {@code set} en el inventario es O(1).</p>
+     *
+     * @param idCompania    id de la compañía
+     * @param indiceMaquina índice de la máquina en el inventario
+     * @return el estado de la compañía con la máquina nueva
+     * @throws NoEncontradoException si la compañía o la máquina no existen
+     * @throws IllegalStateException si la compañía está en quiebra, si la máquina no tiene
+     *                               recomendación de reemplazo o si no está libre
+     */
+    public synchronized EstadoPlantaDto reemplazarMaquina(int idCompania, int indiceMaquina) {
+        Planta planta = buscarCompania(idCompania);
+        buscarMaquina(planta, indiceMaquina);
+        planta.reemplazarMaquina(indiceMaquina);
+        return EstadoPlantaDto.desde(planta, enEjecucion);
+    }
+
+    private SolicitudOverhaulDto copiar(SolicitudOverhaul solicitud) {
+        return SolicitudOverhaulDto.desde(solicitud,
+                organizacion.compania(solicitud.idCompania()).nombre());
     }
 
     private Planta buscarCompania(int id) {

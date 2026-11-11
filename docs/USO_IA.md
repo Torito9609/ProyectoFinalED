@@ -409,6 +409,17 @@ Convención de la columna **Autoría**:
 | `test/.../ControladorJuegoTest.java` | IA | 4 pruebas MockMvc: el modo, los botones en automático, el ciclo manual y la economía con el resumen |
 | `docs/API.md` | IA | Contrato de los endpoints nuevos |
 
+### Entrega 2 — Commit 22: endpoints de overhaul y reemplazo
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `api/dto/AprobarOverhaulDto.java`, `SolicitudOverhaulDto.java`, `TecnicoExternoDto.java`, `EstadoOverhaulsDto.java` | IA | Cuerpo de aprobar; la foto del montículo (cima y orden de salida, sin dibujar el árbol) y de los técnicos del fabricante |
+| `api/dto/MaquinaDto.java` | IA | Campo `overhaulPendiente` (aprobado por el equipo) |
+| `servicio/ServicioSimulacion.java` | IA | `aprobarOverhaul`, `asignarSiguienteOverhaul` (409 con la razón si el camión no sale), `estadoOverhauls` y `reemplazarMaquina` |
+| `api/ControladorSuperusuario.java`, `ControladorOperador.java` | IA | `GET` y `POST /overhauls`, `POST /overhauls/asignar-siguiente` y `POST .../maquinas/{indice}/reemplazo` |
+| `test/.../ControladorOverhaulTest.java` | IA | 4 pruebas MockMvc: el montículo vacío, aprobar (400, 404, 409 y éxito), despachar el camión y reemplazar |
+| `docs/API.md` | IA | Sección 4c: contrato del overhaul y el reemplazo |
+
 ### Etapas siguientes
 
 *(se completa al cerrar cada etapa)*

@@ -144,6 +144,7 @@ pero no opera y todas sus acciones responden `409`.
       "puntajeFallos": 0,
       "numeroOverhauls": 0,
       "recomendacion": "NINGUNA",
+      "overhaulPendiente": false,
       "sensores": [
         { "nombre": "Temperatura aceite", "unidad": "°C", "nominal": 55.0,
           "umbralAdvertencia": 70.0, "umbralAlto": 80.0, "umbralCritico": 90.0,
@@ -201,7 +202,7 @@ pero no opera y todas sus acciones responden `409`.
 | `semilla` | — | La semilla de **esta** compañía, derivada de la maestra |
 | `modo`, `caja`, `ingresos`, `costos`, `enQuiebra` | — | El modo de la simulación y la economía de la compañía (la misma de `ResumenCompania`). Con `enQuiebra`, conviene mostrar el aviso y deshabilitar los botones |
 | `maquinas` | Arreglo dinámico (`ArrayList`) | En orden de índice. `estado`: `OPERANDO`, `EN_ALARMA`, `DETENIDA`, `EN_MANTENIMIENTO`, `PARADA_MANUAL` o `EN_OVERHAUL` (un técnico del fabricante le hace un overhaul de 30 ticks; no produce). `tipo` es el código del catálogo (`PRENSA`, `TORNO`, `ROBOT`, `COMPRESOR`, `HORNO` o `BOMBA`), y `tipoDescripcion` el texto para mostrar |
-| `maquinas[i].puntajeFallos` | Clave del ranking (árbol rojo-negro) | Suma de los pesos de sus fallos desde el último overhaul: P1 = 3, P2 = 2, P3 = 1 (un preventivo P4 no suma). `recomendacion` es `NINGUNA`, `OVERHAUL` o `REEMPLAZO` (sección 4b) |
+| `maquinas[i].puntajeFallos` | Clave del ranking (árbol rojo-negro) | Suma de los pesos de sus fallos desde el último overhaul: P1 = 3, P2 = 2, P3 = 1 (un preventivo P4 no suma). `recomendacion` es `NINGUNA`, `OVERHAUL` o `REEMPLAZO` (sección 4b). `overhaulPendiente` indica que ya tiene una solicitud esperando en el montículo (sección 4c): con ella no se puede aprobar otra |
 | `maquinas[i].lecturas` | Cola circular propia | `celdas` va en **orden físico** (índice 0 a 11), no en orden de llegada. Una celda vacía es `null`. `indiceFrente` es la lectura más antigua; `indiceFinal`, donde se escribirá la próxima. Cuando la cola está llena los dos coinciden, y la próxima lectura sobrescribe el frente. `valores[k]` corresponde a `sensores[k]` |
 | `maquinas[i].sensores` | — | Umbrales para colorear cada valor: < advertencia normal; ≥ advertencia P3; ≥ alto P2; ≥ crítico P1. `tipoFallo` (`MECANICO` o `ELECTRICO`) es el tipo de los fallos de ese sensor |
 | `eventos` | Cola FIFO (`ArrayDeque`) | El primero de la lista es el siguiente en clasificarse. Cada evento trae su `tipoFallo` |
@@ -335,6 +336,72 @@ el árbol, O(log n + k): con `puntajeMinimo` igual a `umbralOverhaul` salen las 
 - Una máquina se identifica por `(idCompania, indice)`, igual que en las rutas de las acciones.
 - **Recomendación:** `OVERHAUL` si `puntajeFallos ≥ umbralOverhaul`; `REEMPLAZO` si además ya tiene
   `numeroOverhauls ≥ maximoOverhauls`; si no, `NINGUNA`. Es una sugerencia: no asigna a nadie.
+
+---
+
+## 4c. Overhaul y reemplazo
+
+| Método | Ruta | Cuerpo | Respuesta |
+|---|---|---|---|
+| `GET` | `/api/overhauls` | — | `EstadoOverhauls`: el montículo y los técnicos del fabricante |
+| `POST` | `/api/overhauls` | `{ "idCompania": 0, "indiceMaquina": 3 }` | `EstadoOverhauls` después de aprobar |
+| `POST` | `/api/overhauls/asignar-siguiente` | — | `EstadoOverhauls` después de despachar el camión. **Solo en modo manual** |
+| `POST` | `/api/companias/{id}/maquinas/{indice}/reemplazo` | — | `EstadoPlanta` de la compañía con la máquina nueva |
+
+**Aprobar un overhaul.** Solo si la máquina tiene `recomendacion` `OVERHAUL` o `REEMPLAZO`, no tiene
+ya una solicitud (`overhaulPendiente`) y su compañía no está en quiebra. Se puede aprobar en los dos
+modos: la recomendación filtra y el jugador decide cuándo, y si paga. La solicitud entra a un
+**montículo** (`PriorityQueue`) con el puntaje de ese momento **congelado** como clave: sale primero
+la máquina en peor estado y, en un empate, la que se aprobó antes (`secuencia`). Mientras espera, la
+máquina sigue operando.
+
+**Despachar el camión.** En automático, el tick lo hace solo. En manual lo hace el botón
+`asignar-siguiente`: el montículo entrega su **cima**, el jugador no elige. Si la máquina de la cima
+no está libre (tiene alarma, una orden o un técnico), el camión **espera**: no se salta a la segunda
+solicitud. Al despachar se cobran `costoOverhaul`, la máquina pasa a `EN_OVERHAUL` durante
+`duracionOverhaul` ticks y vuelve con puntaje 0 y un overhaul más.
+
+**Reemplazar.** Solo si la máquina tiene `recomendacion` `REEMPLAZO` y está libre. Es inmediato, no
+usa técnicos y cuesta `costoReemplazo`. La máquina nueva ocupa el **mismo índice**, con el mismo tipo
+y la misma etiqueta, puntaje 0 y sin overhauls. No se deshace.
+
+**`EstadoOverhauls`** (ejemplo recortado):
+
+```json
+{
+  "modo": "MANUAL",
+  "cima": { "idCompania": 2, "nombreCompania": "Planta Sur", "indiceMaquina": 3,
+            "etiqueta": "COMPRES-01", "puntajeCongelado": 34, "secuencia": 4, "tickAprobacion": 610 },
+  "ordenDeSalida": [ { "...": "la cima" }, { "...": "la siguiente" } ],
+  "tecnicos": [
+    { "nombre": "Fabricante 1", "libre": false, "ticksRestantes": 12,
+      "solicitudActual": { "idCompania": 0, "...": "..." } },
+    { "nombre": "Fabricante 2", "libre": true, "solicitudActual": null, "ticksRestantes": 0 }
+  ],
+  "tecnicosLibres": ["Fabricante 2"],
+  "duracionOverhaul": 30,
+  "costoOverhaul": 120000,
+  "costoReemplazo": 300000
+}
+```
+
+| Campo | Estructura | Cómo leerlo |
+|---|---|---|
+| `cima` | Montículo (`PriorityQueue`) | La solicitud que sale primero (`peek`); `null` si no hay. Es la que se resalta |
+| `ordenDeSalida` | Montículo | Las solicitudes en el orden en que saldrán, la primera es la cima. **No es el arreglo interno del montículo**: `PriorityQueue` no lo expone, así que el backend lo calcula extrayendo de una copia. No se dibuja el árbol |
+| `tecnicosLibres` | Cola FIFO (`ArrayDeque`) | El primero recibe el próximo overhaul. Al terminar, el técnico vuelve al final |
+| `tecnicos` | — | Todos los técnicos del fabricante, compartidos por todas las compañías; los ocupados traen `solicitudActual` y `ticksRestantes` |
+
+| Caso | Código | Ejemplo de mensaje |
+|---|---|---|
+| Falta `idCompania` o `indiceMaquina` | `400` | `Faltan idCompania e indiceMaquina` |
+| La compañía o la máquina no existen | `404` | `No existe una máquina con índice 99` |
+| Sin recomendación | `409` | `PRENSA-01 no tiene recomendación de overhaul: puntaje 12 de 30` |
+| Solicitud repetida | `409` | `PRENSA-01 ya tiene un overhaul pendiente` |
+| Despachar en automático | `409` | `La acción solo está disponible en modo manual` |
+| El camión no pudo salir | `409` | `El camión espera: no hay solicitudes de overhaul`, `... no hay técnicos del fabricante libres` o `... PRENSA-01 no está libre` |
+| Reemplazar sin recomendación de reemplazo | `409` | `PRENSA-01 no tiene recomendación de reemplazo` |
+| Reemplazar una máquina ocupada | `409` | `PRENSA-01 no está libre: está En alarma` |
 
 ---
 
