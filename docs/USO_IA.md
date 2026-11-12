@@ -460,6 +460,19 @@ Convención de la columna **Autoría**:
 | `README.md` | IA | Enlace al frontend, estructuras y estado de la Entrega 2 |
 | `docs/USO_IA.md`, `docs/BITACORA_DESARROLLO.md`, `CLAUDE.md` | IA | Porcentajes, cierre de la bitácora y lista de entregables |
 
+### Frontend (repositorio `ProyectoFinalED-frontend`, 10 al 12 de noviembre)
+
+El frontend vive en otro repositorio y no lleva su propio registro: se declara aquí. Todos sus commits
+(16 al 12 de noviembre) llevan la línea `Co-Authored-By`.
+
+| Archivo o componente | Autoría | Revisión del equipo |
+|---|---|---|
+| `src/api/` (cliente y tipos) | IA | Copia del contrato de `docs/API.md` |
+| `src/estado/` (sondeo de la compañía, del dashboard y del historial) | IA | Revisado por Kevin |
+| `src/escena/` (diorama: máquinas, anillo de la cola circular, banda de eventos, tablero P1–P4, bancas de técnicos, carpetas de la pila y camión del fabricante) | IA | **Decisiones de Kevin:** el estilo de juego con cámara fija y qué objeto representa cada estructura. Cada commit lo probó Kevin en el navegador antes de aprobarlo |
+| `src/hud/` (paneles, dashboard, ranking, overhauls, gráfica del historial, resumen de la partida) | IA | Igual que la escena |
+| `README.md`, `CLAUDE.md` del frontend | IA | Redactados sobre las decisiones del equipo |
+
 ## 4. Porcentaje estimado
 
 | Componente | Generado con IA | Observación |
@@ -470,6 +483,7 @@ Convención de la columna **Autoría**:
 
 | Modelo, servicio y API de la Entrega 2 | ~100 % | Generados contra el diseño de las secciones 16 y 17 de `CLAUDE.md`; cada commit lo revisó el equipo antes de aprobarlo |
 | Pruebas de la Entrega 2 | ~100 % | Los casos obligatorios los fija `CLAUDE.md` |
+| Frontend (`ProyectoFinalED-frontend`) | ~100 % | Unas 4.000 líneas en `src/`, todas de commits con `Co-Authored-By` (16 de 16 al 12 de noviembre) |
 | Documentación (`docs/`, `README.md`) | ~100 % | Redactada sobre las decisiones del equipo; el documento explicativo está pendiente de revisión del equipo |
 
 **Estimación global del proyecto, medida al cerrar la Entrega 2 (10 de noviembre de 2026).** Se

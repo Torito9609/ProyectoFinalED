@@ -36,6 +36,43 @@ Secciones que no apliquen se omiten. Las decisiones que **cambien el diseño** a
 
 # Entradas
 
+## Frontend, hito 2 — 2026-11-12 — Overhauls, historial y documentación (F8 a F10)
+**Responsable:** Kevin Toro, con Claude Code. Los commits están en `ProyectoFinalED-frontend`.
+
+### Hecho
+| # | Commit | Hash | Contenido |
+|---|---|---|---|
+| F8 | `feat: overhauls y reemplazo` | `7d7ab17` | Panel del montículo (cima y orden de salida), técnicos del fabricante, despachar el camión, aprobar overhaul y reemplazar desde el ranking y desde el panel de la máquina, y el camión en el diorama |
+| F9 | `feat: gráfica del historial por ventana de ticks` | `8ee1a12` | Dos gráficas SVG (fallos y costo) con la ventana [a, b], global o por compañía; el total y el pico los da el árbol de segmentos |
+| F10 | `docs: README y estado del frontend` | `4718942` | README con captura y la tabla de dónde se ve cada estructura; `CLAUDE.md` del frontend con el hito 2 cerrado |
+
+### Decisiones
+- **El montículo no se dibuja como árbol:** se muestran la cima y el orden de salida, porque
+  `PriorityQueue` no expone su arreglo (sección 16, "Overhaul y reemplazo").
+- **El camión no lleva etiqueta:** con las máquinas tan juntas se encimaba con las de ellas; su color es
+  el del estado `EN_OVERHAUL`.
+- **La gráfica no recalcula nada:** el total y el pico salen del backend; las series solo se dibujan.
+  Sin ventana fija, sigue la partida en vivo.
+- **Los botones se deshabilitan** en los casos en que el backend respondería 409. La regla de máquina
+  libre se repite en `src/reglas.ts` del frontend, igual que `Maquina.estaLibre`.
+
+### Incidencias
+| Problema | Solución |
+|---|---|
+| Al levantar el backend, `spring-boot:run` fallaba con `exit code: 1` | El backend de prueba de Claude seguía ocupando el puerto 8080; se detuvo. Al verificar con Chrome headless hay que bajar los servidores al terminar |
+
+### Verificación
+`npm run build` y `npm run lint` sin errores en cada commit. Capturas con Chrome headless del diorama
+(camiones) y del dashboard (gráfica), y prueba de Kevin en su navegador antes de cada commit.
+
+### Pendiente
+- Push del frontend (lo hace Kevin).
+- Revisión del equipo del documento explicativo y del porcentaje de IA.
+- Manual de usuario y video de la Entrega 2.
+- El overhaul sigue sin pagar económicamente (ver el commit 14d).
+
+---
+
 ## Entrega 2, commit 14d — 2026-11-10 — Dos técnicos por especialidad y más fallos
 
 ### Por qué
@@ -879,6 +916,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | C | 9–10 | `ArbolSegmentos` (el 9, `ArbolNario`, se pospuso a la etapa G) | **Terminada** (2026-11-10) |
 | D | 11–18, 13a, 13b, 14a–14d | Modelo de la Entrega 2: creación de compañías y máquinas, y el juego de gestión | **Terminada** (2026-11-10). El 14c quedó en la media capacidad en alarma; **la dificultad se pospuso**. El 14d recalibró el juego |
 | — | — | **Pausa de QA con el frontend** (`ProyectoFinalED-frontend`, contra la API de la Entrega 1) | **Terminada** (2026-11-10): hito 1 del frontend (HUD, sondeo y escena isométrica) |
+| — | F1–F10 | **Frontend, hito 2** (`ProyectoFinalED-frontend`): todas las estructuras en el diorama, el juego y el dashboard del superusuario | **Terminado** (2026-11-12) |
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | **Terminada** (2026-11-10): 19, 19a y 20–23 |
 | F | 24–25 | Documentación | **Terminada** (2026-11-10) |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |
