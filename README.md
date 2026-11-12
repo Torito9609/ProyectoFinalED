@@ -69,6 +69,22 @@ starter de pruebas (JUnit 5 y MockMvc). El wrapper las descarga solas.
 
 ## Cómo compilar y ejecutar
 
+### Backend y frontend con un solo comando
+
+Con el [frontend](https://github.com/Torito9609/ProyectoFinalED-frontend) clonado en la carpeta hermana
+`../ProyectoFinalED-frontend` (además del JDK, necesita Node.js 22 o superior):
+
+```bash
+./levantar.sh                                  # backend en :8080 y frontend en http://localhost:5173
+FRONTEND_DIR=/ruta/al/frontend ./levantar.sh   # si el frontend está en otra carpeta
+```
+
+El script revisa que los puertos 8080 y 5173 estén libres, instala las dependencias del frontend la
+primera vez, espera a que la API responda y luego abre el frontend. La salida del backend queda en
+`target/backend.log`. **Ctrl+C detiene los dos.**
+
+### Solo el backend
+
 ```bash
 # Compilar y correr las pruebas
 ./mvnw test

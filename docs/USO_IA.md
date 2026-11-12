@@ -460,6 +460,13 @@ Convención de la columna **Autoría**:
 | `README.md` | IA | Enlace al frontend, estructuras y estado de la Entrega 2 |
 | `docs/USO_IA.md`, `docs/BITACORA_DESARROLLO.md`, `CLAUDE.md` | IA | Porcentajes, cierre de la bitácora y lista de entregables |
 
+### Script para levantar backend y frontend (12 de noviembre)
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `levantar.sh` | IA | Pedido por Kevin: levanta los dos servidores con un comando y Ctrl+C los detiene. Probado al arrancar, al detener y con un puerto ocupado |
+| `README.md` | IA | Cómo usar el script |
+
 ### Frontend (repositorio `ProyectoFinalED-frontend`, 10 al 12 de noviembre)
 
 El frontend vive en otro repositorio y no lleva su propio registro: se declara aquí. Todos sus commits
