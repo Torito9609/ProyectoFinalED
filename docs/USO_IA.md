@@ -467,6 +467,13 @@ Convención de la columna **Autoría**:
 | `levantar.sh` | IA | Pedido por Kevin: levanta los dos servidores con un comando y Ctrl+C los detiene. Probado al arrancar, al detener y con un puerto ocupado |
 | `README.md` | IA | Cómo usar el script |
 
+### Manual de usuario de la Entrega 2 (12 de noviembre)
+
+| Archivo | Autoría | Revisión del equipo |
+|---|---|---|
+| `docs/MANUAL_USUARIO.md` | IA | Reescrito para la versión web: instalación con `levantar.sh`, el diorama, el panel de la máquina, el modo manual, la vista del superusuario, una guía de demostración con valores reales de la semilla 7, preguntas frecuentes y glosario. El de la Entrega 1 queda en la etiqueta `entrega-1` |
+| `docs/img/web/*.png` (9 capturas) | — | Tomadas del frontend real con Chrome headless, con el estado preparado por la API y la semilla 7. Las que requieren un clic (panel de la máquina y quiebra) las toma el equipo |
+
 ### Frontend (repositorio `ProyectoFinalED-frontend`, 10 al 12 de noviembre)
 
 El frontend vive en otro repositorio y no lleva su propio registro: se declara aquí. Todos sus commits
