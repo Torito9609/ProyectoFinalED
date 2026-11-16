@@ -67,8 +67,16 @@ La primera vez tarda un poco más, porque descarga las dependencias. Cuando la t
 
 **Para cerrar el simulador, pulse Ctrl+C en esa terminal:** se detienen las dos partes.
 
-El script funciona en Linux. En Windows se puede usar desde Git Bash o WSL; si no, levante las dos partes
-a mano, en dos terminales:
+En Windows, abra PowerShell en la carpeta del backend y use la versión para Windows del script:
+
+```powershell
+cd ProyectoFinalED
+powershell -ExecutionPolicy Bypass -File .\levantar.ps1
+```
+
+`-ExecutionPolicy Bypass` permite ejecutar el script sin cambiar la configuración de seguridad del equipo.
+
+Si ninguno de los dos scripts funciona, levante las dos partes a mano, en dos terminales:
 
 ```bash
 # Terminal 1, en la carpeta del backend
@@ -647,13 +655,14 @@ tick 1000. El reloj se detiene solo y aparece el resumen.
 ## 9. Preguntas frecuentes
 
 **La página dice "No se pudo conectar con el backend". ¿Qué hago?**
-El backend no está corriendo, o todavía está arrancando. Si usó `./levantar.sh`, revise la terminal; si
+El backend no está corriendo, o todavía está arrancando. Si usó `./levantar.sh` o `levantar.ps1`, revise la terminal; si
 lo levantó a mano, compruebe que la terminal del backend no muestre errores. La página se recupera sola
 cuando el backend responde.
 
 **El backend no arranca y dice `exit code: 1`. ¿Por qué?**
 Casi siempre es porque otro programa ocupa el puerto 8080, por ejemplo un backend que quedó abierto. Con
-`./levantar.sh` se avisa antes de arrancar. Para ver quién lo usa: `ss -ltnp | grep :8080`.
+`./levantar.sh` o `levantar.ps1` se avisa antes de arrancar. Para ver quién lo usa: `ss -ltnp | grep :8080`
+en Linux, o `netstat -ano | findstr :8080` en Windows.
 
 **¿Por qué no puedo elegir qué orden atender ni qué técnico la toma?**
 Porque cada fila tiene sus reglas: del tablero sale siempre la orden más urgente y, de cada banca, el

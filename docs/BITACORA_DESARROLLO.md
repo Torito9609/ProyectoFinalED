@@ -926,6 +926,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | Contenido | Estado |
 |---|---|
 | `levantar.sh`: levanta backend y frontend con un comando (Linux) | **Terminado** (2026-11-12) |
+| `levantar.ps1`: la misma función en Windows (PowerShell) | **Escrito** (2026-11-16), falta probarlo en Windows |
 | Manual de usuario de la Entrega 2, para la versión web | **Terminado** (2026-11-12). Faltan dos capturas que toma el equipo (`panel-maquina.png` y `quiebra.png`) |
 | Video de máximo 5 minutos | Pendiente |
 | Niveles de dificultad (14c) y rediseño del desgaste para que el overhaul pague | Pospuestos (sección 16 de `CLAUDE.md`) |
