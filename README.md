@@ -79,9 +79,16 @@ Con el [frontend](https://github.com/Torito9609/ProyectoFinalED-frontend) clonad
 FRONTEND_DIR=/ruta/al/frontend ./levantar.sh   # si el frontend está en otra carpeta
 ```
 
-El script revisa que los puertos 8080 y 5173 estén libres, instala las dependencias del frontend la
-primera vez, espera a que la API responda y luego abre el frontend. La salida del backend queda en
-`target/backend.log`. **Ctrl+C detiene los dos.**
+En Windows, desde PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\levantar.ps1
+powershell -ExecutionPolicy Bypass -File .\levantar.ps1 -FrontendDir C:\ruta\al\frontend
+```
+
+Los dos scripts hacen lo mismo: revisan que los puertos 8080 y 5173 estén libres, instalan las
+dependencias del frontend la primera vez, esperan a que la API responda y luego abren el frontend. La
+salida del backend queda en `target/backend.log`. **Ctrl+C detiene los dos.**
 
 ### Solo el backend
 
@@ -219,4 +226,5 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 | Endpoints de la Entrega 2 | Listo |
 | Documento explicativo de la Entrega 2 | Listo |
 | Niveles de dificultad | Pospuesto (ver `CLAUDE.md`, sección 16) |
-| Manual de usuario y video de la Entrega 2 | Pendiente, con el frontend |
+| Manual de usuario de la Entrega 2 (versión web) | Listo |
+| Video de la Entrega 2 | Pendiente |

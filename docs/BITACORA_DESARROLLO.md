@@ -905,7 +905,7 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | 3 | `GeneradorFallos`, `Clasificador`, comandos y `Planta.tick()` probado sin interfaz | **Terminada** (2026-10-18) |
 | 4 | Interfaz Swing: los paneles de las estructuras | **Terminada** (2026-10-18) |
 | 5 | Controlador, reloj e integración | **Terminada** (2026-10-18) |
-| 6 | Manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video | Pendiente |
+| 6 | Manual de usuario, documento explicativo, cierre de `USO_IA.md` y guion del video | **Terminada**, salvo el enlace al video en el README. Se conserva en la etiqueta `entrega-1` |
 
 **Entrega 2:** el control se lleva por commits, según la sección 17 de `CLAUDE.md`.
 
@@ -920,3 +920,12 @@ Orden obligatorio de trabajo según la sección 11 de `CLAUDE.md`:
 | E | 19–23, 19a | API de la Entrega 2. Se adelantan **19 → 19a → 21**, antes del 14 | **Terminada** (2026-11-10): 19, 19a y 20–23 |
 | F | 24–25 | Documentación | **Terminada** (2026-11-10) |
 | G | G1–G3 | Opción B: jerarquía con árbol n-ario (opcional, entrega final) | Opcional |
+
+**Después de la etapa F:**
+
+| Contenido | Estado |
+|---|---|
+| `levantar.sh`: levanta backend y frontend con un comando (Linux) | **Terminado** (2026-11-12) |
+| Manual de usuario de la Entrega 2, para la versión web | **Terminado** (2026-11-12). Faltan dos capturas que toma el equipo (`panel-maquina.png` y `quiebra.png`) |
+| Video de máximo 5 minutos | Pendiente |
+| Niveles de dificultad (14c) y rediseño del desgaste para que el overhaul pague | Pospuestos (sección 16 de `CLAUDE.md`) |

@@ -312,11 +312,11 @@ Qué muestra cada panel:
 
 ## 12. Entregables (lista de verificación)
 
-- [ ] Código en GitHub con Javadoc en todas las clases y métodos públicos
-- [ ] `README.md`: descripción, requisitos, cómo compilar y ejecutar, capturas
-- [ ] `docs/MANUAL_USUARIO.md`
-- [ ] `docs/DOCUMENTO_EXPLICATIVO.md`: por qué y cómo se usó cada estructura (secciones 5, 7 y 8)
-- [ ] `docs/USO_IA.md`: herramientas usadas, en qué partes y el porcentaje estimado
+- [x] Código en GitHub con Javadoc en todas las clases y métodos públicos
+- [x] `README.md`: descripción, requisitos, cómo compilar y ejecutar, capturas
+- [x] `docs/MANUAL_USUARIO.md`
+- [x] `docs/DOCUMENTO_EXPLICATIVO.md`: por qué y cómo se usó cada estructura (secciones 5, 7 y 8)
+- [x] `docs/USO_IA.md`: herramientas usadas, en qué partes y el porcentaje estimado
 - [ ] Video de máximo 5 minutos (enlace en el README)
 
 **Entrega 2 (este repositorio):**
@@ -325,7 +325,8 @@ Qué muestra cada panel:
 - [x] `docs/DOCUMENTO_EXPLICATIVO.md`: una sección nueva con el por qué y el cómo de cada estructura de la Entrega 2. **Es lo que más evalúa el profesor**
 - [x] `README.md`: cómo ejecutar el backend y el enlace al repositorio del frontend
 - [x] `docs/USO_IA.md` actualizado
-- [ ] El manual de usuario y el video dependen del frontend: se coordinan con ese repositorio
+- [x] `docs/MANUAL_USUARIO.md`: reescrito para la versión web (12 de noviembre). Faltan dos capturas que requieren un clic (`panel-maquina.png` y `quiebra.png`), marcadas en el manual con un comentario
+- [ ] Video de máximo 5 minutos (enlace en el README)
 
 ---
 
