@@ -155,11 +155,12 @@ Con 6 máquinas fijas, un arreglo normal también funcionaría. Elegimos el din�
 
 ### Cómo se ve en la interfaz
 
-El panel **INVENTARIO — ArrayList** dibuja una fila por posición, con el **índice a la izquierda**,
-porque el acceso por índice es lo que caracteriza a la estructura. No se dibuja la capacidad
-interna del `ArrayList`: Java no la expone, e inventarla sería mostrar una memoria que no conocemos.
+En el diorama del frontend, las máquinas están en el piso **en el orden de su posición en el
+inventario**, y cada etiqueta empieza por su índice (`[0] PRENSA-01`), porque el acceso por índice es
+lo que caracteriza a la estructura. No se dibuja la capacidad interna del `ArrayList`: Java no la
+expone, e inventarla sería mostrar una memoria que no conocemos.
 
-![Panel del inventario](img/manual/panel-inventario.png)
+![Las máquinas en el piso, en el orden del inventario](img/web/inicio.png)
 
 ---
 
@@ -283,12 +284,12 @@ ventaja de tener memoria fija.
 
 ### Cómo se ve en la interfaz
 
-El panel **COLA CIRCULAR** es el único que dibuja el **arreglo físico**, con sus 12 celdas
-numeradas, los huecos y los punteros `frente` y `final`. Puede hacerlo porque la estructura es
-nuestra. Cuando la cola se llena, frente y final coinciden y se ve una sola marca, `frente/final`.
-El contador de sobrescrituras muestra cuántas lecturas viejas se perdieron.
-
-![Panel de la cola circular](img/manual/panel-cola-circular.png)
+Es la única estructura de la que se dibuja el **arreglo físico**: un **anillo de 12 baldosas**
+alrededor de la máquina seleccionada, y el mismo anillo con los números en el panel de la máquina,
+con los huecos y los punteros `frente` (F) y `final` (L). Se puede hacer porque la estructura es
+nuestra y expone sus índices. Cuando la cola se llena, frente y final coinciden, y en cada tick se ve
+el final dar la vuelta al anillo. El contador de sobrescrituras muestra cuántas lecturas viejas se
+perdieron.
 
 ---
 
@@ -358,13 +359,19 @@ Es una forma de **respetar el TAD desde la declaración**.
 
 ### Cómo se ven en la interfaz
 
-Los paneles dibujan **solo la secuencia de elementos**, sin celdas vacías ni capacidad. Es una
-decisión deliberada: `ArrayDeque` no expone su arreglo interno, y dibujarlo sería inventar. Las
-flechas *sale* y *entra* muestran el comportamiento FIFO.
+Se dibuja **solo la secuencia de elementos**, sin celdas vacías ni capacidad. Es una decisión
+deliberada: `ArrayDeque` no expone su arreglo interno, y dibujarlo sería inventar.
 
-![Panel de la cola de eventos](img/manual/panel-cola-eventos.png)
+La cola de eventos es una **banda transportadora**: las alarmas entran por un extremo y la caja más
+cercana al clasificador es la próxima en salir.
 
-![Panel de la cola de técnicos](img/manual/panel-cola-tecnicos.png)
+![Tres alarmas esperando en la banda de eventos](img/web/banda-eventos.png)
+
+Los técnicos libres hacen fila en una **banca**, con el frente marcado; al recibir una orden caminan a
+la máquina, y al terminar vuelven al final de la fila. Desde la Entrega 2 hay dos bancas, una por
+especialidad (ver la segunda parte de este documento).
+
+![Técnicos trabajando y la pila de deshacer](img/web/tecnicos-y-pila.png)
 
 ---
 
@@ -502,12 +509,11 @@ basamos, recomienda trabajar con pocos niveles de prioridad (típicamente tres o
 
 ### Cómo se ve en la interfaz
 
-El panel muestra la estructura tal como es: **cuatro carriles horizontales, cada uno una fila FIFO**.
-Una flecha marca el carril del que sale la próxima orden. En la imagen, `OT-12 BOMBA-01` llegó
-**después** de todas las demás, pero es P1 y sale primero. Dentro del carril P3, `OT-9` sale antes
-que `OT-11` porque llegó antes.
+El frontend la muestra tal como es: un tablero de **cuatro carriles, cada uno una fila FIFO**, y la
+marca **siguiente** en el carril del que sale la próxima orden. En la imagen, la orden de BOMBA-01
+(`OT-4`) fue la última en clasificarse, pero es P1 y sale primero.
 
-![Una P1 que llegó de última sale primero](img/manual/panel-cola-prioridad-p1.png)
+![Una P1 que llegó de última sale primero](img/web/tablero-prioridad.png)
 
 ---
 
@@ -625,11 +631,10 @@ pila sigue siendo una pila: se hace `pop` de la cima. Lo único que cambia es si
 
 ### Cómo se ve en la interfaz
 
-Pila vertical, con **la cima arriba**, resaltada, y el botón *Deshacer* debajo. La vista recibe solo
-**textos**, no los objetos comando. Si recibiera los comandos, podría ejecutarlos o revertirlos por
-su cuenta, y eso saltaría al controlador.
-
-![Panel de la pila](img/manual/panel-pila.png)
+Un **montón de carpetas** sobre un escritorio, con **la cima arriba**, resaltada: deshacer quita la
+de arriba (se ve en la imagen de los técnicos, más arriba). La API envía solo **textos**
+(`pilaDeshacer` es una lista de descripciones), no los objetos comando. Si la vista recibiera los
+comandos, podría ejecutarlos o revertirlos por su cuenta, y eso se saltaría al servicio y al modelo.
 
 ---
 
@@ -795,8 +800,8 @@ sin promedios. Es la consecuencia directa de tener memoria fija.
 
 > En la Entrega 2 el proyecto pasó a **Spring Boot**: este repositorio es el backend y la interfaz es
 > un frontend web en otro repositorio (`ProyectoFinalED-frontend`). Las capturas de la primera parte
-> son de la interfaz Swing de la Entrega 1, que se conserva en la etiqueta de Git `entrega-1`. **Las
-> estructuras de la primera parte no cambiaron**: el modelo es el mismo y sus pruebas siguen pasando.
+> ya son del frontend web; la interfaz Swing de la Entrega 1 se conserva en la etiqueta de Git
+> `entrega-1`. **Las estructuras de la primera parte no cambiaron**: el modelo es el mismo y sus pruebas siguen pasando.
 > Lo que sigue son las estructuras **nuevas**, con el mismo formato: qué problema resuelven, por qué
 > son las adecuadas, qué alternativas se descartaron y cuánto cuesta cada operación.
 

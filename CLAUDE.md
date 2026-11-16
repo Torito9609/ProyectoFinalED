@@ -5,7 +5,7 @@ Equipo: **Cristian Robayo** y **Kevin Toro**.
 
 Este documento es la fuente de verdad del diseño. Cualquier cambio de decisión se registra aquí antes de implementarlo.
 
-**Estado:** la Entrega 1 está cerrada (versión Swing, etiqueta de Git `entrega-1`). La Entrega 2 está en curso en la rama `entrega-2`: el proyecto migra a **Spring Boot** y este repositorio queda como **backend**. El frontend vive en un repositorio aparte. El diseño de la Entrega 2 está en la sección 16 y su plan de commits en la sección 17. **El avance (qué commit sigue) se lleva en la tabla "Control de etapas" de `docs/BITACORA_DESARROLLO.md`**, y el resumen de cada sesión de trabajo en `docs/sesiones/`.
+**Estado:** la Entrega 1 está cerrada (versión Swing, etiqueta de Git `entrega-1`). La Entrega 2 está cerrada e integrada en `main` (la rama `entrega-2` se borró el 16 de noviembre de 2026): el proyecto migró a **Spring Boot** y este repositorio queda como **backend**. El frontend vive en un repositorio aparte. El diseño de la Entrega 2 está en la sección 16 y su plan de commits en la sección 17. **El avance (qué commit sigue) se lleva en la tabla "Control de etapas" de `docs/BITACORA_DESARROLLO.md`**, y el resumen de cada sesión de trabajo en `docs/sesiones/`.
 
 ---
 
@@ -538,7 +538,7 @@ Guardar el resumen de cada partida (semilla, dificultad, modo e indicadores) par
 
 ## 17. Entrega 2: plan de commits
 
-Todo se trabaja en la rama `entrega-2`. Cada commit es pequeño, deja las pruebas en verde y se revisa a mano antes del siguiente (sección 15). Cada uno actualiza `docs/USO_IA.md` con sus archivos.
+Todo se trabajó en la rama `entrega-2`, ya integrada en `main` y borrada. Cada commit es pequeño, deja las pruebas en verde y se revisa a mano antes del siguiente (sección 15). Cada uno actualiza `docs/USO_IA.md` con sus archivos.
 
 **Por qué la migración va primero:** así el repositorio del frontend puede empezar contra una API real con paridad de la Entrega 1, mientras aquí se construyen las estructuras nuevas. El modelo de la Entrega 1 ya está probado, así que no se rompe el orden "modelo probado → vista". La única consecuencia es el commit 19, que mueve las rutas de `/api/planta` a `/api/companias/{id}`, y se anuncia en `docs/API.md`.
 

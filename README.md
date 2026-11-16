@@ -8,25 +8,31 @@ Proyecto final del curso **Estructuras de Datos** — Universidad Nacional de Co
 
 ## Qué hace
 
-Simula una planta industrial con seis máquinas que reportan lecturas de sensores. El sistema genera
-fallos, detecta anomalías en las lecturas, las clasifica por prioridad (P1 a P4, con un esquema
-inspirado en la norma ISA-18.2) y genera órdenes de mantenimiento que asigna a los técnicos
-disponibles.
+Simula varias compañías industriales (tres al arrancar: Planta Norte, Centro y Sur), cada una con
+máquinas que reportan lecturas de sensores. El sistema genera fallos, detecta anomalías en las
+lecturas, las clasifica por prioridad (P1 a P4, con un esquema inspirado en la norma ISA-18.2) y
+genera órdenes de mantenimiento que asigna a técnicos mecánicos y eléctricos.
 
-Lo particular del simulador es que **cada estructura de datos tiene su propio panel en pantalla**,
-donde se ve su comportamiento real: el acceso por índice del arreglo, la sobrescritura de la cola
-circular, el orden de llegada de las colas FIFO, los cuatro carriles de la cola con prioridad y la
-cima de la pila de deshacer.
+Encima de eso hay:
 
-**Desde la Entrega 2 este repositorio es el backend** (Spring Boot): expone la simulación como una
-API REST, y la interfaz es un frontend web en otro repositorio. La captura es de la Entrega 1, la
-versión de escritorio en Swing, que se conserva en la etiqueta `entrega-1`.
+- un **superusuario** que ve todas las compañías, con un ranking de máquinas por fallos y su
+  recomendación de overhaul o reemplazo;
+- un **modo manual**, que convierte la simulación en un juego de gestión: el jugador decide qué
+  hacer, cuándo y con qué recurso, y paga por ello, en partidas de 1000 ticks con caja y quiebra;
+- un **historial** de fallos y de costo que se consulta por una ventana de ticks.
+
+**Este repositorio es el backend** (Spring Boot): expone la simulación como una API REST. La interfaz
+es un frontend web en otro repositorio, un diorama 3D donde **cada estructura de datos es un objeto
+que se comporta como su tipo abstracto**: la cola de eventos es una banda transportadora, la cola
+P1–P4 un tablero de cuatro carriles y la pila un montón de carpetas.
 
 - **Frontend:** [`ProyectoFinalED-frontend`](https://github.com/Torito9609/ProyectoFinalED-frontend)
   (React + Vite + TypeScript + React Three Fiber)
 - **Contrato de la API:** [`docs/API.md`](docs/API.md)
 
-![La ventana del simulador (Entrega 1)](docs/img/ventana.png)
+![La planta de una compañía en el frontend web](docs/img/web/inicio.png)
+
+![La vista del superusuario](docs/img/web/dashboard-superusuario.png)
 
 ## Estructuras de datos utilizadas
 
@@ -134,6 +140,7 @@ sigue siendo más reciente que las fuentes, y la verificación no comprueba nada
 ## Estructura del proyecto
 
 ```
+levantar.sh, levantar.ps1, levantar.cmd   levantan el backend y el frontend juntos (Linux/macOS, Windows)
 src/main/java/edu/unal/planta/
 ├── AplicacionPlanta.java punto de entrada de Spring Boot
 ├── api/                 controladores REST (rutas /api/...)
@@ -152,36 +159,32 @@ completa se puede probar con JUnit sin levantar un servidor.
 
 ## Cómo usarlo
 
-- **Entrega 2:** desde el frontend web. Los endpoints, sus cuerpos y sus errores están en
-  [`docs/API.md`](docs/API.md).
-- **Entrega 1:** la interfaz Swing se retiró del código y se conserva en la etiqueta `entrega-1`
-  (`git switch --detach entrega-1`). Su manual está en [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md).
+Desde el frontend web. El [manual de usuario](docs/MANUAL_USUARIO.md) explica cada pantalla, el
+juego en modo manual y una guía para la demostración. Para usar la API sin el frontend, los
+endpoints, sus cuerpos y sus errores están en [`docs/API.md`](docs/API.md).
+
+La interfaz Swing de la Entrega 1 se retiró del código. Ella y su manual se conservan en la etiqueta
+`entrega-1` (`git switch --detach entrega-1`).
 
 ## Flujo de trabajo con Git
 
-El repositorio maneja dos ramas (en la Entrega 2 se trabaja en la rama `entrega-2`, con el mismo
-criterio que `desarrollo`):
+Todo el trabajo de las entregas 1 y 2 está integrado en `main`, que es la rama que se entrega y la
+que debe compilar siempre. Las ramas de trabajo (`desarrollo` en la Entrega 1 y `entrega-2` en la
+Entrega 2) se borraron al cerrar la Entrega 2. Cada entrega queda marcada con una etiqueta
+(`entrega-1`).
 
-| Rama | Para qué sirve |
-|---|---|
-| `main` | Solo etapas terminadas y probadas. Es la rama que se entrega y la que debe compilar siempre |
-| `desarrollo` | Rama de trabajo diario. Aquí van todos los commits mientras una etapa está en curso |
+Para trabajo nuevo (por ejemplo, la etapa G para la entrega final):
 
-**Reglas:**
-
-1. No se hace commit directo sobre `main`.
-2. Una etapa se integra a `main` solo cuando `./mvnw test` pasa completo.
-3. La integración se hace con `--no-ff`, para que quede un commit de merge que marque dónde empieza
-   y dónde termina cada etapa en la historia.
+1. Se crea una rama desde `main` y los commits van ahí, nunca directo sobre `main`.
+2. La rama se integra a `main` solo cuando `./mvnw test` pasa completo.
 
 ```bash
-git switch desarrollo            # trabajar siempre aquí
-# ... commits de la etapa ...
-./mvnw test                      # obligatorio antes de integrar
+git switch -c entrega-final main   # rama de trabajo
+# ... commits ...
+./mvnw test                        # obligatorio antes de integrar
 
 git switch main
-git merge --no-ff desarrollo     # la etapa queda marcada en la historia
-git switch desarrollo            # volver a la rama de trabajo
+git merge --no-ff entrega-final    # el trabajo queda marcado en la historia
 ```
 
 Los commits hechos con asistencia de IA conservan la línea `Co-Authored-By` que agrega la
@@ -191,7 +194,7 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 ## Documentación
 
 - [`docs/API.md`](docs/API.md) — contrato de la API REST para el frontend
-- [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo usar el simulador (Entrega 1)
+- [`docs/MANUAL_USUARIO.md`](docs/MANUAL_USUARIO.md) — cómo instalar y usar el simulador (versión web)
 - [`docs/DOCUMENTO_EXPLICATIVO.md`](docs/DOCUMENTO_EXPLICATIVO.md) — por qué y cómo se usó cada
   estructura
 - [`docs/BITACORA_DESARROLLO.md`](docs/BITACORA_DESARROLLO.md) — registro de avance del equipo:
@@ -204,6 +207,8 @@ respalda a [`docs/USO_IA.md`](docs/USO_IA.md).
 *(pendiente: enlace al video de máximo 5 minutos)*
 
 ## Estado
+
+**Entrega 1** (versión Swing, etiqueta `entrega-1`; la interfaz se retiró del código en la Entrega 2):
 
 | Entregable | Estado |
 |---|---|
