@@ -76,6 +76,10 @@ powershell -ExecutionPolicy Bypass -File .\levantar.ps1
 
 `-ExecutionPolicy Bypass` permite ejecutar el script sin cambiar la configuración de seguridad del equipo.
 
+**Más fácil:** haga doble clic en `levantar.cmd`, en la carpeta del backend. Abre una ventana que hace lo
+mismo. Para cerrar el simulador, pulse Ctrl+C en esa ventana; si Windows pregunta "¿Desea terminar el
+trabajo por lotes (S/N)?", cualquier respuesta sirve, porque los dos servidores ya se detuvieron.
+
 Si ninguno de los dos scripts funciona, levante las dos partes a mano, en dos terminales:
 
 ```bash

@@ -86,6 +86,8 @@ powershell -ExecutionPolicy Bypass -File .\levantar.ps1
 powershell -ExecutionPolicy Bypass -File .\levantar.ps1 -FrontendDir C:\ruta\al\frontend
 ```
 
+O con doble clic en `levantar.cmd`, que llama a `levantar.ps1`.
+
 Los dos scripts hacen lo mismo: revisan que los puertos 8080 y 5173 estén libres, instalan las
 dependencias del frontend la primera vez, esperan a que la API responda y luego abren el frontend. La
 salida del backend queda en `target/backend.log`. **Ctrl+C detiene los dos.**

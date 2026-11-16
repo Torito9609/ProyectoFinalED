@@ -472,6 +472,7 @@ Convención de la columna **Autoría**:
 | Archivo | Autoría | Revisión del equipo |
 |---|---|---|
 | `levantar.ps1` | IA | Pedido por Kevin: la versión para PowerShell de `levantar.sh`. Llama a Vite con `node` para que Ctrl+C no pregunte si se termina el trabajo por lotes, y detiene el backend con `taskkill /T`. Guardado en UTF-8 con BOM para que Windows PowerShell 5.1 lea las tildes. **Escrito sin PowerShell a mano: lo prueba el equipo en Windows** |
+| `levantar.cmd` | IA | Pedido por Kevin: doble clic que llama a `levantar.ps1` con `-ExecutionPolicy Bypass`; si algo falla, espera una tecla para leer el error. Con fin de línea CRLF. Sin probar en Windows |
 | `README.md`, `docs/MANUAL_USUARIO.md` | IA | Cómo usar el script en Windows |
 
 ### Manual de usuario de la Entrega 2 (12 de noviembre)
